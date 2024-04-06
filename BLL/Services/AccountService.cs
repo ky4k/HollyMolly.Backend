@@ -20,18 +20,14 @@ public class AccountService(
 {
     public async Task<OperationResult<UserDto>> RegisterUserAsync(RegistrationRequest request)
     {
-        if (await userManager.FindByNameAsync(request.UserName) != null)
-        {
-            return new OperationResult<UserDto>(false, "A user with such a name already exist.");
-        }
-        if (await userManager.FindByEmailAsync(request.UserEmail) != null)
+        if (await userManager.FindByEmailAsync(request.Email) != null)
         {
             return new OperationResult<UserDto>(false, "A user with such an email already exist.");
         }
         var user = new User()
         {
-            UserName = request.UserName,
-            Email = request.UserEmail
+            UserName = request.Email,
+            Email = request.Email
         };
         try
         {
@@ -47,7 +43,6 @@ public class AccountService(
         var userDto = new UserDto()
         {
             Id = user.Id,
-            UserName = user.UserName,
             Email = user.Email,
             Roles = await userManager.GetRolesAsync(user),
         };
@@ -57,8 +52,7 @@ public class AccountService(
 
     public async Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest)
     {
-        User? user = await userManager.FindByEmailAsync(loginRequest.UserNameOrEmail);
-        user ??= await userManager.FindByNameAsync(loginRequest.UserNameOrEmail);
+        User? user = await userManager.FindByEmailAsync(loginRequest.Email);
         if (user == null)
         {
             return new OperationResult<LoginResponse>(false, "No user with such a name or email exists.");
@@ -79,7 +73,6 @@ public class AccountService(
         LoginResponse response = new()
         {
             AccessToken = token,
-            UserName = user.UserName,
             Roles = roles
         };
 

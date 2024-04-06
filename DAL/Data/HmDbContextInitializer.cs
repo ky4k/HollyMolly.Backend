@@ -76,28 +76,26 @@ public class HmDbContextInitializer(
 
     private async Task SeedDefaultAdminAsync()
     {
-        string? adminName = GetConfigurationValue("DefaultAdmin:Name");
         string? adminEmail = GetConfigurationValue("DefaultAdmin:Email");
         string? adminPassword = GetConfigurationValue("DefaultAdmin:Password");
-        if (string.IsNullOrEmpty(adminName)
-            || string.IsNullOrEmpty(adminEmail)
+        if (string.IsNullOrEmpty(adminEmail)
             || string.IsNullOrEmpty(adminPassword))
         {
             logger.LogInformation("Default admin information was not provided. " +
                 "Default admin was not seeded.");
             return;
         }
-        if (await userManager.Users.AnyAsync(u => u.UserName == adminName))
+        if (await userManager.FindByEmailAsync(adminEmail) != null)
         {
-            logger.LogInformation("User with the name '{adminName}' already exists.", adminName);
+            logger.LogInformation("User with the email '{adminEmail}' already exists.", adminEmail);
             return;
         }
 
-        var administrator = new User { UserName = adminName, Email = adminEmail };
+        var administrator = new User { UserName = adminEmail, Email = adminEmail };
         await userManager.CreateAsync(administrator, adminPassword);
         await userManager.AddToRoleAsync(administrator, DefaultRoles.Administrator);
         await context.SaveChangesAsync();
-        logger.LogInformation("Default admin '{adminName}' has been seeded.", adminName);
+        logger.LogInformation("Default admin '{adminEmail}' has been seeded.", adminEmail);
     }
 
     private string? GetConfigurationValue(string key)
