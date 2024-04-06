@@ -1,54 +1,102 @@
-﻿using BLL.Interfaces;
-using BLL.Models;
-using DAL.Entities;
+﻿using HM.BLL.Interfaces;
+using HM.BLL.Models;
+using HM.DAL.Constants;
+using HM.DAL.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 
-namespace BLL.Services;
+namespace HM.BLL.Services;
 
 public class AccountService(
-    IConfiguration configuration
+    UserManager<User> userManager,
+    IConfiguration configuration,
+    ILogger<AccountService> logger
     ) : IAccountService
 {
-    public async Task<LoginResponse> LoginAsync(LoginRequest loginRequest)
+    public async Task<OperationResult<UserDto>> RegisterUserAsync(RegistrationRequest request)
     {
-        User user = new() { Id = 1, UserName = "admin", Email = "admin@example.com" };
+        if (await userManager.FindByNameAsync(request.UserName) != null)
+        {
+            return new OperationResult<UserDto>(false, "A user with such a name already exist.");
+        }
+        if (await userManager.FindByEmailAsync(request.UserEmail) != null)
+        {
+            return new OperationResult<UserDto>(false, "A user with such an email already exist.");
+        }
+        var user = new User()
+        {
+            UserName = request.UserName,
+            Email = request.UserEmail
+        };
+        try
+        {
+            await userManager.CreateAsync(user);
+            await userManager.AddPasswordAsync(user, request.Password);
+            await userManager.AddToRoleAsync(user, DefaultRoles.User);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "User has not been created.");
+            return new OperationResult<UserDto>(false, "An error has happened while creating user");
+        }
+        var userDto = new UserDto()
+        {
+            Id = user.Id,
+            UserName = user.UserName,
+            Email = user.Email,
+            Roles = await userManager.GetRolesAsync(user),
+        };
+
+        return new OperationResult<UserDto>(true, userDto);
+    }
+
+    public async Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest)
+    {
+        User? user = await userManager.FindByEmailAsync(loginRequest.UserNameOrEmail);
+        user ??= await userManager.FindByNameAsync(loginRequest.UserNameOrEmail);
+        if (user == null)
+        {
+            return new OperationResult<LoginResponse>(false, "No user with such a name or email exists.");
+        }
+        IEnumerable<string> roles = await userManager.GetRolesAsync(user);
 
         string? token;
         try
         {
-            token = new JwtSecurityTokenHandler().WriteToken(await GetTokenAsync(user));
+            token = new JwtSecurityTokenHandler().WriteToken(GetToken(user, roles));
         }
         catch (Exception ex)
         {
-            //logger.LogError(ex, "An error occurred while setting the JWT token.");
-            return new LoginResponse() { Succeeded = false, Message = ex.Message };
+            logger.LogError(ex, "An error occurred while setting the JWT token.");
+            return new OperationResult<LoginResponse>(false, "Cannot create JWT token.");
         }
 
-        return new LoginResponse()
+        LoginResponse response = new()
         {
-            Succeeded = true,
-            Message = "Login is complete",
-            Token = token,
+            AccessToken = token,
             UserName = user.UserName,
-            Roles = []
+            Roles = roles
         };
+
+        return new OperationResult<LoginResponse>(true, response);
     }
 
-    public async Task<JwtSecurityToken> GetTokenAsync(User user)
+    private JwtSecurityToken GetToken(User user, IEnumerable<string> roles)
     {
         var claims = new List<Claim>
         {
             new(ClaimTypes.Name, user?.UserName ?? string.Empty),
             new(ClaimTypes.Email, user?.Email ?? string.Empty)
         };
-        //foreach (string role in await userManager.GetRolesAsync(user, new CancellationToken()))
-        //{
-        //    claims.Add(new Claim(ClaimTypes.Role, role));
-        //}
+        foreach (string role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
 
         double expiresIn = double.TryParse(
             configuration?["JwtSettings:ExpirationTimeInMinutes"], out double exp) ? exp : 60.0;

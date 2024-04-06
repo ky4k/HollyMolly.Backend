@@ -1,8 +1,8 @@
-﻿namespace DAL.Entities;
+﻿using Microsoft.AspNetCore.Identity;
 
-public class User
+namespace HM.DAL.Entities;
+
+public class User : IdentityUser
 {
-    public int Id { get; set; }
-    public string UserName { get; set; } = null!;
-    public string Email { get; set; } = null!;
+
 }

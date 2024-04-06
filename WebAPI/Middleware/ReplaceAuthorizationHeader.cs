@@ -12,7 +12,7 @@ public class ReplaceAuthorizationHeaderMiddleware : IMiddleware
         {
             string[] parts = authHeader.ToString().Split(',');
             string? bearer = Array.Find(parts, part => part.Trim().StartsWith("Bearer "))?.Trim();
-            if(!string.IsNullOrEmpty(bearer))
+            if (!string.IsNullOrEmpty(bearer))
             {
                 context.Request.Headers.Authorization = bearer;
             }

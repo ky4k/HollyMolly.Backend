@@ -1,8 +1,9 @@
-﻿using BLL.Models;
+﻿using HM.BLL.Models;
 
-namespace BLL.Interfaces;
+namespace HM.BLL.Interfaces;
 
 public interface IAccountService
 {
-    Task<LoginResponse> LoginAsync(LoginRequest loginRequest);
+    Task<OperationResult<UserDto>> RegisterUserAsync(RegistrationRequest request);
+    Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest);
 }

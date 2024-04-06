@@ -1,13 +1,13 @@
-﻿using BLL.Models;
-using FluentValidation;
+﻿using FluentValidation;
+using HM.BLL.Models;
 
-namespace BLL.Validators;
+namespace HM.BLL.Validators;
 
 public class LoginRequestValidator : AbstractValidator<LoginRequest>
 {
     public LoginRequestValidator()
     {
-        RuleFor(lr => lr.UserName)
+        RuleFor(lr => lr.UserNameOrEmail)
             .NotEmpty();
         RuleFor(lr => lr.Password)
             .NotEmpty();
