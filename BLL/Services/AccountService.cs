@@ -72,6 +72,8 @@ public class AccountService(
 
         LoginResponse response = new()
         {
+            UserId = user.Id,
+            UserEmail = user.Email,
             AccessToken = token,
             Roles = roles
         };

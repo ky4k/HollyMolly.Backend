@@ -7,6 +7,10 @@ namespace HM.WebAPI.Controllers;
 [ApiController]
 public class TestController : ControllerBase
 {
+    /// <summary>
+    /// Allows to test API accessibility for any user.
+    /// </summary>
+    /// <response code="200">Indicates that API is working.</response>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public ActionResult Test()
@@ -14,6 +18,11 @@ public class TestController : ControllerBase
         return Ok(new { Succeded = true });
     }
 
+    /// <summary>
+    /// Allows to test API accessibility for the authenticated users.
+    /// </summary>
+    /// <response code="200">Indicates that user is authenticated.</response>
+    /// <response code="401">Indicates that user is not authenticated.</response>
     [Authorize]
     [Route("authorize")]
     [HttpGet]

@@ -1,4 +1,5 @@
-﻿using HM.BLL.Interfaces;
+﻿using Azure;
+using HM.BLL.Interfaces;
 using HM.BLL.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -40,6 +41,14 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
-        return Ok(await accountService.LoginAsync(request));
+        var response = await accountService.LoginAsync(request);
+        return response.Succeeded? Ok(response.Payload) : BadRequest(response.Message);
+    }
+
+    [Route("{userId}")]
+    [HttpPut]
+    public async Task<ActionResult<UserDto>> UpdateProfile(string userId)
+    {
+        throw new NotImplementedException();
     }
 }
