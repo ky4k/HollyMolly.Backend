@@ -22,7 +22,7 @@ public class OperationResult
 
 public class OperationResult<T> : OperationResult
 {
-    public T Payload { get; set; } = default!;
+    public T? Payload { get; set; }
 
     public OperationResult()
     {
