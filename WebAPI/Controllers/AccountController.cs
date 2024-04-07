@@ -1,4 +1,5 @@
-﻿using HM.BLL.Interfaces;
+﻿using Azure;
+using HM.BLL.Interfaces;
 using HM.BLL.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -42,5 +43,12 @@ public class AccountController(
     {
         var response = await accountService.LoginAsync(request);
         return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
+    }
+
+    [Route("{userId}")]
+    [HttpPut]
+    public async Task<ActionResult<UserDto>> UpdateProfile(string userId)
+    {
+        throw new NotImplementedException();
     }
 }
