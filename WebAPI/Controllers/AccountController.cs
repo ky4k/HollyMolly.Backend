@@ -40,6 +40,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
-        return Ok(await accountService.LoginAsync(request));
+        var response = await accountService.LoginAsync(request);
+        return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
     }
 }

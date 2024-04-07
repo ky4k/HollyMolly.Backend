@@ -4,5 +4,4 @@ namespace HM.DAL.Entities;
 
 public class User : IdentityUser
 {
-
 }
