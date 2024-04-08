@@ -32,7 +32,7 @@ builder.Services.AddIdentity<User, Role>(options =>
     options.Password.RequiredLength = 8;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
-    options.Password.RequireLowercase = true;
+    options.Password.RequireLowercase = false;
     options.Password.RequireDigit = false;
 })
     .AddEntityFrameworkStores<HmDbContext>();

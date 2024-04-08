@@ -18,16 +18,17 @@ public class AccountService(
     ILogger<AccountService> logger
     ) : IAccountService
 {
-    public async Task<OperationResult<UserDto>> RegisterUserAsync(RegistrationRequest request)
+    public async Task<OperationResult<RegistrationResponse>> RegisterUserAsync(RegistrationRequest request)
     {
+        var x = await userManager.FindByEmailAsync(request.Email) != null;
         if (await userManager.FindByEmailAsync(request.Email) != null)
         {
-            return new OperationResult<UserDto>(false, "A user with such an email already exist.");
+            return new OperationResult<RegistrationResponse>(false, "A user with such an email already exist.");
         }
         var user = new User()
         {
-            UserName = request.Email,
-            Email = request.Email
+            UserName = request.Email.ToLower(),
+            Email = request.Email.ToLower()
         };
         try
         {
@@ -38,21 +39,21 @@ public class AccountService(
         catch (Exception ex)
         {
             logger.LogError(ex, "User has not been created.");
-            return new OperationResult<UserDto>(false, "An error has happened while creating user");
+            return new OperationResult<RegistrationResponse>(false, "An error has happened while creating user");
         }
-        var userDto = new UserDto()
+        var response = new RegistrationResponse()
         {
             Id = user.Id,
             Email = user.Email,
             Roles = await userManager.GetRolesAsync(user),
         };
 
-        return new OperationResult<UserDto>(true, userDto);
+        return new OperationResult<RegistrationResponse>(true, response);
     }
 
     public async Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest)
     {
-        User? user = await userManager.FindByEmailAsync(loginRequest.Email);
+        User? user = await userManager.FindByEmailAsync(loginRequest.Email.ToLower());
         if (user == null)
         {
             return new OperationResult<LoginResponse>(false, "No user with such a name or email exists.");
@@ -72,6 +73,8 @@ public class AccountService(
 
         LoginResponse response = new()
         {
+            UserId = user.Id,
+            UserEmail = user.Email,
             AccessToken = token,
             Roles = roles
         };
@@ -83,6 +86,7 @@ public class AccountService(
     {
         var claims = new List<Claim>
         {
+            new(ClaimTypes.NameIdentifier, user?.Id ?? string.Empty),
             new(ClaimTypes.Name, user?.UserName ?? string.Empty),
             new(ClaimTypes.Email, user?.Email ?? string.Empty)
         };
@@ -103,5 +107,65 @@ public class AccountService(
             claims: claims,
             expires: DateTime.Now.AddMinutes(expiresIn),
             signingCredentials: new SigningCredentials(secret, SecurityAlgorithms.HmacSha256));
+    }
+
+    public async Task<OperationResult<UserDto>> UpdateUserProfileAsync(string userId, ProfileUpdateDto profile)
+    {
+        User? user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new OperationResult<UserDto>(false, "User with such an id does not exist.");
+        }
+
+        user.FirstName = profile.FirstName;
+        user.LastName = profile.LastName;
+        user.PhoneNumber = profile.PhoneNumber;
+        user.DateOfBirth = profile.DateOfBirth;
+        user.City = profile.City;
+        user.DeliveryAddress = profile.DeliveryAddress;
+
+        var result = await userManager.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            var userDto = new UserDto()
+            {
+                Id = userId,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                DateOfBirth = user.DateOfBirth,
+                PhoneNumber = user.PhoneNumber,
+                City = user.City,
+                DeliveryAddress = user.DeliveryAddress,
+                Roles = await userManager.GetRolesAsync(user)
+            };
+            return new OperationResult<UserDto>(true, userDto);
+        }
+        else
+        {
+            logger.LogError("User has not been updated: {errors}",
+                string.Join(' ', result.Errors.Select(e => e.Description)));
+            return new OperationResult<UserDto>(false, "An error occurred while updating user");
+        }
+    }
+
+    public async Task<OperationResult> ChangePasswordAsync(string userId, ChangePasswordDto passwords)
+    {
+        User? user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new OperationResult(false, "User with such an id does not exist.");
+        }
+        var result = await userManager.ChangePasswordAsync(
+            user, passwords.OldPassword, passwords.NewPassword);
+        if (result.Succeeded)
+        {
+            return new OperationResult(true);
+        }
+        else
+        {
+            var errors = string.Join(' ', result.Errors.Select(e => e.Description));
+            return new OperationResult(false, $"Password has not been changed: {errors}");
+        }
     }
 }
