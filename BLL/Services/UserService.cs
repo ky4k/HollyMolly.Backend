@@ -43,6 +43,12 @@ public class UserService(
         {
             return new OperationResult<UserDto>(false, "User with such an id does not exist");
         }
+        var allowedRoles = await GetAllRolesAsync();
+        if (Array.Exists(roles, r => !allowedRoles.Contains(r)))
+        {
+            string allowed = string.Join(", ", allowedRoles);
+            return new OperationResult<UserDto>(false, $"Not all roles in the list exist. Allowed roles include: {allowed}");
+        }
         
         var oldRoles = await userManager.GetRolesAsync(user);
         var removeResult = await userManager.RemoveFromRolesAsync(user, oldRoles);
