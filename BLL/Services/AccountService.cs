@@ -1,4 +1,5 @@
-﻿using HM.BLL.Interfaces;
+﻿using HM.BLL.Extensions;
+using HM.BLL.Interfaces;
 using HM.BLL.Models;
 using HM.DAL.Constants;
 using HM.DAL.Entities;
@@ -20,8 +21,8 @@ public class AccountService(
 {
     public async Task<OperationResult<RegistrationResponse>> RegisterUserAsync(RegistrationRequest request)
     {
-        var x = await userManager.FindByEmailAsync(request.Email) != null;
-        if (await userManager.FindByEmailAsync(request.Email) != null)
+        if (await userManager.FindByEmailAsync(request.Email.ToLower()) != null || 
+            await userManager.FindByNameAsync(request.Email.ToLower()) != null)
         {
             return new OperationResult<RegistrationResponse>(false, "A user with such an email already exist.");
         }
@@ -127,18 +128,8 @@ public class AccountService(
         var result = await userManager.UpdateAsync(user);
         if (result.Succeeded)
         {
-            var userDto = new UserDto()
-            {
-                Id = userId,
-                Email = user.Email,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                DateOfBirth = user.DateOfBirth,
-                PhoneNumber = user.PhoneNumber,
-                City = user.City,
-                DeliveryAddress = user.DeliveryAddress,
-                Roles = await userManager.GetRolesAsync(user)
-            };
+            IEnumerable<string> roles = await userManager.GetRolesAsync(user);
+            UserDto userDto = user.ToUserDto(roles);
             return new OperationResult<UserDto>(true, userDto);
         }
         else
