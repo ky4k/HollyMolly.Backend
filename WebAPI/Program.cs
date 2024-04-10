@@ -120,6 +120,8 @@ builder.Services.AddSerilog(options =>
 builder.Services.AddScoped<HmDbContextInitializer>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IOrderService, OrderService>();
 
 var app = builder.Build();
 
@@ -137,6 +139,8 @@ app.UseSwaggerUI();
 
 app.UseCors("FreeCORSPolicy");
 app.UseHttpsRedirection();
+
+app.UseStaticFiles();
 
 app.UseMiddleware<ReplaceAuthorizationHeaderMiddleware>();
 app.UseAuthentication();

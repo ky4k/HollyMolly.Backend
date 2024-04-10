@@ -49,12 +49,12 @@ public class UserService(
             string allowed = string.Join(", ", allowedRoles);
             return new OperationResult<UserDto>(false, $"Not all roles in the list exist. Allowed roles include: {allowed}");
         }
-        
+
         var oldRoles = await userManager.GetRolesAsync(user);
         var removeResult = await userManager.RemoveFromRolesAsync(user, oldRoles);
         var addResult = await userManager.AddToRolesAsync(user, roles);
-        
-        if(removeResult.Succeeded && addResult.Succeeded)
+
+        if (removeResult.Succeeded && addResult.Succeeded)
         {
             IEnumerable<string> newRoles = await userManager.GetRolesAsync(user);
             UserDto userDto = user.ToUserDto(newRoles);

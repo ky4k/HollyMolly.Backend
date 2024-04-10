@@ -8,7 +8,8 @@ namespace HM.DAL.Data;
 public class HmDbContext(DbContextOptions<HmDbContext> options)
     : IdentityDbContext<User, Role, string>(options)
 {
-
+    public DbSet<Product> Products => Set<Product>();
+    public DbSet<Order> Orders => Set<Order>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
