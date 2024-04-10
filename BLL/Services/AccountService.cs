@@ -21,7 +21,7 @@ public class AccountService(
 {
     public async Task<OperationResult<RegistrationResponse>> RegisterUserAsync(RegistrationRequest request)
     {
-        if (await userManager.FindByEmailAsync(request.Email.ToLower()) != null || 
+        if (await userManager.FindByEmailAsync(request.Email.ToLower()) != null ||
             await userManager.FindByNameAsync(request.Email.ToLower()) != null)
         {
             return new OperationResult<RegistrationResponse>(false, "A user with such an email already exist.");
