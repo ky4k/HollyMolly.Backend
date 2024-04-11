@@ -16,10 +16,12 @@ public class ProductService(
     public async Task<IEnumerable<ProductDto>> GetProductsAsync(string? category, string? name,
         bool sortByPrice, bool sortByRating, bool sortAsc, CancellationToken cancellationToken)
     {
-        IQueryable<Product> products = context.Products;
+        IQueryable<Product> products = context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Feedbacks);
         if (!string.IsNullOrWhiteSpace(category))
         {
-            products = products.Where(p => p.Category == category);
+            products = products.Where(p => p.Category.Name == category);
         }
         if (!string.IsNullOrWhiteSpace(name))
         {
@@ -48,6 +50,7 @@ public class ProductService(
     public async Task<ProductDto?> GetProductByIdAsync(int productId, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
+            .Include(p => p.Category)
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
@@ -59,11 +62,18 @@ public class ProductService(
 
     public async Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateUpdateDto productDto, CancellationToken cancellationToken)
     {
+        Category? category = await context.Categories
+            .FirstOrDefaultAsync(c => c.Name == productDto.Category, cancellationToken);
+        if (category == null)
+        {
+            return new OperationResult<ProductDto>(false, $"Category {productDto.Category} does not exist. " +
+                $"Create the category first or specify another category.");
+        }
         Product product = new()
         {
             Name = productDto.Name,
             Description = productDto.Description,
-            Category = productDto.Category,
+            Category = category,
             Price = productDto.Price,
             StockQuantity = productDto.StockQuantity,
             Images = productDto.Images
@@ -85,15 +95,24 @@ public class ProductService(
         ProductCreateUpdateDto productDto, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
-            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-        
+            .Include(p => p.Category)
+            .Include(p => p.Feedbacks)
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);   
         if (product == null)
         {
             return new OperationResult<ProductDto>(false, "Product with such an id does not exist.");
         }
+        Category? category = await context.Categories
+            .FirstOrDefaultAsync(c => c.Name == productDto.Category, cancellationToken);
+        if (category == null)
+        {
+            return new OperationResult<ProductDto>(false, $"Category {productDto.Category} does not exist. " +
+                $"Create the category first or specify another category.");
+        }
+
         product.Name = productDto.Name;
         product.Description = productDto.Description;
-        product.Category = productDto.Category;
+        product.Category = category;
         product.Price = productDto.Price;
         product.StockQuantity = productDto.StockQuantity;
         product.Images = productDto.Images;
@@ -183,10 +202,12 @@ public class ProductService(
     public async Task<IEnumerable<ProductFeedback>> GetAllProductsFeedbackAsync(
         string? category, CancellationToken cancellationToken)
     {
-        IQueryable<Product> products = context.Products.Include(p => p.Feedbacks);
+        IQueryable<Product> products = context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Feedbacks);
         if(category != null)
         {
-            products = products.Where(p => p.Category == category);
+            products = products.Where(p => p.Category.Name == category);
         }
         return await products
             .SelectMany(p => p.Feedbacks)

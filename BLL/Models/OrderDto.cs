@@ -6,7 +6,7 @@ public class OrderDto
 {
     public int Id { get; set; }
     public CustomerDto Customer { get; set; } = null!;
-    public List<OrderRecordDto> OrderRecords { get; set; } = new();
+    public List<OrderRecordDto> OrderRecords { get; set; } = [];
     public decimal TotalPrice
     {
         get

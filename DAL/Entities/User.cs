@@ -9,5 +9,5 @@ public class User : IdentityUser
     public DateOnly? DateOfBirth { get; set; }
     public string? City { get; set; }
     public string? DeliveryAddress { get; set; }
-    public List<Order> Orders { get; set; } = new();
+    public List<Order> Orders { get; set; } = [];
 }

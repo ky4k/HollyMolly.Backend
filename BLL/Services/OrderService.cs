@@ -43,12 +43,12 @@ public class OrderService(
         return order.ToOrderDto();
     }
 
-    public async Task<OperationResult<OrderDto>> CreateOrderAsync(OrderCreateDto orderDto, string? userId,
+    public async Task<OperationResult<OrderDto>> CreateOrderAsync(OrderCreateDto orderDto, string userId,
         CancellationToken cancellationToken)
     {
         var order = new Order()
         {
-            UserId = userId ?? Guid.NewGuid().ToString(),
+            UserId = userId,
             Customer = orderDto.Customer.ToCustomerInfo(),
             OrderDate = DateTimeOffset.UtcNow,
             Status = "default",

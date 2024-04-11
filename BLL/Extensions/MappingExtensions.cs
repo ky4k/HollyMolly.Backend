@@ -44,7 +44,7 @@ public static class MappingExtensions
             Description = product.Description,
             Price = product.Price,
             Rating = product.Rating,
-            Category = product.Category,
+            Category = product.Category.Name,
             StockQuantity = product.StockQuantity,
             Images = product.Images,
             Feedbacks = product.Feedbacks

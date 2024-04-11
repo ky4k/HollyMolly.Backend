@@ -7,5 +7,5 @@ public class ProductCreateUpdateDto
     public decimal Price { get; set; }
     public string Category { get; set; } = null!;
     public int StockQuantity { get; set; }
-    public List<string> Images { get; set; } = new();
+    public List<string> Images { get; set; } = [];
 }

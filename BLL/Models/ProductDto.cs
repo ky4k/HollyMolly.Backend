@@ -11,6 +11,6 @@ public class ProductDto
     public decimal Rating { get; set; }
     public string Category { get; set; } = null!;
     public int StockQuantity { get; set; }
-    public List<string> Images { get; set; } = new();
-    public List<ProductFeedback> Feedbacks { get; set; } = new();
+    public List<string> Images { get; set; } = [];
+    public List<ProductFeedback> Feedbacks { get; set; } = [];
 }

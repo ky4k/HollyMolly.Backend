@@ -83,13 +83,21 @@ public class OrdersController(
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Indicates that the order has been successfully created and returns the created order.</response>
     /// <response code="400">Indicates that the request to create the order is invalid or incomplete.</response>
+    /// <response code="401">Indicates that the endpoint has been called by an unauthenticated user.</response>
+    [Authorize]
     [Route("")]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<OrderDto>> CreateOrder(OrderCreateDto order, CancellationToken cancellationToken)
     {
         string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if(userId == null)
+        {
+            return Unauthorized();
+        }
+
         OperationResult<OrderDto> result = await orderService.CreateOrderAsync(order, userId, cancellationToken);
         return result.Succeeded && result.Payload != null
             ? CreatedAtAction(nameof(GetOrderById), new { orderId = result.Payload.Id }, result.Payload)
