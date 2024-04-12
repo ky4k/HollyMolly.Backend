@@ -58,7 +58,6 @@ public class HmDbContextInitializer(
         List<string> roles = [
             DefaultRoles.Administrator,
             DefaultRoles.Manager,
-            DefaultRoles.Consultant,
             DefaultRoles.User
         ];
         List<string> existing = await roleManager.Roles

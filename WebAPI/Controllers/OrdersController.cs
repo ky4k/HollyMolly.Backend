@@ -47,7 +47,7 @@ public class OrdersController(
     public async Task<ActionResult<IEnumerable<OrderDto>>> GetUserOrders(CancellationToken cancellationToken)
     {
         string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if(userId == null)
+        if (userId == null)
         {
             return BadRequest("Token does not contain a userId");
         }
@@ -93,7 +93,7 @@ public class OrdersController(
     public async Task<ActionResult<OrderDto>> CreateOrder(OrderCreateDto order, CancellationToken cancellationToken)
     {
         string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if(userId == null)
+        if (userId == null)
         {
             return Unauthorized();
         }

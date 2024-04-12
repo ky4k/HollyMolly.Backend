@@ -1,6 +1,5 @@
 ﻿using FluentValidation;
 using HM.BLL.Models;
-using System.Text.RegularExpressions;
 
 namespace HM.BLL.Validators;
 
@@ -23,5 +22,5 @@ public class ProfileUpdateDtoValidator : AbstractValidator<ProfileUpdateDto>
             .MinimumLength(1);
     }
 
-    
+
 }

@@ -48,7 +48,7 @@ public class CategoryService(
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true);
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while updating the category {oldName} to {newName}.",
                 oldCategoryName, updatedCategory.CategoryName);
@@ -65,7 +65,7 @@ public class CategoryService(
         {
             return new OperationResult(false, "Category does not exist.");
         }
-        if(category.Products.Count != 0)
+        if (category.Products.Count != 0)
         {
             return new OperationResult(false, "The category contains products and cannot be deleted.");
         }
@@ -79,6 +79,6 @@ public class CategoryService(
         {
             logger.LogError(ex, "An error occurred while deleting category {@category}", category);
             return new OperationResult(false, "The category has not been deleted.");
-}
+        }
     }
 }

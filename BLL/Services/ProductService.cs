@@ -101,7 +101,7 @@ public class ProductService(
             .Include(p => p.Category)
             .Include(p => p.Images)
             .Include(p => p.Feedbacks)
-            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);   
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
         {
             return new OperationResult<ProductDto>(false, "Product with such an id does not exist.");
@@ -176,7 +176,7 @@ public class ProductService(
             product.Images.Add(productImage);
             added++;
         }
-        if(added == 0)
+        if (added == 0)
         {
             return new OperationResult<List<string>>(false, $"No link was added. {errorMessage}");
         }
@@ -199,12 +199,12 @@ public class ProductService(
         Product? product = await context.Products
             .Include(p => p.Images)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-        if(product == null)
+        if (product == null)
         {
             return new OperationResult(false, "The product does not exist");
         }
         ProductImage? image = product.Images.Find(i => i.Id == imageId);
-        if(image == null)
+        if (image == null)
         {
             return new OperationResult(false, $"The product {product.Name} does not contain the image with Id {imageId}");
         }
@@ -219,7 +219,7 @@ public class ProductService(
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true, "The image was removed");
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while removing image {@image}", image);
             return new OperationResult(false, "The image was not removed.");
@@ -287,7 +287,7 @@ public class ProductService(
         var product = await context.Products
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-        if(product == null)
+        if (product == null)
         {
             return new OperationResult<IEnumerable<ProductFeedback>>(false, "Product with such an id does not exist.");
         }
@@ -301,7 +301,7 @@ public class ProductService(
         IQueryable<Product> products = context.Products
             .Include(p => p.Category)
             .Include(p => p.Feedbacks);
-        if(category != null)
+        if (category != null)
         {
             products = products.Where(p => p.Category.Name == category);
         }

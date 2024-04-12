@@ -5,7 +5,7 @@ namespace HM.BLL.Validators;
 
 public class RegistrationRequestValidator : AbstractValidator<RegistrationRequest>
 {
-    
+
     public RegistrationRequestValidator()
     {
         RuleFor(rr => rr.Email)

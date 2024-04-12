@@ -9,4 +9,5 @@ public class Order
     public DateTimeOffset OrderDate { get; set; }
     public string Status { get; set; } = null!;
     public bool PaymentReceived { get; set; }
+    public string Notes { get; set; } = string.Empty;
 }

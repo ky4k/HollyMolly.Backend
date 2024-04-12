@@ -64,6 +64,10 @@ public class OrderService(
             {
                 continue;
             }
+            if (product.StockQuantity == 0)
+            {
+                continue;
+            }
             if (product.StockQuantity < orderRecordDto.Quantity)
             {
                 orderRecordDto.Quantity = product.StockQuantity;
@@ -75,12 +79,12 @@ public class OrderService(
                 Price = product.Price,
                 Quantity = orderRecordDto.Quantity
             };
-            
+
             product.StockQuantity -= orderRecordDto.Quantity;
             order.OrderRecords.Add(orderRecord);
         }
 
-        if(order.OrderRecords.Count == 0)
+        if (order.OrderRecords.Count == 0)
         {
             return new OperationResult<OrderDto>(false, "The order contains no products.");
         }
@@ -105,11 +109,12 @@ public class OrderService(
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
-        if(order == null)
+        if (order == null)
         {
             return new OperationResult<OrderDto>(false, "Order with such an id does not exist.");
         }
         order.Status = updateDto.Status;
+        order.Notes = updateDto.Notes;
         try
         {
             context.Orders.Update(order);
