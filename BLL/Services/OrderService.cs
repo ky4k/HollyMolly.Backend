@@ -80,6 +80,11 @@ public class OrderService(
             order.OrderRecords.Add(orderRecord);
         }
 
+        if(order.OrderRecords.Count == 0)
+        {
+            return new OperationResult<OrderDto>(false, "The order contains no products.");
+        }
+
         try
         {
             await context.Orders.AddAsync(order, cancellationToken);

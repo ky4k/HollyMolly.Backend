@@ -98,6 +98,26 @@ public class OrdersController(
             return Unauthorized();
         }
 
+        return await CreateOrder(userId, order, cancellationToken);
+    }
+
+    /// <summary>
+    /// Allows administrators and managers to create a new order for the user.
+    /// </summary>
+    /// <param name="userId">The Id of the user to create a new order for.</param>
+    /// <param name="order">The order to create.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Indicates that the order has been successfully created and returns the created order.</response>
+    /// <response code="400">Indicates that the request to create the order is invalid or incomplete.</response>
+    /// <response code="401">Indicates that the endpoint has been called by an unauthenticated user.</response>
+    [Authorize(Roles = $"{DefaultRoles.Administrator},{DefaultRoles.Manager}")]
+    [Route("{userId}")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<OrderDto>> CreateOrder(string userId, OrderCreateDto order, CancellationToken cancellationToken)
+    {
         OperationResult<OrderDto> result = await orderService.CreateOrderAsync(order, userId, cancellationToken);
         return result.Succeeded && result.Payload != null
             ? CreatedAtAction(nameof(GetOrderById), new { orderId = result.Payload.Id }, result.Payload)

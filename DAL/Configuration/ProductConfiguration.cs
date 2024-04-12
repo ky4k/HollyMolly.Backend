@@ -13,5 +13,8 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
             .HasPrecision(10, 2);
         builder.Property(p => p.Rating)
             .HasPrecision(8, 4);
+        builder.HasMany(p => p.Images)
+            .WithOne(i => i.Product)
+            .HasForeignKey(i => i.ProductId);
     }
 }

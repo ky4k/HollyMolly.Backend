@@ -37,6 +37,11 @@ public static class MappingExtensions
 
     public static ProductDto ToProductDto(this Product product)
     {
+        var images = new List<ProductImageDto>();
+        foreach(var image in product.Images)
+        {
+            images.Add(image.ToProductImageDto());
+        }
         return new ProductDto()
         {
             Id = product.Id,
@@ -46,8 +51,17 @@ public static class MappingExtensions
             Rating = product.Rating,
             Category = product.Category.Name,
             StockQuantity = product.StockQuantity,
-            Images = product.Images,
+            Images = images,
             Feedbacks = product.Feedbacks
+        };
+    }
+
+    private static ProductImageDto ToProductImageDto(this ProductImage productImage)
+    {
+        return new ProductImageDto()
+        {
+            Id = productImage.Id,
+            Link = productImage.Link
         };
     }
 

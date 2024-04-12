@@ -11,7 +11,7 @@ public class Product
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
     public int StockQuantity { get; set; }
-    public List<string> Images { get; set; } = [];
+    public List<ProductImage> Images { get; set; } = [];
     public List<ProductFeedback> Feedbacks { get; set; } = [];
     public List<OrderRecord> OrderRecords { get; set; } = [];
 }

@@ -3,8 +3,10 @@ using HM.BLL.Interfaces;
 using HM.BLL.Models;
 using HM.DAL.Data;
 using HM.DAL.Entities;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace HM.BLL.Services;
 
@@ -18,6 +20,7 @@ public class ProductService(
     {
         IQueryable<Product> products = context.Products
             .Include(p => p.Category)
+            .Include(p => p.Images)
             .Include(p => p.Feedbacks);
         if (!string.IsNullOrWhiteSpace(category))
         {
@@ -51,6 +54,7 @@ public class ProductService(
     {
         Product? product = await context.Products
             .Include(p => p.Category)
+            .Include(p => p.Images)
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
@@ -76,7 +80,6 @@ public class ProductService(
             Category = category,
             Price = productDto.Price,
             StockQuantity = productDto.StockQuantity,
-            Images = productDto.Images
         };
         try
         {
@@ -96,6 +99,7 @@ public class ProductService(
     {
         Product? product = await context.Products
             .Include(p => p.Category)
+            .Include(p => p.Images)
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);   
         if (product == null)
@@ -115,7 +119,6 @@ public class ProductService(
         product.Category = category;
         product.Price = productDto.Price;
         product.StockQuantity = productDto.StockQuantity;
-        product.Images = productDto.Images;
 
         try
         {
@@ -127,6 +130,99 @@ public class ProductService(
         {
             logger.LogError(ex, "An error occurred while updating product {@product}", product);
             return new OperationResult<ProductDto>(false, "The product has not been updated.");
+        }
+    }
+
+    public async Task<OperationResult> UploadProductImagesAsync(int productId, IFormFile[] images,
+        string basePath, CancellationToken cancellationToken)
+    {
+        Product? product = await context.Products
+            .Include(p => p.Images)
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        if (product == null)
+        {
+            return new OperationResult(false, "The product does not exist");
+        }
+
+        List<string> imageLinks = [];
+        string imagePath = $"wwwroot/images/{productId}";
+        Directory.CreateDirectory(imagePath);
+        int added = 0;
+        int notAdded = 0;
+        StringBuilder errorMessage = new();
+        foreach (var image in images)
+        {
+            if (image.ContentType != "image/jpeg" || (!image.FileName.EndsWith(".jpg") && !image.FileName.EndsWith(".jpeg")))
+            {
+                notAdded++;
+                errorMessage.Append($"Invalid file format of {image.FileName}");
+                continue;
+            }
+            int index = image.FileName.ToString().LastIndexOf('.');
+            string fileNameWithoutExtension = image.FileName.ToString()[..index];
+            var fileName = $"{fileNameWithoutExtension}-{Guid.NewGuid().ToString()[..4]}.jpg";
+            var filePath = $"{imagePath}/{fileName}";
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await image.CopyToAsync(stream, cancellationToken);
+            }
+            var imageUrl = $"{basePath}/{filePath.Replace("wwwroot/", "")}";
+            imageLinks.Add(imageUrl);
+            ProductImage productImage = new()
+            {
+                FilePath = filePath,
+                Link = imageUrl
+            };
+            product.Images.Add(productImage);
+            added++;
+        }
+        if(added == 0)
+        {
+            return new OperationResult<List<string>>(false, $"No link was added. {errorMessage}");
+        }
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken);
+            string message = $"{added} images were added to the product {product.Name}.";
+            message += notAdded > 0 ? $" {notAdded} images were not added. {errorMessage}" : "";
+            return new OperationResult(true, message);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while uploading images for the product {product}", product);
+            return new OperationResult(false, "Images was not added to the product.");
+        }
+    }
+
+    public async Task<OperationResult> DeleteProductImageAsync(int productId, int imageId, CancellationToken cancellationToken)
+    {
+        Product? product = await context.Products
+            .Include(p => p.Images)
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        if(product == null)
+        {
+            return new OperationResult(false, "The product does not exist");
+        }
+        ProductImage? image = product.Images.Find(i => i.Id == imageId);
+        if(image == null)
+        {
+            return new OperationResult(false, $"The product {product.Name} does not contain the image with Id {imageId}");
+        }
+
+        try
+        {
+            if (File.Exists(image.FilePath))
+            {
+                File.Delete(image.FilePath);
+            }
+            product.Images.Remove(image);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult(true, "The image was removed");
+        }
+        catch(Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while removing image {@image}", image);
+            return new OperationResult(false, "The image was not removed.");
         }
     }
 
