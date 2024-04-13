@@ -21,7 +21,13 @@ public class CategoryService(
     {
         try
         {
-            await context.Categories.AddAsync(new Category() { Name = category.CategoryName }, cancellationToken);
+            Category toCreate = new()
+            {
+                Name = category.CategoryName,
+                ImageFilePath = "",
+                ImageLink = "",
+            };
+            await context.Categories.AddAsync(toCreate, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true);
         }
