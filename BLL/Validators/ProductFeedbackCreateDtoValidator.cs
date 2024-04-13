@@ -8,5 +8,6 @@ public class ProductFeedbackCreateDtoValidator : AbstractValidator<ProductFeedba
     public ProductFeedbackCreateDtoValidator()
     {
         // TO DO: Validate all the properties.
+
     }
 }

@@ -8,5 +8,6 @@ public class ProductCreateUpdateDtoValidator : AbstractValidator<ProductCreateUp
     public ProductCreateUpdateDtoValidator()
     {
         // TO DO: Write validators for all the properties except Images that will be validated in the service.
+
     }
 }
