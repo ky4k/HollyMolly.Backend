@@ -29,6 +29,7 @@ builder.Services.AddDbContext<HmDbContext>((sp, options) =>
 
 builder.Services.AddIdentity<User, Role>(options =>
 {
+    options.User.RequireUniqueEmail = true;
     options.Password.RequiredLength = 8;
     options.Password.RequireNonAlphanumeric = false;
     options.Password.RequireUppercase = false;
@@ -117,11 +118,15 @@ builder.Services.AddSerilog(options =>
         .WriteTo.File("./logs/log.txt", LogEventLevel.Information, rollingInterval: RollingInterval.Day)
         .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Debug));
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddScoped<HmDbContextInitializer>();
+builder.Services.AddScoped<IGoogleOAuthService, GoogleOAuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 var app = builder.Build();
 

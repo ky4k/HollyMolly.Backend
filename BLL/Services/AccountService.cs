@@ -21,35 +21,78 @@ public class AccountService(
 {
     public async Task<OperationResult<RegistrationResponse>> RegisterUserAsync(RegistrationRequest request)
     {
-        if (await userManager.FindByEmailAsync(request.Email.ToLower()) != null ||
-            await userManager.FindByNameAsync(request.Email.ToLower()) != null)
+        var existedUser = await userManager.FindByEmailAsync(request.Email.ToLower());
+        if (existedUser != null && !existedUser.IsOidcUser)
         {
             return new OperationResult<RegistrationResponse>(false, "A user with such an email already exist.");
         }
-        var user = new User()
-        {
-            UserName = request.Email.ToLower(),
-            Email = request.Email.ToLower()
-        };
         try
         {
-            await userManager.CreateAsync(user);
-            await userManager.AddPasswordAsync(user, request.Password);
-            await userManager.AddToRoleAsync(user, DefaultRoles.User);
+            var user = existedUser ?? new User()
+            {
+                UserName = request.Email.ToLower(),
+                Email = request.Email.ToLower()
+            };
+
+            if (existedUser != null && existedUser.IsOidcUser)
+            {
+                await userManager.RemovePasswordAsync(existedUser);
+                await userManager.AddPasswordAsync(existedUser, request.Password);
+                existedUser.IsOidcUser = false;
+                await userManager.UpdateAsync(existedUser);
+            }
+            else
+            {
+                await userManager.CreateAsync(user);
+                await userManager.AddPasswordAsync(user, request.Password);
+                await userManager.AddToRoleAsync(user, DefaultRoles.User);
+            }
+            var response = new RegistrationResponse()
+            {
+                Id = user.Id,
+                Email = user.Email!,
+                Roles = await userManager.GetRolesAsync(user),
+            };
+
+            return new OperationResult<RegistrationResponse>(true, response);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "User has not been created.");
             return new OperationResult<RegistrationResponse>(false, "An error has happened while creating user");
         }
-        var response = new RegistrationResponse()
-        {
-            Id = user.Id,
-            Email = user.Email,
-            Roles = await userManager.GetRolesAsync(user),
-        };
+    }
 
-        return new OperationResult<RegistrationResponse>(true, response);
+    public async Task<OperationResult> RegisterOidcUserAsync(string email)
+    {
+        if (email == null)
+        {
+            return new OperationResult(false);
+        }
+
+        if (await userManager.FindByEmailAsync(email.ToLower()) != null)
+        {
+            return new OperationResult(true);
+        }
+        var user = new User()
+        {
+            IsOidcUser = true,
+            UserName = email.ToLower(),
+            Email = email.ToLower(),
+            EmailConfirmed = true
+        };
+        try
+        {
+            await userManager.CreateAsync(user);
+            await userManager.AddPasswordAsync(user, Guid.NewGuid().ToString());
+            await userManager.AddToRoleAsync(user, DefaultRoles.User);
+            return new OperationResult(true);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "User has not been created.");
+            return new OperationResult(false, "An error has happened while creating user");
+        }
     }
 
     public async Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest)
@@ -57,8 +100,32 @@ public class AccountService(
         User? user = await userManager.FindByEmailAsync(loginRequest.Email.ToLower());
         if (user == null)
         {
-            return new OperationResult<LoginResponse>(false, "No user with such a name or email exists.");
+            return new OperationResult<LoginResponse>(false, "No user with such a email exists.");
         }
+        if(!await userManager.CheckPasswordAsync(user, loginRequest.Password))
+        {
+            return new OperationResult<LoginResponse>(false, "Invalid password.");
+        }
+        return await GetLoginResultAsync(user);
+    }
+
+    public async Task<OperationResult<LoginResponse>> LoginOidcUserAsync(string email)
+    {
+        if (email == null)
+        {
+            return new OperationResult<LoginResponse>(false, "Login has failed.");
+        }
+
+        User? user = await userManager.FindByEmailAsync(email.ToLower());
+        if (user == null)
+        {
+            return new OperationResult<LoginResponse>(false, "No user with such a email exists.");
+        }
+        return await GetLoginResultAsync(user);
+    }
+
+    private async Task<OperationResult<LoginResponse>> GetLoginResultAsync(User user)
+    {
         IEnumerable<string> roles = await userManager.GetRolesAsync(user);
 
         string? token;

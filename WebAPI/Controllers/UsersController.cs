@@ -38,7 +38,7 @@ public class UsersController(
     /// <response code="401">Indicates that the endpoint has been called by an unauthenticated user.</response>
     /// <response code="403">Indicates that the user is not authorized to retrieve information about the user.</response>
     /// <response code="404">Indicates that no user with the specified ID exists.</response>
-    [Authorize(Roles = $"{DefaultRoles.Administrator},{DefaultRoles.Consultant},{DefaultRoles.Manager}")]
+    [Authorize(Roles = $"{DefaultRoles.Administrator},{DefaultRoles.Manager}")]
     [Route("{userId}")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]

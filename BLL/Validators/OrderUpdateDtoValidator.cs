@@ -7,6 +7,6 @@ public class OrderUpdateDtoValidator : AbstractValidator<OrderUpdateDto>
 {
     public OrderUpdateDtoValidator()
     {
-        // TO DO: validate the status field
+        // TO DO: validate all the fields
     }
 }

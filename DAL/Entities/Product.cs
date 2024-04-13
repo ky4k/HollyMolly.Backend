@@ -8,9 +8,10 @@ public class Product
     public decimal Price { get; set; }
     public decimal Rating { get; set; }
     public int TimesRated { get; set; }
-    public string Category { get; set; } = null!;
+    public int CategoryId { get; set; }
+    public Category Category { get; set; } = null!;
     public int StockQuantity { get; set; }
-    public List<string> Images { get; set; } = new();
-    public List<ProductFeedback> Feedbacks { get; set; } = new();
-    public List<OrderRecord> OrderRecords { get; set; } = new();
+    public List<ProductImage> Images { get; set; } = [];
+    public List<ProductFeedback> Feedbacks { get; set; } = [];
+    public List<OrderRecord> OrderRecords { get; set; } = [];
 }

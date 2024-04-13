@@ -1,12 +1,10 @@
-﻿using HM.DAL.Entities;
-
-namespace HM.BLL.Models;
+﻿namespace HM.BLL.Models;
 
 public class OrderDto
 {
     public int Id { get; set; }
     public CustomerDto Customer { get; set; } = null!;
-    public List<OrderRecordDto> OrderRecords { get; set; } = new();
+    public List<OrderRecordDto> OrderRecords { get; set; } = [];
     public decimal TotalPrice
     {
         get
@@ -21,4 +19,5 @@ public class OrderDto
     }
     public DateTimeOffset OrderDate { get; set; }
     public string Status { get; set; } = null!;
+    public string Notes { get; set; } = null!;
 }

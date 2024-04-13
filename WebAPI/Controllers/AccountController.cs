@@ -9,7 +9,8 @@ namespace HM.WebAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class AccountController(
-    IAccountService accountService
+    IAccountService accountService,
+    IGoogleOAuthService googleOAuthService
     ) : ControllerBase
 {
     /// <summary>
@@ -43,6 +44,51 @@ public class AccountController(
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
         OperationResult<LoginResponse> response = await accountService.LoginAsync(request);
+        return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
+    }
+
+    /// <summary>
+    /// Allows to get link to login on the site via Google account.
+    /// </summary>
+    /// <response code="200">Returns link to the Google login form.</response>
+    [Route("login/google")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public ActionResult RedirectOnGoogleOAuthServer()
+    {
+        string redirectUrl = $"https://{Request.Host}{Request.PathBase}/api/account/login/google/getToken";
+        var url = googleOAuthService.GenerateOAuthRequestUrl(redirectUrl);
+        return Ok(new { RedirectUrl = url });
+    }
+
+    /// <summary>
+    /// Allows to exchange the code received from Google Api for the user access token.
+    /// </summary>
+    /// <param name="code">The user code that can be exchanged on the user token.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Indicates that the login was successful and returns 
+    ///     an access token and user information.</response>
+    /// <response code="400">Indicates that the login has failed and returns the error message.</response>
+    [Route("login/google/getToken")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> GetGoogleToken(string code, CancellationToken cancellationToken)
+    {
+        string redirectUrl = $"https://{Request.Host}{Request.PathBase}/api/account/login/google/getToken";
+        string? token = await googleOAuthService.ExchangeCodeOnTokenAsync(code, redirectUrl, cancellationToken);
+        if(token == null)
+        {
+            return BadRequest("Google does not return a valid user token.");
+        }
+        string? email = await googleOAuthService.GetUserEmailAsync(token, cancellationToken);
+        if (email == null)
+        {
+            return BadRequest("Google does not return a valid user email address.");
+        }
+
+        await accountService.RegisterOidcUserAsync(email);
+        OperationResult<LoginResponse> response = await accountService.LoginOidcUserAsync(email);
         return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
     }
 

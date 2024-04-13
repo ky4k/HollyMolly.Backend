@@ -3,5 +3,5 @@
 public class OrderCreateDto
 {
     public CustomerDto Customer { get; set; } = null!;
-    public List<OrderRecordCreateDto> OrderRecords { get; set; } = new();
+    public List<OrderRecordCreateDto> OrderRecords { get; set; } = [];
 }

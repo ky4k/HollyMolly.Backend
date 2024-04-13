@@ -8,4 +8,6 @@ public interface IAccountService
     Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest);
     Task<OperationResult<UserDto>> UpdateUserProfileAsync(string userId, ProfileUpdateDto profile);
     Task<OperationResult> ChangePasswordAsync(string userId, ChangePasswordDto passwords);
+    Task<OperationResult> RegisterOidcUserAsync(string email);
+    Task<OperationResult<LoginResponse>> LoginOidcUserAsync(string email);
 }

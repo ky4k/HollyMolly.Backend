@@ -43,12 +43,12 @@ public class OrderService(
         return order.ToOrderDto();
     }
 
-    public async Task<OperationResult<OrderDto>> CreateOrderAsync(OrderCreateDto orderDto, string? userId,
+    public async Task<OperationResult<OrderDto>> CreateOrderAsync(OrderCreateDto orderDto, string userId,
         CancellationToken cancellationToken)
     {
         var order = new Order()
         {
-            UserId = userId ?? Guid.NewGuid().ToString(),
+            UserId = userId,
             Customer = orderDto.Customer.ToCustomerInfo(),
             OrderDate = DateTimeOffset.UtcNow,
             Status = "default",
@@ -64,6 +64,10 @@ public class OrderService(
             {
                 continue;
             }
+            if (product.StockQuantity == 0)
+            {
+                continue;
+            }
             if (product.StockQuantity < orderRecordDto.Quantity)
             {
                 orderRecordDto.Quantity = product.StockQuantity;
@@ -75,9 +79,14 @@ public class OrderService(
                 Price = product.Price,
                 Quantity = orderRecordDto.Quantity
             };
-            
+
             product.StockQuantity -= orderRecordDto.Quantity;
             order.OrderRecords.Add(orderRecord);
+        }
+
+        if (order.OrderRecords.Count == 0)
+        {
+            return new OperationResult<OrderDto>(false, "The order contains no products.");
         }
 
         try
@@ -100,11 +109,12 @@ public class OrderService(
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
-        if(order == null)
+        if (order == null)
         {
             return new OperationResult<OrderDto>(false, "Order with such an id does not exist.");
         }
         order.Status = updateDto.Status;
+        order.Notes = updateDto.Notes;
         try
         {
             context.Orders.Update(order);

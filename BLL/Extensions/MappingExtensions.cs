@@ -37,6 +37,11 @@ public static class MappingExtensions
 
     public static ProductDto ToProductDto(this Product product)
     {
+        var images = new List<ProductImageDto>();
+        foreach (var image in product.Images)
+        {
+            images.Add(image.ToProductImageDto());
+        }
         return new ProductDto()
         {
             Id = product.Id,
@@ -44,17 +49,26 @@ public static class MappingExtensions
             Description = product.Description,
             Price = product.Price,
             Rating = product.Rating,
-            Category = product.Category,
+            Category = product.Category.Name,
             StockQuantity = product.StockQuantity,
-            Images = product.Images,
+            Images = images,
             Feedbacks = product.Feedbacks
+        };
+    }
+
+    private static ProductImageDto ToProductImageDto(this ProductImage productImage)
+    {
+        return new ProductImageDto()
+        {
+            Id = productImage.Id,
+            Link = productImage.Link
         };
     }
 
     public static OrderDto ToOrderDto(this Order order)
     {
         var orderRecordsDto = new List<OrderRecordDto>();
-        foreach(var orderRecord in order.OrderRecords)
+        foreach (var orderRecord in order.OrderRecords)
         {
             orderRecordsDto.Add(orderRecord.ToOrderRecordDto());
         }
@@ -64,6 +78,7 @@ public static class MappingExtensions
             Customer = order.Customer.ToCustomerDto(),
             OrderDate = order.OrderDate,
             Status = order.Status,
+            Notes = order.Notes,
             OrderRecords = orderRecordsDto
         };
 
@@ -73,8 +88,6 @@ public static class MappingExtensions
     {
         return new CustomerDto()
         {
-            //Id = customer.Id,
-            //OrderId = customer.OrderId,
             Email = customer.Email,
             FirstName = customer.FirstName,
             LastName = customer.LastName,
@@ -88,8 +101,6 @@ public static class MappingExtensions
     {
         return new CustomerInfo()
         {
-            //Id = customer.Id,
-            //OrderId = customer.OrderId,
             Email = customer.Email,
             FirstName = customer.FirstName,
             LastName = customer.LastName,

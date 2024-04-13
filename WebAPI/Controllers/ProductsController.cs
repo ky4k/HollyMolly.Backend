@@ -94,15 +94,56 @@ public class ProductsController(
             : BadRequest(result.Message);
     }
 
-    /* TO DO: Implement after allowed file formats will be defined.
+    /// <summary>
+    /// Allows administrators and managers to upload the product images.
+    /// </summary>
+    /// <param name="productId">Id of the product to add image to.</param>
+    /// <param name="images">List of images to upload.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the message with the result of the operation.</response>
+    /// <response code="400">Indicates that the request to upload the product images was invalid.</response>
+    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
     [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
-    [Route("/images")]
+    [Route("{productId}/images")]
     [HttpPost]
-    public async Task<ActionResult<string>> UploadProductImage(int productId, IFormFile image, CancellationToken cancellationToken)
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<string>> UploadProductImage(int productId, IFormFile[] images,
+        CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        string basePath = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+        OperationResult result = await productService.UploadProductImagesAsync(productId, images,
+            basePath, cancellationToken);
+        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
     }
-    */
+
+    /// <summary>
+    /// Allows administrators and managers to remove the product images.
+    /// </summary>
+    /// <param name="productId">Id of the product to remove image from.</param>
+    /// <param name="imageId">Id of the image to remove.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the message with the result of the operation.</response>
+    /// <response code="400">Indicates that the request to delete the product image was invalid.</response>
+    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
+    [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
+    [Route("{productId}/images/{imageId}")]
+    [HttpDelete]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<string>> RemoveProductImage(int productId, int imageId,
+        CancellationToken cancellationToken)
+    {
+        OperationResult result = await productService.DeleteProductImageAsync(productId, imageId,
+            cancellationToken);
+        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
+    }
 
     /// <summary>
     /// Allows administrators and managers to update an existing product.
@@ -114,7 +155,6 @@ public class ProductsController(
     /// <response code="400">Indicates that the request to update the product was invalid.</response>
     /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
     /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
-
     [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
     [Route("{productId}")]
     [HttpPut]
