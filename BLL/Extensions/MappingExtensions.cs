@@ -120,4 +120,32 @@ public static class MappingExtensions
             Price = orderRecord.Price
         };
     }
+
+    public static CategoryGroupDto ToCategoryGroupDto(this CategoryGroup categoryGroup)
+    {
+        List<CategoryDto> categoriesDto = [];
+        foreach (var category in categoryGroup.Categories)
+        {
+            categoriesDto.Add(category.ToCategoryDto());
+        }
+        var categoryGroupDto = new CategoryGroupDto()
+        {
+            Id = categoryGroup.Id,
+            Name = categoryGroup.Name,
+            Link = categoryGroup.ImageLink,
+            Categories = categoriesDto
+        };
+        return categoryGroupDto;
+    }
+
+    public static CategoryDto ToCategoryDto(this Category category)
+    {
+        return new CategoryDto()
+        {
+            Id = category.Id,
+            CategoryGroupId = category.CategoryGroupId,
+            Name = category.Name,
+            Link = category.ImageLink
+        };
+    }
 }

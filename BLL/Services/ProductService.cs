@@ -6,12 +6,12 @@ using HM.DAL.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Text;
 
 namespace HM.BLL.Services;
 
 public class ProductService(
     HmDbContext context,
+    IImageService imageService,
     ILogger<ProductService> logger
     ) : IProductService
 {
@@ -134,7 +134,7 @@ public class ProductService(
     }
 
     public async Task<OperationResult> UploadProductImagesAsync(int productId, IFormFile[] images,
-        string basePath, CancellationToken cancellationToken)
+        string baseUrlPath, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
             .Include(p => p.Images)
@@ -144,52 +144,35 @@ public class ProductService(
             return new OperationResult(false, "The product does not exist");
         }
 
-        List<string> imageLinks = [];
-        string imagePath = $"wwwroot/images/{productId}";
-        Directory.CreateDirectory(imagePath);
-        int added = 0;
-        int notAdded = 0;
-        StringBuilder errorMessage = new();
-        foreach (var image in images)
+        string savePath = $"images/products/{productId}";
+        OperationResult<List<ImageDto>> result = await imageService
+            .UploadImagesAsync(images, baseUrlPath, savePath, cancellationToken);
+
+        if(!result.Succeeded || result.Payload == null || result.Payload.Count == 0)
         {
-            if (image.ContentType != "image/jpeg" || (!image.FileName.EndsWith(".jpg") && !image.FileName.EndsWith(".jpeg")))
-            {
-                notAdded++;
-                errorMessage.Append($"Invalid file format of {image.FileName}");
-                continue;
-            }
-            int index = image.FileName.ToString().LastIndexOf('.');
-            string fileNameWithoutExtension = image.FileName.ToString()[..index];
-            var fileName = $"{fileNameWithoutExtension}-{Guid.NewGuid().ToString()[..4]}.jpg";
-            var filePath = $"{imagePath}/{fileName}";
-            using (var stream = new FileStream(filePath, FileMode.Create))
-            {
-                await image.CopyToAsync(stream, cancellationToken);
-            }
-            var imageUrl = $"{basePath}/{filePath.Replace("wwwroot/", "")}";
-            imageLinks.Add(imageUrl);
+            return new OperationResult<List<string>>(false, $"No images were added. {result.Message}");
+        }
+
+        foreach(ImageDto imageDto in result.Payload)
+        {
             ProductImage productImage = new()
             {
-                FilePath = filePath,
-                Link = imageUrl
+                FilePath = imageDto.FilePath,
+                Link = imageDto.Link
             };
             product.Images.Add(productImage);
-            added++;
-        }
-        if (added == 0)
-        {
-            return new OperationResult<List<string>>(false, $"No link was added. {errorMessage}");
         }
         try
         {
             await context.SaveChangesAsync(cancellationToken);
-            string message = $"{added} images were added to the product {product.Name}.";
-            message += notAdded > 0 ? $" {notAdded} images were not added. {errorMessage}" : "";
+            string message = $"{result.Payload.Count} images were added to the product {product.Name}.";
+            message += images.Length > result.Payload.Count
+                ? $" {images.Length - result.Payload.Count} images were not added. {result.Message}" : "";
             return new OperationResult(true, message);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while uploading images for the product {product}", product);
+            logger.LogError(ex, "An error occurred while uploading images for the product {@product}", product);
             return new OperationResult(false, "Images was not added to the product.");
         }
     }
@@ -211,10 +194,7 @@ public class ProductService(
 
         try
         {
-            if (File.Exists(image.FilePath))
-            {
-                File.Delete(image.FilePath);
-            }
+            imageService.DeleteImage(image.FilePath);
             product.Images.Remove(image);
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true, "The image was removed");
@@ -236,6 +216,11 @@ public class ProductService(
         }
         try
         {
+            foreach(var image in product.Images)
+            {
+                imageService.DeleteImage(image.FilePath);
+            }
+
             context.Products.Remove(product);
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true);

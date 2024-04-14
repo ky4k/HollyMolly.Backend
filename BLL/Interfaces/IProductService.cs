@@ -14,7 +14,7 @@ public interface IProductService
     Task<OperationResult<ProductDto>> UpdateProductAsync(int productId, ProductCreateUpdateDto productDto,
         CancellationToken cancellationToken);
     Task<OperationResult> UploadProductImagesAsync(int productId, IFormFile[] images,
-        string basePath, CancellationToken cancellationToken);
+        string baseUrlPath, CancellationToken cancellationToken);
     Task<OperationResult> DeleteProductImageAsync(int productId, int imageId, CancellationToken cancellationToken);
     Task<OperationResult> DeleteProductAsync(int productId, CancellationToken cancellationToken);
 

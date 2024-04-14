@@ -114,9 +114,9 @@ public class ProductsController(
     public async Task<ActionResult<string>> UploadProductImage(int productId, IFormFile[] images,
         CancellationToken cancellationToken)
     {
-        string basePath = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+        string baseUrlPath = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
         OperationResult result = await productService.UploadProductImagesAsync(productId, images,
-            basePath, cancellationToken);
+            baseUrlPath, cancellationToken);
         return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
     }
 

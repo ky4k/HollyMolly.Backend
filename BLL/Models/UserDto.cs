@@ -1,6 +1,8 @@
-﻿namespace HM.BLL.Models;
+﻿using HM.BLL.Interfaces;
 
-public class UserDto
+namespace HM.BLL.Models;
+
+public class UserDto : IUserMailInfo
 {
     public string Id { get; set; } = null!;
     public string? Email { get; set; }

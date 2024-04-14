@@ -1,12 +1,10 @@
 ﻿namespace HM.DAL.Entities;
 
-public class Category
+public class CategoryGroup
 {
     public int Id { get; set; }
-    public int CategoryGroupId { get; set; }
-    public CategoryGroup CategoryGroup { get; set; } = null!;
     public string Name { get; set; } = null!;
     public string ImageLink { get; set; } = string.Empty;
     public string ImageFilePath { get; set; } = string.Empty;
-    public List<Product> Products { get; set; } = [];
+    public List<Category> Categories { get; set; } = [];
 }
