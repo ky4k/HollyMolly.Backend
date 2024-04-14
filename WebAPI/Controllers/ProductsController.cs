@@ -17,6 +17,7 @@ public class ProductsController(
     /// <summary>
     /// Allows to retrieve a list of products with optional filtering and sorting options.
     /// </summary>
+    /// <param name="categoryId">Optional. Filters products by category.</param>
     /// <param name="name">Optional. Filters products by name.</param>
     /// <param name="sortByPrice">Optional. If true, sorts products by price.</param>
     /// <param name="sortByRating">Optional. If true, sorts products by rating.
@@ -26,30 +27,10 @@ public class ProductsController(
     [Route("")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts(string? name = null,
-        bool sortByPrice = false, bool sortByRating = false, bool sortAsc = true)
-    {
-        return Ok(await productService.GetProductsAsync(null, name, sortByPrice, sortByRating,
-            sortAsc, Request.HttpContext.RequestAborted));
-    }
-
-    /// <summary>
-    /// Allows to retrieve a list of products with optional filtering and sorting options.
-    /// </summary>
-    /// <param name="category">Optional. Filters products by category.</param>
-    /// <param name="name">Optional. Filters products by name.</param>
-    /// <param name="sortByPrice">Optional. If true, sorts products by price.</param>
-    /// <param name="sortByRating">Optional. If true, sorts products by rating.
-    ///     Is not applied if <paramref name="sortByPrice"/> is set to true</param>
-    /// <param name="sortAsc">Optional. If true, sorts products in ascending order; otherwise, sorts in descending order.</param>
-    /// <response code = "200" > Returns a list of products that match the specified criteria.</response>
-    [Route("categories/{category}")]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategory(string category,
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategory(int? categoryId = null,
         string? name = null, bool sortByPrice = false, bool sortByRating = false, bool sortAsc = true)
     {
-        return Ok(await productService.GetProductsAsync(category, name, sortByPrice, sortByRating,
+        return Ok(await productService.GetProductsAsync(categoryId, name, sortByPrice, sortByRating,
             sortAsc, Request.HttpContext.RequestAborted));
     }
 

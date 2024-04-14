@@ -15,16 +15,16 @@ public class ProductService(
     ILogger<ProductService> logger
     ) : IProductService
 {
-    public async Task<IEnumerable<ProductDto>> GetProductsAsync(string? category, string? name,
+    public async Task<IEnumerable<ProductDto>> GetProductsAsync(int? categoryId, string? name,
         bool sortByPrice, bool sortByRating, bool sortAsc, CancellationToken cancellationToken)
     {
         IQueryable<Product> products = context.Products
             .Include(p => p.Category)
             .Include(p => p.Images)
             .Include(p => p.Feedbacks);
-        if (!string.IsNullOrWhiteSpace(category))
+        if (categoryId != null)
         {
-            products = products.Where(p => p.Category.Name == category);
+            products = products.Where(p => p.Category.Id == categoryId);
         }
         if (!string.IsNullOrWhiteSpace(name))
         {

@@ -6,7 +6,7 @@ namespace HM.BLL.Interfaces;
 
 public interface IProductService
 {
-    Task<IEnumerable<ProductDto>> GetProductsAsync(string? category, string? name, bool sortByPrice,
+    Task<IEnumerable<ProductDto>> GetProductsAsync(int? categoryId, string? name, bool sortByPrice,
         bool sortByRating, bool sortAsc, CancellationToken cancellationToken);
     Task<ProductDto?> GetProductByIdAsync(int productId, CancellationToken cancellationToken);
     Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateUpdateDto productDto,
