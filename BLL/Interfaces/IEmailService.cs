@@ -4,6 +4,9 @@ namespace HM.BLL.Interfaces;
 
 public interface IEmailService
 {
-    Task<OperationResult> SendEmailAsync(IUserMailInfo recipient, string subject,
-        string htmlText, CancellationToken cancellationToken);
+    Task<OperationResult> SendRegistrationResultEmailAsync();
+    Task<OperationResult> SendForgetPasswordEmailAsync();
+    Task<OperationResult> SendOrderCreatedEmailAsync();
+    Task<OperationResult> SendOrderStatusUpdatedEmailAsync();
+    Task<OperationResult> SendNewsEmailAsync();
 }
