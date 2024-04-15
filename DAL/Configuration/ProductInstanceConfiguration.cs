@@ -1,0 +1,24 @@
+﻿using HM.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace HM.DAL.Configuration;
+
+public class ProductInstanceConfiguration : IEntityTypeConfiguration<ProductInstance>
+{
+    public void Configure(EntityTypeBuilder<ProductInstance> builder)
+    {
+        builder.HasKey(p => p.Id);
+        builder.Property(p => p.Price)
+            .HasPrecision(10, 2);
+        builder.HasMany(p => p.Images)
+            .WithOne(i => i.ProductInstance)
+            .HasForeignKey(i => i.ProductInstanceId);
+        builder.HasMany(p => p.OrderRecords)
+            .WithOne(o => o.ProductInstance)
+            .HasForeignKey(o => o.ProductInstanceId);
+        builder.HasOne(p => p.Discount)
+            .WithMany(d => d.ProductInstances)
+            .HasForeignKey(p => p.DiscountId);
+    }
+}

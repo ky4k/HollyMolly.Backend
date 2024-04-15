@@ -2,6 +2,6 @@
 
 public class OrderRecordCreateDto
 {
-    public int ProductId { get; set; }
+    public int ProductInstanceId { get; set; }
     public int Quantity { get; set; }
 }

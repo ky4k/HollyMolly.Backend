@@ -17,12 +17,42 @@ namespace HM.DAL.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.3")
+                .HasAnnotation("ProductVersion", "8.0.4")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
             modelBuilder.Entity("HM.DAL.Entities.Category", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryGroupId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImageFilePath")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageLink")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryGroupId");
+
+                    b.ToTable("Categories");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.CategoryGroup", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -44,7 +74,7 @@ namespace HM.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Categories");
+                    b.ToTable("CategoryGroups");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.CustomerInfo", b =>
@@ -88,6 +118,27 @@ namespace HM.DAL.Migrations
                         .IsUnique();
 
                     b.ToTable("CustomerInfo");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.Discount", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("AbsoluteDiscount")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal>("PercentageDiscount")
+                        .HasPrecision(8, 4)
+                        .HasColumnType("decimal(8,4)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Discount");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Order", b =>
@@ -138,7 +189,7 @@ namespace HM.DAL.Migrations
                         .HasPrecision(10, 2)
                         .HasColumnType("decimal(10,2)");
 
-                    b.Property<int>("ProductId")
+                    b.Property<int>("ProductInstanceId")
                         .HasColumnType("int");
 
                     b.Property<string>("ProductName")
@@ -152,7 +203,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductInstanceId");
 
                     b.ToTable("OrderRecord");
                 });
@@ -175,16 +226,9 @@ namespace HM.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("Price")
-                        .HasPrecision(10, 2)
-                        .HasColumnType("decimal(10,2)");
-
                     b.Property<decimal>("Rating")
-                        .HasPrecision(8, 4)
-                        .HasColumnType("decimal(8,4)");
-
-                    b.Property<int>("StockQuantity")
-                        .HasColumnType("int");
+                        .HasPrecision(6, 4)
+                        .HasColumnType("decimal(6,4)");
 
                     b.Property<int>("TimesRated")
                         .HasColumnType("int");
@@ -245,14 +289,81 @@ namespace HM.DAL.Migrations
                     b.Property<int>("Position")
                         .HasColumnType("int");
 
+                    b.Property<int>("ProductInstanceId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductInstanceId");
+
+                    b.ToTable("ProductImage");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.ProductInstance", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Color")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("DiscountId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Price")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("SKU")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Size")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("StockQuantity")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DiscountId");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("ProductInstance");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("NumberPurchases")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumberViews")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumberWishlistAdditions")
+                        .HasColumnType("int");
+
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductId")
+                        .IsUnique();
 
-                    b.ToTable("ProductImage");
+                    b.ToTable("ProductStatistics");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Role", b =>
@@ -471,6 +582,17 @@ namespace HM.DAL.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("HM.DAL.Entities.Category", b =>
+                {
+                    b.HasOne("HM.DAL.Entities.CategoryGroup", "CategoryGroup")
+                        .WithMany("Categories")
+                        .HasForeignKey("CategoryGroupId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CategoryGroup");
+                });
+
             modelBuilder.Entity("HM.DAL.Entities.CustomerInfo", b =>
                 {
                     b.HasOne("HM.DAL.Entities.Order", "Order")
@@ -499,11 +621,13 @@ namespace HM.DAL.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("HM.DAL.Entities.Product", null)
+                    b.HasOne("HM.DAL.Entities.ProductInstance", "ProductInstance")
                         .WithMany("OrderRecords")
-                        .HasForeignKey("ProductId")
+                        .HasForeignKey("ProductInstanceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("ProductInstance");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Product", b =>
@@ -528,9 +652,37 @@ namespace HM.DAL.Migrations
 
             modelBuilder.Entity("HM.DAL.Entities.ProductImage", b =>
                 {
-                    b.HasOne("HM.DAL.Entities.Product", "Product")
+                    b.HasOne("HM.DAL.Entities.ProductInstance", "ProductInstance")
                         .WithMany("Images")
+                        .HasForeignKey("ProductInstanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ProductInstance");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.ProductInstance", b =>
+                {
+                    b.HasOne("HM.DAL.Entities.Discount", "Discount")
+                        .WithMany("ProductInstances")
+                        .HasForeignKey("DiscountId");
+
+                    b.HasOne("HM.DAL.Entities.Product", "Product")
+                        .WithMany("ProductInstances")
                         .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Discount");
+
+                    b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
+                {
+                    b.HasOne("HM.DAL.Entities.Product", "Product")
+                        .WithOne("ProductStatistics")
+                        .HasForeignKey("HM.DAL.Entities.ProductStatistics", "ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -593,6 +745,16 @@ namespace HM.DAL.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("HM.DAL.Entities.CategoryGroup", b =>
+                {
+                    b.Navigation("Categories");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.Discount", b =>
+                {
+                    b.Navigation("ProductInstances");
+                });
+
             modelBuilder.Entity("HM.DAL.Entities.Order", b =>
                 {
                     b.Navigation("Customer")
@@ -605,6 +767,14 @@ namespace HM.DAL.Migrations
                 {
                     b.Navigation("Feedbacks");
 
+                    b.Navigation("ProductInstances");
+
+                    b.Navigation("ProductStatistics")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.ProductInstance", b =>
+                {
                     b.Navigation("Images");
 
                     b.Navigation("OrderRecords");

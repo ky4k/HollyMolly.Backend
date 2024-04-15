@@ -6,16 +6,21 @@ namespace HM.BLL.Interfaces;
 
 public interface IProductService
 {
-    Task<IEnumerable<ProductDto>> GetProductsAsync(string? category, string? name, bool sortByPrice,
+    Task<IEnumerable<ProductDto>> GetProductsAsync(int? categoryId, string? name, bool sortByPrice,
         bool sortByRating, bool sortAsc, CancellationToken cancellationToken);
     Task<ProductDto?> GetProductByIdAsync(int productId, CancellationToken cancellationToken);
-    Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateUpdateDto productDto,
+    Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateDto productDto,
         CancellationToken cancellationToken);
-    Task<OperationResult<ProductDto>> UpdateProductAsync(int productId, ProductCreateUpdateDto productDto,
+    Task<OperationResult<ProductDto>> UpdateProductAsync(int productId, ProductUpdateDto productDto,
         CancellationToken cancellationToken);
-    Task<OperationResult> UploadProductImagesAsync(int productId, IFormFile[] images,
-        string basePath, CancellationToken cancellationToken);
-    Task<OperationResult> DeleteProductImageAsync(int productId, int imageId, CancellationToken cancellationToken);
+    Task<OperationResult<ProductInstanceDto>> UpdateProductInstanceAsync(int productId, int productInstanceId,
+        ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken);
+    Task<OperationResult<ProductInstanceDto>> UploadProductImagesAsync(int productId, int productInstanceId,
+        IFormFile[] images, string baseUrlPath, CancellationToken cancellationToken);
+    Task<OperationResult> RearrangeProductImagesAsync(int productId, int productInstanceId,
+        List<ProductImageRearrangeDto> imageRearrangesDto, CancellationToken cancellationToken);
+    Task<OperationResult> DeleteProductImageAsync(int productId, int productInstanceId,
+        int imageId, CancellationToken cancellationToken);
     Task<OperationResult> DeleteProductAsync(int productId, CancellationToken cancellationToken);
 
     Task<IEnumerable<ProductFeedback>> GetAllProductsFeedbackAsync(string? category, CancellationToken cancellationToken);

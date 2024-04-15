@@ -13,9 +13,9 @@ public class GoogleOAuthService : IGoogleOAuthService
     private readonly HttpClient _httpClient;
     private readonly IConfiguration _configuration;
     private readonly ILogger<GoogleOAuthService> _logger;
-    
+
     private const string GoogleApiEndpoint = "https://openidconnect.googleapis.com/v1/userinfo";
-    
+
     private const string _scope = "https://www.googleapis.com/auth/userinfo.email";
     private readonly string _clientId;
     private readonly string _clientSecret;
@@ -69,7 +69,7 @@ public class GoogleOAuthService : IGoogleOAuthService
             var token = JsonSerializer.Deserialize<TokenResult>(stream);
             return token?.AccessToken;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while getting token from Google api.");
             return null;
@@ -99,7 +99,7 @@ public class GoogleOAuthService : IGoogleOAuthService
     {
         string? value = Environment.GetEnvironmentVariable(key);
         value ??= _configuration.GetValue<string>(key);
-        if(value == null)
+        if (value == null)
         {
             _logger.LogError("Cannot get the value of the {key} from the environment or " +
                 "the configuration. Google API may not work correctly.", key);
