@@ -10,7 +10,8 @@ namespace HM.WebAPI.Controllers;
 [ApiController]
 public class AccountController(
     IAccountService accountService,
-    IGoogleOAuthService googleOAuthService
+    IGoogleOAuthService googleOAuthService,
+    IEmailService emailService
     ) : ControllerBase
 {
     /// <summary>
@@ -77,7 +78,7 @@ public class AccountController(
     {
         string redirectUrl = $"https://{Request.Host}{Request.PathBase}/api/account/login/google/getToken";
         string? token = await googleOAuthService.ExchangeCodeOnTokenAsync(code, redirectUrl, cancellationToken);
-        if(token == null)
+        if (token == null)
         {
             return BadRequest("Google does not return a valid user token.");
         }

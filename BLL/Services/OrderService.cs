@@ -51,36 +51,45 @@ public class OrderService(
             UserId = userId,
             Customer = orderDto.Customer.ToCustomerInfo(),
             OrderDate = DateTimeOffset.UtcNow,
-            Status = "default",
+            Status = "Created",
             PaymentReceived = false,
             OrderRecords = []
         };
 
         foreach (var orderRecordDto in orderDto.OrderRecords)
         {
-            var product = await context.Products
-                .FirstOrDefaultAsync(p => p.Id == orderRecordDto.ProductId, cancellationToken);
+            Product? product = await context.Products
+                .Include(p => p.ProductInstances)
+                .FirstOrDefaultAsync(p =>
+                    p.ProductInstances.Select(pi => pi.Id).Contains(orderRecordDto.ProductInstanceId),
+                    cancellationToken);
             if (product == null)
             {
                 continue;
             }
-            if (product.StockQuantity == 0)
+            ProductInstance? productInstance = product.ProductInstances
+                .Find(pi => pi.Id == orderRecordDto.ProductInstanceId);
+            if (productInstance == null)
             {
                 continue;
             }
-            if (product.StockQuantity < orderRecordDto.Quantity)
+            if (productInstance.StockQuantity == 0)
             {
-                orderRecordDto.Quantity = product.StockQuantity;
+                continue;
+            }
+            if (productInstance.StockQuantity < orderRecordDto.Quantity)
+            {
+                orderRecordDto.Quantity = productInstance.StockQuantity;
             }
             var orderRecord = new OrderRecord()
             {
-                ProductId = product.Id,
+                ProductInstanceId = productInstance.Id,
                 ProductName = product.Name,
-                Price = product.Price,
+                Price = productInstance.Price,
                 Quantity = orderRecordDto.Quantity
             };
 
-            product.StockQuantity -= orderRecordDto.Quantity;
+            productInstance.StockQuantity -= orderRecordDto.Quantity;
             order.OrderRecords.Add(orderRecord);
         }
 

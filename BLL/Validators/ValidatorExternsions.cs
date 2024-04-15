@@ -84,4 +84,18 @@ public static partial class ValidatorExtensions
             .Matches(@"^\+[0-9]{12}$|^[0-9]{10}$")
                 .WithMessage("Phone number may be either exactly 10 digits long or start with the plus (+) sign followed by 12 digits");
     }
+
+    public static IRuleBuilderOptions<T, string?> ApplyCategoryValidationRules<T>(this IRuleBuilder<T, string?> category)
+    {
+        return category
+            .NotEmpty()
+                .WithMessage("Category name is required.")
+            .MinimumLength(3)
+                .WithMessage("Category name must be at least 3 characters long.")
+            .MaximumLength(20)
+                .WithMessage("Category name cannot be longer than 20 characters.")
+            .Matches(@"^[\p{L}0-9\s]+$")
+                .WithMessage("Category must be 3-20 characters long and contain only Latin " +
+                    "or Ukrainian letters, numbers, and spaces.");
+    }
 }

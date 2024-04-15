@@ -9,12 +9,16 @@ public class ProductConfiguration : IEntityTypeConfiguration<Product>
     public void Configure(EntityTypeBuilder<Product> builder)
     {
         builder.HasKey(p => p.Id);
-        builder.Property(p => p.Price)
-            .HasPrecision(10, 2);
         builder.Property(p => p.Rating)
-            .HasPrecision(8, 4);
-        builder.HasMany(p => p.Images)
-            .WithOne(i => i.Product)
-            .HasForeignKey(i => i.ProductId);
+            .HasPrecision(6, 4);
+        builder.HasOne(p => p.Category)
+            .WithMany(c => c.Products)
+            .HasForeignKey(i => i.CategoryId);
+        builder.HasOne(p => p.ProductStatistics)
+            .WithOne(ps => ps.Product)
+            .HasForeignKey<ProductStatistics>(ps => ps.ProductId);
+        builder.HasMany(p => p.ProductInstances)
+            .WithOne(pi => pi.Product)
+            .HasForeignKey(pi => pi.ProductId);
     }
 }

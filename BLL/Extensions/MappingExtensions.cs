@@ -37,22 +37,51 @@ public static class MappingExtensions
 
     public static ProductDto ToProductDto(this Product product)
     {
-        var images = new List<ProductImageDto>();
-        foreach (var image in product.Images)
+        List<ProductInstanceDto> productInstancesDto = [];
+        foreach (ProductInstance productInstance in product.ProductInstances)
         {
-            images.Add(image.ToProductImageDto());
+            productInstancesDto.Add(productInstance.ToProductInstanceDto());
         }
         return new ProductDto()
         {
             Id = product.Id,
             Name = product.Name,
             Description = product.Description,
-            Price = product.Price,
             Rating = product.Rating,
-            Category = product.Category.Name,
-            StockQuantity = product.StockQuantity,
-            Images = images,
+            TimesRated = product.TimesRated,
+            CategoryId = product.Category.Id,
+            ProductsInstances = productInstancesDto,
             Feedbacks = product.Feedbacks
+        };
+    }
+
+    public static ProductInstanceDto ToProductInstanceDto(this ProductInstance productInstance)
+    {
+        var images = new List<ProductImageDto>();
+        foreach (var image in productInstance.Images)
+        {
+            images.Add(image.ToProductImageDto());
+        }
+        return new ProductInstanceDto()
+        {
+            Id = productInstance.Id,
+            StockQuantity = productInstance.StockQuantity,
+            Price = productInstance.Price,
+            SKU = productInstance.SKU,
+            Color = productInstance.Color,
+            Size = productInstance.Size,
+            Discount = productInstance.Discount?.ToDiscountDto(),
+            Images = images
+        };
+    }
+
+    public static DiscountDto ToDiscountDto(this Discount discount)
+    {
+        return new DiscountDto()
+        {
+            Id = discount.Id,
+            AbsoluteDiscount = discount.AbsoluteDiscount,
+            PercentageDiscount = discount.PercentageDiscount
         };
     }
 
@@ -61,6 +90,7 @@ public static class MappingExtensions
         return new ProductImageDto()
         {
             Id = productImage.Id,
+            Position = productImage.Position,
             Link = productImage.Link
         };
     }
@@ -114,10 +144,38 @@ public static class MappingExtensions
     {
         return new OrderRecordDto()
         {
-            ProductId = orderRecord.ProductId,
+            ProductInstanceId = orderRecord.ProductInstanceId,
             ProductName = orderRecord.ProductName,
             Quantity = orderRecord.Quantity,
             Price = orderRecord.Price
+        };
+    }
+
+    public static CategoryGroupDto ToCategoryGroupDto(this CategoryGroup categoryGroup)
+    {
+        List<CategoryDto> categoriesDto = [];
+        foreach (var category in categoryGroup.Categories)
+        {
+            categoriesDto.Add(category.ToCategoryDto());
+        }
+        var categoryGroupDto = new CategoryGroupDto()
+        {
+            Id = categoryGroup.Id,
+            Name = categoryGroup.Name,
+            Link = categoryGroup.ImageLink,
+            Categories = categoriesDto
+        };
+        return categoryGroupDto;
+    }
+
+    public static CategoryDto ToCategoryDto(this Category category)
+    {
+        return new CategoryDto()
+        {
+            Id = category.Id,
+            CategoryGroupId = category.CategoryGroupId,
+            Name = category.Name,
+            Link = category.ImageLink
         };
     }
 }

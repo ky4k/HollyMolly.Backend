@@ -21,6 +21,4 @@ public class ProfileUpdateDtoValidator : AbstractValidator<ProfileUpdateDto>
         RuleFor(pud => pud.DeliveryAddress)
             .MinimumLength(1);
     }
-
-
 }

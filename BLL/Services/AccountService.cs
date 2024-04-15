@@ -102,7 +102,7 @@ public class AccountService(
         {
             return new OperationResult<LoginResponse>(false, "No user with such a email exists.");
         }
-        if(!await userManager.CheckPasswordAsync(user, loginRequest.Password))
+        if (!await userManager.CheckPasswordAsync(user, loginRequest.Password))
         {
             return new OperationResult<LoginResponse>(false, "Invalid password.");
         }

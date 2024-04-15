@@ -37,4 +37,9 @@ public class OperationResult<T> : OperationResult
     {
         Payload = payload;
     }
+
+    public OperationResult(bool succeeded, string message, T payload) : this(succeeded, message)
+    {
+        Payload = payload;
+    }
 }

@@ -17,6 +17,7 @@ public class ProductsController(
     /// <summary>
     /// Allows to retrieve a list of products with optional filtering and sorting options.
     /// </summary>
+    /// <param name="categoryId">Optional. Filters products by category.</param>
     /// <param name="name">Optional. Filters products by name.</param>
     /// <param name="sortByPrice">Optional. If true, sorts products by price.</param>
     /// <param name="sortByRating">Optional. If true, sorts products by rating.
@@ -26,30 +27,10 @@ public class ProductsController(
     [Route("")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetAllProducts(string? name = null,
-        bool sortByPrice = false, bool sortByRating = false, bool sortAsc = true)
-    {
-        return Ok(await productService.GetProductsAsync(null, name, sortByPrice, sortByRating,
-            sortAsc, Request.HttpContext.RequestAborted));
-    }
-
-    /// <summary>
-    /// Allows to retrieve a list of products with optional filtering and sorting options.
-    /// </summary>
-    /// <param name="category">Optional. Filters products by category.</param>
-    /// <param name="name">Optional. Filters products by name.</param>
-    /// <param name="sortByPrice">Optional. If true, sorts products by price.</param>
-    /// <param name="sortByRating">Optional. If true, sorts products by rating.
-    ///     Is not applied if <paramref name="sortByPrice"/> is set to true</param>
-    /// <param name="sortAsc">Optional. If true, sorts products in ascending order; otherwise, sorts in descending order.</param>
-    /// <response code = "200" > Returns a list of products that match the specified criteria.</response>
-    [Route("categories/{category}")]
-    [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategory(string category,
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategory(int? categoryId = null,
         string? name = null, bool sortByPrice = false, bool sortByRating = false, bool sortAsc = true)
     {
-        return Ok(await productService.GetProductsAsync(category, name, sortByPrice, sortByRating,
+        return Ok(await productService.GetProductsAsync(categoryId, name, sortByPrice, sortByRating,
             sortAsc, Request.HttpContext.RequestAborted));
     }
 
@@ -86,63 +67,12 @@ public class ProductsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> CreateProduct(ProductCreateUpdateDto product, CancellationToken cancellationToken)
+    public async Task<ActionResult> CreateProduct(ProductCreateDto product, CancellationToken cancellationToken)
     {
         OperationResult<ProductDto> result = await productService.CreateProductAsync(product, cancellationToken);
         return result.Succeeded && result.Payload != null
             ? CreatedAtAction(nameof(GetProductById), new { productId = result.Payload.Id }, result.Payload)
             : BadRequest(result.Message);
-    }
-
-    /// <summary>
-    /// Allows administrators and managers to upload the product images.
-    /// </summary>
-    /// <param name="productId">Id of the product to add image to.</param>
-    /// <param name="images">List of images to upload.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <response code="200">Returns the message with the result of the operation.</response>
-    /// <response code="400">Indicates that the request to upload the product images was invalid.</response>
-    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
-    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
-    [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
-    [Route("{productId}/images")]
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<string>> UploadProductImage(int productId, IFormFile[] images,
-        CancellationToken cancellationToken)
-    {
-        string basePath = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
-        OperationResult result = await productService.UploadProductImagesAsync(productId, images,
-            basePath, cancellationToken);
-        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
-    }
-
-    /// <summary>
-    /// Allows administrators and managers to remove the product images.
-    /// </summary>
-    /// <param name="productId">Id of the product to remove image from.</param>
-    /// <param name="imageId">Id of the image to remove.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <response code="200">Returns the message with the result of the operation.</response>
-    /// <response code="400">Indicates that the request to delete the product image was invalid.</response>
-    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
-    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
-    [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
-    [Route("{productId}/images/{imageId}")]
-    [HttpDelete]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<string>> RemoveProductImage(int productId, int imageId,
-        CancellationToken cancellationToken)
-    {
-        OperationResult result = await productService.DeleteProductImageAsync(productId, imageId,
-            cancellationToken);
-        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
     }
 
     /// <summary>
@@ -162,10 +92,115 @@ public class ProductsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ProductDto>> UpdateProduct(int productId, ProductCreateUpdateDto product, CancellationToken cancellationToken)
+    public async Task<ActionResult<ProductDto>> UpdateProduct(int productId, ProductUpdateDto product, CancellationToken cancellationToken)
     {
         OperationResult<ProductDto> result = await productService.UpdateProductAsync(productId, product, cancellationToken);
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
+
+    /// <summary>
+    /// Allows administrators and managers to update an existing product instance.
+    /// </summary>
+    /// <param name="productId">The ID of the product that contains instance.</param>
+    /// <param name="productInstanceId">The ID of the product instance to update.</param>
+    /// <param name="productInstanceDto">The updated product instance information.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Indicates that the product instance was successfully updated.</response>
+    /// <response code="400">Indicates that the request to update the product was invalid.</response>
+    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
+    [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
+    [Route("{productId}/{productInstanceId}")]
+    [HttpPut]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<ProductDto>> UpdateProductInstance(int productId, int productInstanceId,
+        ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
+    {
+        OperationResult<ProductInstanceDto> result = await productService.UpdateProductInstanceAsync(
+            productId, productInstanceId, productInstanceDto, cancellationToken);
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
+
+    /// <summary>
+    /// Allows administrators and managers to upload the product images.
+    /// </summary>
+    /// <param name="productId">Id of the product that contains product instance to add image to.</param>
+    /// <param name="productInstanceId">Id of the product instance that to add image to.</param>
+    /// <param name="images">List of images to upload.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the message with the result of the operation.</response>
+    /// <response code="400">Indicates that the request to upload the product images was invalid.</response>
+    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
+    [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
+    [Route("{productId}/{productInstanceId}/images")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<string>> UploadProductImage(int productId,
+        int productInstanceId, IFormFile[] images, CancellationToken cancellationToken)
+    {
+        string baseUrlPath = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+        OperationResult result = await productService.UploadProductImagesAsync(
+            productId, productInstanceId, images, baseUrlPath, cancellationToken);
+        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
+    }
+
+    /// <summary>
+    /// Allows administrators and managers to rearrange order of the images.
+    /// </summary>
+    /// <param name="productId">Id of the product that contains product instance.</param>
+    /// <param name="productInstanceId">Id of the product instance to rearrange images.</param>
+    /// <param name="imageRearrangesDto">List of image id's and its updated position.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="204">Indicates that were rearranged.</response>
+    /// <response code="400">Indicates that the request to delete the product image was invalid.</response>
+    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
+    [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
+    [Route("{productId}/{productInstanceId}/images/")]
+    [HttpPut]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> RearrangeProductImages(int productId, int productInstanceId,
+        List<ProductImageRearrangeDto> imageRearrangesDto, CancellationToken cancellationToken)
+    {
+        OperationResult result = await productService.RearrangeProductImagesAsync(
+            productId, productInstanceId, imageRearrangesDto, cancellationToken);
+        return result.Succeeded ? NoContent() : BadRequest(result.Message);
+    }
+
+    /// <summary>
+    /// Allows administrators and managers to remove the product images.
+    /// </summary>
+    /// <param name="productId">Id of the product that contains product instance to remove image from.</param>
+    /// <param name="productInstanceId">Id of the product instance that to remove image from.</param>
+    /// <param name="imageId">Id of the image to remove.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the message with the result of the operation.</response>
+    /// <response code="400">Indicates that the request to delete the product image was invalid.</response>
+    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
+    [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
+    [Route("{productId}/{productInstanceId}/images/{imageId}")]
+    [HttpDelete]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<string>> RemoveProductImage(int productId,
+        int productInstanceId, int imageId, CancellationToken cancellationToken)
+    {
+        OperationResult result = await productService.DeleteProductImageAsync(
+            productId, productInstanceId, imageId, cancellationToken);
+        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
     }
 
     /// <summary>
