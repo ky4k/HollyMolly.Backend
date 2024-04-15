@@ -1,7 +1,6 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models;
 using HM.DAL.Constants;
-using HM.DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -63,7 +62,7 @@ public class CategoriesController(
         OperationResult<CategoryGroupDto> result = await categoryService.CreateCategoryGroupAsync(categoryGroupDto,
             cancellationToken);
         return result.Succeeded && result.Payload != null
-            ? CreatedAtAction(nameof(GetCategoryGroup), new { categoryGroupId = result.Payload.Id}, result.Payload)
+            ? CreatedAtAction(nameof(GetCategoryGroup), new { categoryGroupId = result.Payload.Id }, result.Payload)
             : BadRequest(result.Message);
     }
 
@@ -142,7 +141,7 @@ public class CategoriesController(
     }
 
     /// <summary>
-    /// Allows to retrieve a category group and its categories.
+    /// Allows to retrieve a category.
     /// </summary>
     /// <param name="categoryGroupId">The id of the category group that contains the category.</param>
     /// <param name="categoryId">The id of the category to get.</param>
@@ -175,7 +174,7 @@ public class CategoriesController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> CreateCategory(int categoryGroupId, CategoryCreateDto category, 
+    public async Task<ActionResult> CreateCategory(int categoryGroupId, CategoryCreateDto category,
         CancellationToken cancellationToken)
     {
         OperationResult<CategoryDto> result = await categoryService
@@ -209,7 +208,7 @@ public class CategoriesController(
     public async Task<ActionResult> UpdateCategory(int categoryGroupId, int categoryId,
         CategoryUpdateDto category, CancellationToken cancellationToken)
     {
-        OperationResult result = await categoryService .UpdateCategoryAsync(categoryGroupId,
+        OperationResult result = await categoryService.UpdateCategoryAsync(categoryGroupId,
             categoryId, category, cancellationToken);
         return result.Succeeded ? NoContent() : BadRequest(result.Message);
     }

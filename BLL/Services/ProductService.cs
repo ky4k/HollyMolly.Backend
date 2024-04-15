@@ -19,8 +19,11 @@ public class ProductService(
         bool sortByPrice, bool sortByRating, bool sortAsc, CancellationToken cancellationToken)
     {
         IQueryable<Product> products = context.Products
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Images)
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Discount)
             .Include(p => p.Category)
-            .Include(p => p.Images)
             .Include(p => p.Feedbacks);
         if (categoryId != null)
         {
@@ -33,14 +36,14 @@ public class ProductService(
         if (sortByPrice)
         {
             products = sortAsc
-                ? products.OrderBy(p => p.Price)
-                : products.OrderByDescending(p => p.Price);
+                ? products.OrderBy(p => p.ProductInstances.Select(pi => pi.Price).Min())
+                : products.OrderByDescending(p => p.ProductInstances.Select(pi => pi.Price).Max());
         }
         else if (sortByRating)
         {
             products = sortAsc
                 ? products.OrderBy(p => p.Rating)
-                : products.OrderByDescending(p => p.Price);
+                : products.OrderByDescending(p => p.Rating);
         }
         var productsDto = new List<ProductDto>();
         foreach (var product in await products.ToListAsync(cancellationToken))
@@ -53,8 +56,11 @@ public class ProductService(
     public async Task<ProductDto?> GetProductByIdAsync(int productId, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Images)
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Discount)
             .Include(p => p.Category)
-            .Include(p => p.Images)
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
@@ -64,22 +70,34 @@ public class ProductService(
         return product.ToProductDto();
     }
 
-    public async Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateUpdateDto productDto, CancellationToken cancellationToken)
+    public async Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateDto productDto, CancellationToken cancellationToken)
     {
         Category? category = await context.Categories
-            .FirstOrDefaultAsync(c => c.Name == productDto.Category, cancellationToken);
+            .FirstOrDefaultAsync(c => c.Id == productDto.CategoryId, cancellationToken);
         if (category == null)
         {
-            return new OperationResult<ProductDto>(false, $"Category {productDto.Category} does not exist. " +
-                $"Create the category first or specify another category.");
+            return new OperationResult<ProductDto>(false, $"Category with ID {productDto.CategoryId} " +
+                $"does not exist. Create the category first or specify another category.");
         }
+        List<ProductInstance> productInstances = [];
+        foreach (ProductInstanceCreateDto productInstanceDto in productDto.ProductInstances)
+        {
+            productInstances.Add(new ProductInstance()
+            {
+                SKU = productInstanceDto.SKU,
+                Color = productInstanceDto.Color,
+                Size = productInstanceDto.Size,
+                Price = productInstanceDto.Price,
+                StockQuantity = productInstanceDto.StockQuantity
+            });
+        }
+
         Product product = new()
         {
             Name = productDto.Name,
             Description = productDto.Description,
             Category = category,
-            Price = productDto.Price,
-            StockQuantity = productDto.StockQuantity,
+            ProductInstances = productInstances
         };
         try
         {
@@ -95,11 +113,10 @@ public class ProductService(
     }
 
     public async Task<OperationResult<ProductDto>> UpdateProductAsync(int productId,
-        ProductCreateUpdateDto productDto, CancellationToken cancellationToken)
+        ProductUpdateDto productDto, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
-            .Include(p => p.Category)
-            .Include(p => p.Images)
+            .Include(p => p.ProductInstances)
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
@@ -107,18 +124,16 @@ public class ProductService(
             return new OperationResult<ProductDto>(false, "Product with such an id does not exist.");
         }
         Category? category = await context.Categories
-            .FirstOrDefaultAsync(c => c.Name == productDto.Category, cancellationToken);
+            .FirstOrDefaultAsync(c => c.Id == productDto.CategoryId, cancellationToken);
         if (category == null)
         {
-            return new OperationResult<ProductDto>(false, $"Category {productDto.Category} does not exist. " +
-                $"Create the category first or specify another category.");
+            return new OperationResult<ProductDto>(false, $"Category with id {productDto.CategoryId} " +
+                $"does not exist. Create the category first or specify another category.");
         }
 
         product.Name = productDto.Name;
         product.Description = productDto.Description;
         product.Category = category;
-        product.Price = productDto.Price;
-        product.StockQuantity = productDto.StockQuantity;
 
         try
         {
@@ -133,69 +148,135 @@ public class ProductService(
         }
     }
 
-    public async Task<OperationResult> UploadProductImagesAsync(int productId, IFormFile[] images,
-        string baseUrlPath, CancellationToken cancellationToken)
+    public async Task<OperationResult<ProductInstanceDto>> UpdateProductInstanceAsync(int productId, int productInstanceId,
+        ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
     {
-        Product? product = await context.Products
-            .Include(p => p.Images)
-            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-        if (product == null)
+        OperationResult<ProductInstance> instanceResult = await GetProductInstanceAsync(
+            productId, productInstanceId, cancellationToken);
+        if (!instanceResult.Succeeded || instanceResult.Payload == null)
         {
-            return new OperationResult(false, "The product does not exist");
+            return new OperationResult<ProductInstanceDto>(false, instanceResult.Message ?? "");
+        }
+        ProductInstance productInstance = instanceResult.Payload;
+
+        productInstance.StockQuantity = productInstanceDto.StockQuantity;
+        productInstance.Price = productInstanceDto.Price;
+        productInstance.SKU = productInstanceDto.SKU;
+        productInstance.Color = productInstanceDto.Color;
+        productInstance.Size = productInstanceDto.Size;
+
+        try
+        {
+            context.Update(productInstance);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult<ProductInstanceDto>(true, productInstance.ToProductInstanceDto());
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while updating produceInstance {@productInstance}", productInstance);
+            return new OperationResult<ProductInstanceDto>(false, "The product instance has not been updated.");
         }
 
-        string savePath = $"images/products/{productId}";
+    }
+
+    public async Task<OperationResult<ProductInstanceDto>> UploadProductImagesAsync(int productId,
+        int productInstanceId, IFormFile[] images, string baseUrlPath, CancellationToken cancellationToken)
+    {
+        OperationResult<ProductInstance> instanceResult = await GetProductInstanceAsync(
+            productId, productInstanceId, cancellationToken);
+        if (!instanceResult.Succeeded || instanceResult.Payload == null)
+        {
+            return new OperationResult<ProductInstanceDto>(false, instanceResult.Message ?? "");
+        }
+        ProductInstance productInstance = instanceResult.Payload;
+
+        string savePath = $"images/products/{productInstance.Id}";
         OperationResult<List<ImageDto>> result = await imageService
             .UploadImagesAsync(images, baseUrlPath, savePath, cancellationToken);
 
-        if(!result.Succeeded || result.Payload == null || result.Payload.Count == 0)
+        if (!result.Succeeded || result.Payload == null || result.Payload.Count == 0)
         {
-            return new OperationResult<List<string>>(false, $"No images were added. {result.Message}");
+            return new OperationResult<ProductInstanceDto>(false, $"No images were added. {result.Message}");
         }
-
-        foreach(ImageDto imageDto in result.Payload)
+        productInstance.Images ??= [];
+        int startPosition = productInstance.Images.Select(i => i.Position).DefaultIfEmpty(0).Max();
+        foreach (ImageDto imageDto in result.Payload)
         {
             ProductImage productImage = new()
             {
                 FilePath = imageDto.FilePath,
+                Position = ++startPosition,
                 Link = imageDto.Link
             };
-            product.Images.Add(productImage);
+            productInstance.Images.Add(productImage);
         }
         try
         {
             await context.SaveChangesAsync(cancellationToken);
-            string message = $"{result.Payload.Count} images were added to the product {product.Name}.";
-            message += images.Length > result.Payload.Count
-                ? $" {images.Length - result.Payload.Count} images were not added. {result.Message}" : "";
-            return new OperationResult(true, message);
+            return new OperationResult<ProductInstanceDto>(true, productInstance.ToProductInstanceDto());
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while uploading images for the product {@product}", product);
-            return new OperationResult(false, "Images was not added to the product.");
+            logger.LogError(ex, "An error occurred while uploading images" +
+                " for the productInstance {@productInstance}", productInstance);
+            return new OperationResult<ProductInstanceDto>(false, "Images was not added to the product.");
         }
     }
 
-    public async Task<OperationResult> DeleteProductImageAsync(int productId, int imageId, CancellationToken cancellationToken)
+    public async Task<OperationResult> RearrangeProductImagesAsync(int productId,
+        int productInstanceId, List<ProductImageRearrangeDto> imageRearrangesDto,
+        CancellationToken cancellationToken)
     {
-        Product? product = await context.Products
-            .Include(p => p.Images)
-            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-        if (product == null)
+        OperationResult<ProductInstance> instanceResult = await GetProductInstanceAsync(
+            productId, productInstanceId, cancellationToken);
+        if (!instanceResult.Succeeded || instanceResult.Payload == null)
         {
-            return new OperationResult(false, "The product does not exist");
+            return instanceResult;
         }
-        ProductImage? image = product.Images.Find(i => i.Id == imageId);
+        ProductInstance productInstance = instanceResult.Payload;
+        foreach (var image in productInstance.Images)
+        {
+            ProductImageRearrangeDto? rearrangeDto = imageRearrangesDto.Find(ird => ird.Id == image.Id);
+            if (rearrangeDto != null)
+            {
+                image.Position = rearrangeDto.Position;
+            }
+        }
+        try
+        {
+            context.Update(productInstance);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult(true);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while rearranging images for the productInstance " +
+                "{@productInstance}", productInstance);
+            return new OperationResult(false, "Images were not rearranged");
+        }
+    }
+
+    public async Task<OperationResult> DeleteProductImageAsync(int productId,
+        int productInstanceId, int imageId, CancellationToken cancellationToken)
+    {
+        OperationResult<ProductInstance> instanceResult = await GetProductInstanceAsync(
+            productId, productInstanceId, cancellationToken);
+        if (!instanceResult.Succeeded || instanceResult.Payload == null)
+        {
+            return instanceResult;
+        }
+        ProductInstance productInstance = instanceResult.Payload;
+        ProductImage? image = productInstance.Images.Find(i => i.Id == imageId);
         if (image == null)
         {
-            return new OperationResult(false, $"The product {product.Name} does not contain the image with Id {imageId}");
+            return new OperationResult(false, $"The product instance with id {productInstance.Id}" +
+                $" does not contain the image with Id {imageId}");
         }
 
         try
         {
             imageService.DeleteImage(image.FilePath);
-            product.Images.Remove(image);
+            productInstance.Images.Remove(image);
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true, "The image was removed");
         }
@@ -209,6 +290,12 @@ public class ProductService(
     public async Task<OperationResult> DeleteProductAsync(int productId, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Images)
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Discount)
+            .Include(p => p.Category)
+            .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
         {
@@ -216,11 +303,13 @@ public class ProductService(
         }
         try
         {
-            foreach(var image in product.Images)
+            foreach (var productInstance in product.ProductInstances)
             {
-                imageService.DeleteImage(image.FilePath);
+                foreach (var image in productInstance.Images)
+                {
+                    imageService.DeleteImage(image.FilePath);
+                }
             }
-
             context.Products.Remove(product);
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true);
@@ -294,5 +383,28 @@ public class ProductService(
             .SelectMany(p => p.Feedbacks)
             .OrderByDescending(f => f.Created)
             .ToListAsync(cancellationToken);
+    }
+
+    private async Task<OperationResult<ProductInstance>> GetProductInstanceAsync(int productId,
+        int productInstanceId, CancellationToken cancellationToken)
+    {
+        Product? product = await context.Products
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Images)
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Discount)
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        if (product == null)
+        {
+            return new OperationResult<ProductInstance>(false, "The product does not exist");
+        }
+        ProductInstance? productInstance = product.ProductInstances
+            .Find(pi => pi.Id == productInstanceId);
+        if (productInstance == null)
+        {
+            return new OperationResult<ProductInstance>(false, "Product with id {productId} " +
+                $"does not contain the product instance with id {productInstanceId}.");
+        }
+        return new OperationResult<ProductInstance>(true, productInstance);
     }
 }

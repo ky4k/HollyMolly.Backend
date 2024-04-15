@@ -1,8 +1,6 @@
-﻿using HM.BLL.Interfaces;
+﻿namespace HM.BLL.Models;
 
-namespace HM.BLL.Models;
-
-public class UserDto : IUserMailInfo
+public class UserDto
 {
     public string Id { get; set; } = null!;
     public string? Email { get; set; }

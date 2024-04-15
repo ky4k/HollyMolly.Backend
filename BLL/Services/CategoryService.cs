@@ -62,7 +62,7 @@ public class CategoryService(
     {
         CategoryGroup? group = await context.CategoryGroups
             .FirstOrDefaultAsync(cg => cg.Id == categoryGroupId, cancellationToken);
-        if(group == null)
+        if (group == null)
         {
             return new OperationResult(false, $"The category group with id {categoryGroupId} does not exist");
         }
@@ -81,7 +81,7 @@ public class CategoryService(
         }
     }
 
-    public async Task<OperationResult> UpdateCategoryGroupImageAsync(int categoryGroupId, 
+    public async Task<OperationResult> UpdateCategoryGroupImageAsync(int categoryGroupId,
         IFormFile image, string baseUrlPath, CancellationToken cancellationToken)
     {
         CategoryGroup? group = await context.CategoryGroups
@@ -95,7 +95,7 @@ public class CategoryService(
         {
             string filePath = group.ImageFilePath;
             OperationResult result = await AddImageToCategoryGroupAsync(group, image, baseUrlPath, cancellationToken);
-            
+
             if (result.Succeeded && !string.IsNullOrEmpty(filePath))
             {
                 imageService.DeleteImage(filePath);
@@ -103,7 +103,7 @@ public class CategoryService(
             await context.SaveChangesAsync(cancellationToken);
             return result;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while adding categoryGroup image.");
             return new OperationResult(false, "The image has not been updated.");
@@ -115,7 +115,7 @@ public class CategoryService(
         CategoryGroup? categoryGroup = await context.CategoryGroups
             .Include(cg => cg.Categories)
             .FirstOrDefaultAsync(cg => cg.Id == categoryGroupId, cancellationToken);
-        if(categoryGroup == null)
+        if (categoryGroup == null)
         {
             return new OperationResult(false, $"The category group with id {categoryGroupId} does not exist");
         }
@@ -193,7 +193,7 @@ public class CategoryService(
         {
             return new OperationResult(false, "Category does not exist.");
         }
-        if(category.CategoryGroupId != categoryGroupId)
+        if (category.CategoryGroupId != categoryGroupId)
         {
             return new OperationResult(false, $"There are no category with id {categoryId} " +
                 $"in the category group with id {categoryGroupId}.");
