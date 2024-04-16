@@ -1,0 +1,7 @@
+{
+  "Registration" : "Реєстрація успішна",
+  "ForgetPassword": "Відновити пароль",
+  "PasswordChanged": "Пароль змінено",
+  "OrderCreated": "Замовлення створено",
+  "OrderStatusUpdated": "Статус замовлення оновлено"
+}

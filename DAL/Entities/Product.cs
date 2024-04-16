@@ -12,4 +12,5 @@ public class Product
     public ProductStatistics ProductStatistics { get; set; } = null!;
     public List<ProductInstance> ProductInstances { get; set; } = [];
     public List<ProductFeedback> Feedbacks { get; set; } = [];
+    public List<WishList> WishLists { get; set; } = [];
 }

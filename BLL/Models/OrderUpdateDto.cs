@@ -3,5 +3,5 @@
 public class OrderUpdateDto
 {
     public string Status { get; set; } = null!;
-    public string? Notes { get; set; }
+    public string Notes { get; set; } = null!;
 }

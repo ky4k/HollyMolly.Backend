@@ -351,5 +351,9 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
+<<<<<<< HEAD
+**/wwwroot/images/**
+=======
 # Test uploaded images
 **/WebAPI/wwwroot/images/**
+>>>>>>> emails

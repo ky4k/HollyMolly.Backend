@@ -18,6 +18,7 @@ public class AccountController(
     /// Allows to register a new user.
     /// </summary>
     /// <param name="request">Name, email and password of the user to register.</param>
+    /// <param name="sendEmail">Sends a real email if sets to true.</param>
     /// <response code="200"> Indicates that the user was successfully created and returns 
     ///     the user model object.</response>
     /// <response code="400">Indicates that user was not created and returns the error message.</response>
@@ -25,10 +26,19 @@ public class AccountController(
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<RegistrationResponse>> Registration(RegistrationRequest request)
+    public async Task<ActionResult<RegistrationResponse>> Registration(RegistrationRequest request,
+        bool sendEmail = false)
     {
         OperationResult<RegistrationResponse> response = await accountService.RegisterUserAsync(request);
-        return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
+        if(!response.Succeeded)
+        {
+            return BadRequest(response.Message);
+        }
+        if (sendEmail)
+        {
+            await emailService.SendRegistrationResultEmailAsync();
+        }
+        return Ok(response.Payload);
     }
 
     /// <summary>
