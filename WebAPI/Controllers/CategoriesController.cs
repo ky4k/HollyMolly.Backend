@@ -214,7 +214,7 @@ public class CategoriesController(
     }
 
     /// <summary>
-    /// Allows administrators to update an image of the category group.
+    /// Allows administrators to update an image of the category.
     /// </summary>
     /// <param name="categoryGroupId">The ID of the category group that contains the category
     /// to update image.</param>

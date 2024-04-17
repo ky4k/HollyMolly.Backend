@@ -5,6 +5,7 @@ namespace HM.DAL.Entities;
 public class User : IdentityUser
 {
     public bool IsOidcUser { get; set; }
+    public string? OidcToken { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public DateOnly? DateOfBirth { get; set; }

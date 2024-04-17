@@ -18,7 +18,8 @@ public class AccountController(
     /// Allows to register a new user.
     /// </summary>
     /// <param name="request">Name, email and password of the user to register.</param>
-    /// <param name="sendEmail">Sends a real email if sets to true.</param>
+    /// <param name="sendEmail">A real email will be sent only if this parameter is set to true.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200"> Indicates that the user was successfully created and returns 
     ///     the user model object.</response>
     /// <response code="400">Indicates that user was not created and returns the error message.</response>
@@ -27,18 +28,42 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RegistrationResponse>> Registration(RegistrationRequest request,
-        bool sendEmail = false)
+        CancellationToken cancellationToken, bool sendEmail = false)
     {
         OperationResult<RegistrationResponse> response = await accountService.RegisterUserAsync(request);
-        if(!response.Succeeded)
+        if (!response.Succeeded || response.Payload == null)
         {
             return BadRequest(response.Message);
         }
         if (sendEmail)
         {
-            await emailService.SendRegistrationResultEmailAsync();
+            OperationResult<ConfirmationEmailDto> confirmationEmailResult = await accountService
+                .GetConfirmationEmailKey(response.Payload.Id);
+            if (confirmationEmailResult.Succeeded && confirmationEmailResult.Payload != null)
+            {
+                await emailService.SendRegistrationResultEmailAsync(response.Payload.Email,
+                    confirmationEmailResult.Payload, cancellationToken);
+            }
         }
         return Ok(response.Payload);
+    }
+
+    /// <summary>
+    /// Allows to register a new user.
+    /// </summary>
+    /// <param name="userId">Id of the user to confirm email.</param>
+    /// <param name="confirmationEmailToken">A token that was send to the user email.</param>
+    /// <response code="200"> Indicates that the user was successfully created and returns 
+    ///     the user model object.</response>
+    /// <response code="400">Indicates that user was not created and returns the error message.</response>
+    [Route("{userId}/confirmEmail")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<RegistrationResponse>> ConfirmEmail(string userId, string confirmationEmailToken)
+    {
+        OperationResult response = await accountService.ConfirmEmailAsync(userId, confirmationEmailToken);
+        return response.Succeeded ? NoContent() : BadRequest(response.Message);
     }
 
     /// <summary>
@@ -77,17 +102,16 @@ public class AccountController(
     /// </summary>
     /// <param name="code">The user code that can be exchanged on the user token.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <response code="200">Indicates that the login was successful and returns 
-    ///     an access token and user information.</response>
+    /// <response code="302">Redirect user to the frontend page and set token as query parameter.</response>
     /// <response code="400">Indicates that the login has failed and returns the error message.</response>
     [Route("login/google/getToken")]
     [HttpGet]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status302Found)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> GetGoogleToken(string code, CancellationToken cancellationToken)
     {
-        string redirectUrl = $"https://{Request.Host}{Request.PathBase}/api/account/login/google/getToken";
-        string? token = await googleOAuthService.ExchangeCodeOnTokenAsync(code, redirectUrl, cancellationToken);
+        string googleRedirectUrl = $"https://{Request.Host}{Request.PathBase}/api/account/login/google/getToken";
+        string? token = await googleOAuthService.ExchangeCodeOnTokenAsync(code, googleRedirectUrl, cancellationToken);
         if (token == null)
         {
             return BadRequest("Google does not return a valid user token.");
@@ -98,8 +122,31 @@ public class AccountController(
             return BadRequest("Google does not return a valid user email address.");
         }
 
-        await accountService.RegisterOidcUserAsync(email);
-        OperationResult<LoginResponse> response = await accountService.LoginOidcUserAsync(email);
+        OperationResult response = await accountService.RegisterOidcUserAsync(email);
+        if (!response.Succeeded)
+        {
+            return BadRequest(response.Message);
+        }
+        string? oidcToken = (await accountService.GetOidcTokenAsync(email)).Payload;
+
+        string redirectToFrontendUrl = $"https://holly-molly.vercel.app/?token={oidcToken}";
+        return Redirect(redirectToFrontendUrl);
+    }
+
+    /// <summary>
+    /// Allows the user to login to the site using provided by the application token.
+    /// </summary>
+    /// <param name="loginRequest">The user token provided by the application.</param>
+    /// <response code="200">Indicates that the login was successful and returns an access token and user information.</response>
+    /// <response code="400">Indicates that the login has failed and returns the error message.</response>
+    [Route("login/google")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> LoginViaToken(LoginOidcRequest loginRequest)
+    {
+        OperationResult<LoginResponse> response = await accountService
+            .LoginOidcUserAsync(loginRequest.Token);
         return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
     }
 
@@ -134,8 +181,10 @@ public class AccountController(
     /// <summary>
     /// Allows a user to change password.
     /// </summary>
-    /// <param name="userId">Id of the user to update.</param>
+    /// <param name="userId">Id of the user to change password.</param>
     /// <param name="passwords">The current and the new passwords.</param>
+    /// <param name="sendEmail">A real email will be sent only if this parameter is set to true.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="204">Indicates that the password has been changed.</response>
     /// <response code="400">Indicates that the password has not been updated and returns the error message.</response>
     /// <response code="401">Indicates that the user is unauthenticated and therefore cannot change the password.</response>
@@ -146,13 +195,75 @@ public class AccountController(
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> ChangeUserPassword(string userId, ChangePasswordDto passwords)
+    public async Task<ActionResult> ChangeUserPassword(string userId, ChangePasswordDto passwords,
+        CancellationToken cancellationToken, bool sendEmail = false)
     {
         if (User.FindFirst(ClaimTypes.NameIdentifier)?.Value != userId)
         {
             return Forbid();
         }
-        var response = await accountService.ChangePasswordAsync(userId, passwords);
-        return response.Succeeded ? NoContent() : BadRequest(response.Message);
+        OperationResult<ResetPasswordTokenDto> response = await accountService.ChangePasswordAsync(userId, passwords);
+        if (!response.Succeeded || response.Payload == null)
+        {
+            return BadRequest(response.Message);
+        }
+        if (sendEmail)
+        {
+            string? email = User.FindFirst(ClaimTypes.Email)?.Value;
+            if (email != null)
+            {
+                await emailService.SendPasswordChangedEmail(email, response.Payload, cancellationToken);
+            }
+        }
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Allows user to get email with link to reset password in case they have it forgotten.
+    /// </summary>
+    /// <param name="email">Email of the user to send link.</param>
+    /// <param name="sendEmail">A real email will be sent only if this parameter is set to true.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="204">Indicates that the email has been sent.</response>
+    /// <response code="400">Indicates that the reset password email cannot be sent and returns the error message.</response>
+    [Route("/forgetPassword")]
+    [HttpPut]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> SendForgetPasswordEmail(string email,
+        CancellationToken cancellationToken, bool sendEmail = false)
+    {
+        OperationResult<ResetPasswordTokenDto> response = await accountService
+            .CreatePasswordResetKeyAsync(email);
+        if (!response.Succeeded || response.Payload == null)
+        {
+            return BadRequest(response.Message);
+        }
+        if (sendEmail)
+        {
+            await emailService.SendForgetPasswordEmailAsync(email, response.Payload, cancellationToken);
+        }
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Allows a user to reset password.
+    /// </summary>
+    /// <param name="userId">Id of the user to reset the password.</param>
+    /// <param name="resetPassword">The reset token that was set to the user email and the new password.</param>
+    /// <response code="204">Indicates that the password has been changed.</response>
+    /// <response code="400">Indicates that the password has not been updated and returns the error message.</response>
+    [Route("{userId}/password/reset")]
+    [HttpPut]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult> ResetPassword(string userId, ResetPasswordDto resetPassword)
+    {
+        OperationResult<UserDto> response = await accountService.ResetPasswordAsync(userId, resetPassword);
+        if (!response.Succeeded || response.Payload == null)
+        {
+            return BadRequest(response.Message);
+        }
+        return NoContent();
     }
 }
