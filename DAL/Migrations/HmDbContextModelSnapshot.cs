@@ -412,6 +412,36 @@ namespace HM.DAL.Migrations
                     b.ToTable("ProductInstanceStatistics", (string)null);
                 });
 
+            modelBuilder.Entity("HM.DAL.Entities.ProductInstanceStatistics", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("NumberOfPurchases")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductInstanceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductStatisticsId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalRevenue")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductInstanceId");
+
+                    b.HasIndex("ProductStatisticsId");
+
+                    b.ToTable("ProductInstanceStatistics");
+                });
+
             modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
                 {
                     b.Property<int>("Id")

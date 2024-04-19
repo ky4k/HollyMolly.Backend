@@ -432,6 +432,7 @@ public class StatisticsService(
             logger.LogError(ex, "An error occurred while adding number of feedbacks to the statistic of the product with id {productId}", productId);
         }
     }
+
     public async Task AddToProductNumberWishlistAdditionsAsync(int productId)
     {
         try

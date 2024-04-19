@@ -24,5 +24,4 @@ public interface IStatisticsService
     Task AddToProductNumberPurchasesAsync(OrderDto order);
     Task AddToProductNumberFeedbacksAsync(int productId);
     Task AddToProductNumberWishlistAdditionsAsync(int productId);
-
 }

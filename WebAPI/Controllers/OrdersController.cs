@@ -132,6 +132,7 @@ public class OrdersController(
         {
             await emailService.SendOrderCreatedEmailAsync(result.Payload, cancellationToken);
         }
+
         await statisticsService.AddToProductNumberPurchasesAsync(result.Payload);
         return CreatedAtAction(nameof(GetOrderById), new { orderId = result.Payload.Id }, result.Payload);
     }
