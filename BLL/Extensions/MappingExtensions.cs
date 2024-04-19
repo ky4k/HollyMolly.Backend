@@ -1,5 +1,6 @@
 ﻿using HM.BLL.Models;
 using HM.DAL.Entities;
+using HM.DAL.Migrations;
 
 namespace HM.BLL.Extensions;
 
@@ -38,7 +39,7 @@ public static class MappingExtensions
     public static ProductDto ToProductDto(this Product product)
     {
         List<ProductInstanceDto> productInstancesDto = [];
-        foreach (ProductInstance productInstance in product.ProductInstances)
+        foreach (HM.DAL.Entities.ProductInstance productInstance in product.ProductInstances)
         {
             productInstancesDto.Add(productInstance.ToProductInstanceDto());
         }
@@ -55,7 +56,7 @@ public static class MappingExtensions
         };
     }
 
-    public static ProductInstanceDto ToProductInstanceDto(this ProductInstance productInstance)
+    public static ProductInstanceDto ToProductInstanceDto(this HM.DAL.Entities.ProductInstance productInstance)
     {
         var images = new List<ProductImageDto>();
         foreach (var image in productInstance.Images)
@@ -85,7 +86,7 @@ public static class MappingExtensions
         };
     }
 
-    private static ProductImageDto ToProductImageDto(this ProductImage productImage)
+    private static ProductImageDto ToProductImageDto(this HM.DAL.Entities.ProductImage productImage)
     {
         return new ProductImageDto()
         {
@@ -176,6 +177,16 @@ public static class MappingExtensions
             CategoryGroupId = category.CategoryGroupId,
             Name = category.Name,
             Link = category.ImageLink
+        };
+    }
+    public static WishListDto ToWishListDto(this HM.DAL.Entities.WishList wishList)
+    {
+        return new WishListDto()
+        {
+            Id = wishList.Id,
+            UserId = wishList.UserId,
+            User = wishList.User.ToUserDto(),
+            Products = wishList.Products.Select(p => p.ToProductDto()).ToList()
         };
     }
 }

@@ -1,4 +1,5 @@
-﻿using HM.DAL.Entities;
+﻿using HM.BLL.Models;
+using HM.DAL.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,8 +10,8 @@ namespace HM.BLL.Interfaces
 {
     public interface IWishListService
     {
-        WishList CreateWishList(string userId);
-        void AddProductToWishList(int wishListId, Product product);
-        void RemoveProductFromWishList(int wishListId, int productId);
+        Task<WishListDto?> GetWishListAsync(int userId, CancellationToken cancellationToken);
+        Task<OperationResult<WishListDto>> AddProductToWishListAsync(int userId, int productId, CancellationToken cancellationToken);
+        Task<OperationResult<WishListDto>> RemoveProductFromWishListAsync(int userId, int productId, CancellationToken cancellationToken);
     }
 }
