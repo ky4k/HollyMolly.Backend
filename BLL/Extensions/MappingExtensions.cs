@@ -50,7 +50,7 @@ public static class MappingExtensions
             Description = product.Description,
             Rating = product.Rating,
             TimesRated = product.TimesRated,
-            CategoryId = product.Category.Id,
+            CategoryId = product.Category != null ? product.Category.Id : 0,
             ProductsInstances = productInstancesDto,
             Feedbacks = product.Feedbacks
         };

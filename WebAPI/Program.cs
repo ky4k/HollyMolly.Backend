@@ -130,7 +130,7 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-
+builder.Services.AddScoped<IWishListService, WishListService>();
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
