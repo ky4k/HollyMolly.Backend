@@ -4,6 +4,7 @@ using HM.DAL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HM.DAL.Migrations
 {
     [DbContext(typeof(HmDbContext))]
-    partial class HmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240418205100_AddStatistics")]
+    partial class AddStatistics
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -443,7 +446,8 @@ namespace HM.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductId")
+                        .IsUnique();
 
                     b.ToTable("ProductStatistics");
                 });
@@ -813,8 +817,8 @@ namespace HM.DAL.Migrations
             modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
                 {
                     b.HasOne("HM.DAL.Entities.Product", "Product")
-                        .WithMany("ProductStatistics")
-                        .HasForeignKey("ProductId")
+                        .WithOne("ProductStatistics")
+                        .HasForeignKey("HM.DAL.Entities.ProductStatistics", "ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -922,7 +926,8 @@ namespace HM.DAL.Migrations
 
                     b.Navigation("ProductInstances");
 
-                    b.Navigation("ProductStatistics");
+                    b.Navigation("ProductStatistics")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductInstance", b =>

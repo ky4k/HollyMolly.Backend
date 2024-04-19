@@ -68,7 +68,7 @@ public class NewsSubscriptionsController(
     }
 
     /// <summary>
-    /// Allow to send news to all subscribers.
+    /// Allow administrators to send news to all subscribers.
     /// </summary>
     /// <param name="subject">News subjects.</param>
     /// <param name="bodyTextHtml">News text. Text can be formatted by using HTML tags.</param>

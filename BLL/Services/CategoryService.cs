@@ -147,6 +147,13 @@ public class CategoryService(
                 ?.ToCategoryDto();
     }
 
+    public async Task<bool> IsCategoryInCategoryGroupAsync(int categoryGroupId,
+        int categoryId, CancellationToken cancellationToken)
+    {
+        return await context.Categories
+            .AnyAsync(c => c.Id == categoryId && c.CategoryGroupId == categoryGroupId, cancellationToken);
+    }
+
     public async Task<OperationResult<CategoryDto>> CreateCategoryAsync(int categoryGroupId,
         CategoryCreateDto categoryDto, CancellationToken cancellationToken)
     {

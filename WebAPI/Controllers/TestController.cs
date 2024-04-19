@@ -8,6 +8,14 @@ namespace HM.WebAPI.Controllers;
 [ApiController]
 public class TestController : ControllerBase
 {
+    [ApiExplorerSettings(IgnoreApi = true)]
+    [Route("~/")]
+    [HttpGet]
+    public ActionResult NavigateToSwagger()
+    {
+        return Redirect($"https://{Request.Host}{Request.PathBase}/swagger/index.html");
+    }
+
     /// <summary>
     /// Allows to test API accessibility for any user.
     /// </summary>

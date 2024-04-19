@@ -4,6 +4,7 @@ using HM.DAL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HM.DAL.Migrations
 {
     [DbContext(typeof(HmDbContext))]
-    partial class HmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240419010127_UpdateStatistics")]
+    partial class UpdateStatistics
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -405,8 +408,6 @@ namespace HM.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductInstanceId");
-
                     b.HasIndex("ProductStatisticsId");
 
                     b.ToTable("ProductInstanceStatistics");
@@ -435,15 +436,10 @@ namespace HM.DAL.Migrations
                     b.Property<int>("NumberWishlistAdditions")
                         .HasColumnType("int");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
-
                     b.Property<int>("Year")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ProductId");
 
                     b.ToTable("ProductStatistics");
                 });
@@ -686,6 +682,36 @@ namespace HM.DAL.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ProductInstanceProductInstanceStatistics", b =>
+                {
+                    b.Property<int>("ProductInstanceStatisticsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductInstancesId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductInstanceStatisticsId", "ProductInstancesId");
+
+                    b.HasIndex("ProductInstancesId");
+
+                    b.ToTable("ProductInstanceProductInstanceStatistics");
+                });
+
+            modelBuilder.Entity("ProductProductStatistics", b =>
+                {
+                    b.Property<int>("ProductStatisticsId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ProductStatisticsId", "ProductsId");
+
+                    b.HasIndex("ProductsId");
+
+                    b.ToTable("ProductProductStatistics");
+                });
+
             modelBuilder.Entity("ProductWishList", b =>
                 {
                     b.Property<int>("ProductsId")
@@ -793,32 +819,13 @@ namespace HM.DAL.Migrations
 
             modelBuilder.Entity("HM.DAL.Entities.ProductInstanceStatistics", b =>
                 {
-                    b.HasOne("HM.DAL.Entities.ProductInstance", "ProductInstance")
-                        .WithMany("ProductInstanceStatistics")
-                        .HasForeignKey("ProductInstanceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("HM.DAL.Entities.ProductStatistics", "ProductStatistics")
                         .WithMany("ProductInstanceStatistics")
                         .HasForeignKey("ProductStatisticsId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("ProductInstance");
-
                     b.Navigation("ProductStatistics");
-                });
-
-            modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
-                {
-                    b.HasOne("HM.DAL.Entities.Product", "Product")
-                        .WithMany("ProductStatistics")
-                        .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Product");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.WishList", b =>
@@ -883,6 +890,36 @@ namespace HM.DAL.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ProductInstanceProductInstanceStatistics", b =>
+                {
+                    b.HasOne("HM.DAL.Entities.ProductInstanceStatistics", null)
+                        .WithMany()
+                        .HasForeignKey("ProductInstanceStatisticsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HM.DAL.Entities.ProductInstance", null)
+                        .WithMany()
+                        .HasForeignKey("ProductInstancesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ProductProductStatistics", b =>
+                {
+                    b.HasOne("HM.DAL.Entities.ProductStatistics", null)
+                        .WithMany()
+                        .HasForeignKey("ProductStatisticsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HM.DAL.Entities.Product", null)
+                        .WithMany()
+                        .HasForeignKey("ProductsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ProductWishList", b =>
                 {
                     b.HasOne("HM.DAL.Entities.Product", null)
@@ -921,8 +958,6 @@ namespace HM.DAL.Migrations
                     b.Navigation("Feedbacks");
 
                     b.Navigation("ProductInstances");
-
-                    b.Navigation("ProductStatistics");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductInstance", b =>
@@ -930,8 +965,6 @@ namespace HM.DAL.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("OrderRecords");
-
-                    b.Navigation("ProductInstanceStatistics");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>

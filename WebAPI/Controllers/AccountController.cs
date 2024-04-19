@@ -49,7 +49,7 @@ public class AccountController(
     }
 
     /// <summary>
-    /// Allows to register a new user.
+    /// Allows a user to confirm email using token that was sent to email.
     /// </summary>
     /// <param name="userId">Id of the user to confirm email.</param>
     /// <param name="confirmationEmailToken">A token that was send to the user email.</param>

@@ -18,7 +18,7 @@ public class EmailService(
     private const string OrderCreatedTemplate = "<p>Ваше замовлення з ідентифікатором {{orderId}} було успішно створено. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"https://holly-molly.vercel.app/\" href=\"https://holly-molly.vercel.app/\">https://holly-molly.vercel.app/</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string OrderStatusUpdatedSubject = "Статус замовлення оновлено";
     private const string OrderStatusUpdatedTemplate = "<p>Статус вашого замовлення з ідентифікатором №{{orderId}} було змінено на {{newStatus}}. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"https://holly-molly.vercel.app/\" href=\"https://holly-molly.vercel.app/\">https://holly-molly.vercel.app/</a></p></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
-    private const string NewsTemplate = "{{news}}<p>____<br />Відписатися від новин можна за посиланням: https://holly-molly.vercel.app/?token={{token}}</p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
+    private const string NewsTemplate = "{{news}}<p>____<br />Відписатися від новин можна за посиланням: <a title=\"https://holly-molly.vercel.app/?token={{token}}\" href=\"https://holly-molly.vercel.app/?token={{token}}\">https://holly-molly.vercel.app/?token={{token}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
 
     public async Task<OperationResult> SendRegistrationResultEmailAsync(string email,
         ConfirmationEmailDto confirmationEmail, CancellationToken cancellationToken)

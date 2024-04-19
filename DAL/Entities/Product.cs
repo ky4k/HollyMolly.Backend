@@ -9,7 +9,7 @@ public class Product
     public int TimesRated { get; set; }
     public int CategoryId { get; set; }
     public Category Category { get; set; } = null!;
-    public ProductStatistics ProductStatistics { get; set; } = null!;
+    public List<ProductStatistics> ProductStatistics { get; set; } = [];
     public List<ProductInstance> ProductInstances { get; set; } = [];
     public List<ProductFeedback> Feedbacks { get; set; } = [];
     public List<WishList> WishLists { get; set; } = [];

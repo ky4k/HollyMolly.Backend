@@ -11,6 +11,7 @@ namespace HM.WebAPI.Controllers;
 [ApiController]
 public class OrdersController(
     IOrderService orderService,
+    IStatisticsService statisticsService,
     IEmailService emailService
     ) : ControllerBase
 {
@@ -131,6 +132,7 @@ public class OrdersController(
         {
             await emailService.SendOrderCreatedEmailAsync(result.Payload, cancellationToken);
         }
+        await statisticsService.AddToProductNumberPurchases(result.Payload);
         return CreatedAtAction(nameof(GetOrderById), new { orderId = result.Payload.Id }, result.Payload);
     }
 

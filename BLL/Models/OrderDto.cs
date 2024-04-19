@@ -5,14 +5,14 @@ public class OrderDto
     public int Id { get; set; }
     public CustomerDto Customer { get; set; } = null!;
     public List<OrderRecordDto> OrderRecords { get; set; } = [];
-    public decimal TotalPrice
+    public decimal TotalCost
     {
         get
         {
             decimal total = 0;
             foreach (var record in OrderRecords)
             {
-                total += record.Total;
+                total += record.TotalCost;
             }
             return total;
         }
