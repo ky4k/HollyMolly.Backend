@@ -140,12 +140,12 @@ namespace HM.DAL.Migrations
                 column: "ProductId",
                 unique: true);
 
-            migrationBuilder.InsertData(
-                table: "ProductInstance",
-                columns: new[] { "Id", "ProductId", "Price", "StockQuantity" },
-                values: new object[] { 1, 1, 58.4, 1000 });
+            //migrationBuilder.InsertData(
+            //    table: "ProductInstance",
+            //    columns: new[] { "Id", "ProductId", "Price", "StockQuantity" },
+            //    values: new object[] { 1, 1, 58.4, 1000 });
 
-            migrationBuilder.Sql("UPDATE OrderRecord SET ProductInstanceId = 1");
+            //migrationBuilder.Sql("UPDATE OrderRecord SET ProductInstanceId = 1");
 
             migrationBuilder.AddForeignKey(
                 name: "FK_OrderRecord_ProductInstance_ProductInstanceId",

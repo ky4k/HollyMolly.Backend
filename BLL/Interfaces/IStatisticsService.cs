@@ -20,9 +20,8 @@ public interface IStatisticsService
     Task<IEnumerable<EmailLog>> GetEmailLogsAsync(string? recipientEmail, string? subject,
         DateOnly? startDateTime, DateOnly? endDateTime, CancellationToken cancellationToken);
 
-    Task AddToProductNumberViews(int productId);
-    Task AddToProductNumberPurchases(OrderDto order);
-    Task AddToProductNumberFeedbacks(int productId);
-    Task AddToProductNumberWishlistAdditions(int productId);
-
+    Task AddToProductNumberViewsAsync(int productId);
+    Task AddToProductNumberPurchasesAsync(OrderDto order);
+    Task AddToProductNumberFeedbacksAsync(int productId);
+    Task AddToProductNumberWishlistAdditionsAsync(int productId);
 }

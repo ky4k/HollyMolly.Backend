@@ -378,7 +378,7 @@ public class StatisticsService(
         return await emails.ToListAsync(cancellationToken);
     }
 
-    public async Task AddToProductNumberViews(int productId)
+    public async Task AddToProductNumberViewsAsync(int productId)
     {
         ProductStatistics productStatistic = await GetProductStatisticsAsync(productId);
         productStatistic.NumberViews++;
@@ -392,7 +392,7 @@ public class StatisticsService(
         }
     }
 
-    public async Task AddToProductNumberPurchases(OrderDto order)
+    public async Task AddToProductNumberPurchasesAsync(OrderDto order)
     {
         try
         {
@@ -419,7 +419,7 @@ public class StatisticsService(
         }
     }
 
-    public async Task AddToProductNumberFeedbacks(int productId)
+    public async Task AddToProductNumberFeedbacksAsync(int productId)
     {
         try
         {
@@ -432,12 +432,13 @@ public class StatisticsService(
             logger.LogError(ex, "An error occurred while adding number of feedbacks to the statistic of the product with id {productId}", productId);
         }
     }
-    public async Task AddToProductNumberWishlistAdditions(int productId)
+
+    public async Task AddToProductNumberWishlistAdditionsAsync(int productId)
     {
         try
         {
             ProductStatistics productStatistic = await GetProductStatisticsAsync(productId);
-            productStatistic.NumberFeedbacks++;
+            productStatistic.NumberWishlistAdditions++;
             await context.SaveChangesAsync();
         }
         catch (Exception ex)

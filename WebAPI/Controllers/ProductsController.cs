@@ -56,7 +56,7 @@ public class ProductsController(
         {
             return NotFound();
         }
-        await statisticsService.AddToProductNumberViews(productId);
+        await statisticsService.AddToProductNumberViewsAsync(productId);
         return Ok(productDto);
     }
 
@@ -291,7 +291,7 @@ public class ProductsController(
         OperationResult result = await productService.AddFeedbackAsync(productId, userId, feedback, cancellationToken);
         if (result.Succeeded)
         {
-            await statisticsService.AddToProductNumberFeedbacks(productId);
+            await statisticsService.AddToProductNumberFeedbacksAsync(productId);
             return NoContent();
         }
         else

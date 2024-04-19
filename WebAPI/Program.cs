@@ -134,6 +134,7 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INewsSubscriptionService, NewsSubscriptionService>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+builder.Services.AddScoped<IWishListService, WishListService>();
 
 var app = builder.Build();
 

@@ -1,11 +1,11 @@
-﻿using HM.DAL.Entities;
+﻿﻿using HM.BLL.Models;
 
 namespace HM.BLL.Interfaces
 {
     public interface IWishListService
     {
-        WishList CreateWishList(string userId);
-        void AddProductToWishList(int wishListId, Product product);
-        void RemoveProductFromWishList(int wishListId, int productId);
+        Task<WishListDto?> GetWishListAsync(string userId, CancellationToken cancellationToken);
+        Task<OperationResult<WishListDto>> AddProductToWishListAsync(string userId, int productId, CancellationToken cancellationToken);
+        Task<OperationResult<WishListDto>> RemoveProductFromWishListAsync(string userId, int productId, CancellationToken cancellationToken);
     }
 }

@@ -49,7 +49,7 @@ public static class MappingExtensions
             Description = product.Description,
             Rating = product.Rating,
             TimesRated = product.TimesRated,
-            CategoryId = product.Category.Id,
+            CategoryId = product.CategoryId,
             ProductsInstances = productInstancesDto,
             Feedbacks = product.Feedbacks
         };
@@ -201,6 +201,15 @@ public static class MappingExtensions
             CategoryGroupId = category.CategoryGroupId,
             Name = category.Name,
             Link = category.ImageLink
+        };
+    }
+    public static WishListDto ToWishListDto(this WishList wishList)
+    {
+        return new WishListDto()
+        {
+            Id = wishList.Id,
+            UserId = wishList.UserId,
+            Products = wishList.Products.Select(p => p.ToProductDto()).ToList()
         };
     }
 }
