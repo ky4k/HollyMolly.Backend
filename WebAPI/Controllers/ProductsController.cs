@@ -11,12 +11,15 @@ namespace HM.WebAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class ProductsController(
-    IProductService productService
+    IProductService productService,
+    IStatisticsService statisticsService
     ) : ControllerBase
 {
     /// <summary>
     /// Allows to retrieve a list of products with optional filtering and sorting options.
     /// </summary>
+    /// <param name="categoryGroupId">Optional. Filters products by category group. Has effect only
+    /// if <paramref name="categoryId"/> is not specified.</param>
     /// <param name="categoryId">Optional. Filters products by category.</param>
     /// <param name="name">Optional. Filters products by name.</param>
     /// <param name="sortByPrice">Optional. If true, sorts products by price.</param>
@@ -27,11 +30,12 @@ public class ProductsController(
     [Route("")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategory(int? categoryId = null,
-        string? name = null, bool sortByPrice = false, bool sortByRating = false, bool sortAsc = true)
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategory(
+        int? categoryGroupId, int? categoryId = null, string? name = null,
+        bool sortByPrice = false, bool sortByRating = false, bool sortAsc = true)
     {
-        return Ok(await productService.GetProductsAsync(categoryId, name, sortByPrice, sortByRating,
-            sortAsc, Request.HttpContext.RequestAborted));
+        return Ok(await productService.GetProductsAsync(categoryGroupId, categoryId,
+            name, sortByPrice, sortByRating, sortAsc, Request.HttpContext.RequestAborted));
     }
 
     /// <summary>
@@ -48,7 +52,12 @@ public class ProductsController(
     public async Task<ActionResult<ProductDto>> GetProductById(int productId, CancellationToken cancellationToken)
     {
         ProductDto? productDto = await productService.GetProductByIdAsync(productId, cancellationToken);
-        return productDto == null ? NotFound() : Ok(productDto);
+        if(productDto == null)
+        {
+            return NotFound();
+        }
+        await statisticsService.AddToProductNumberViews(productId);
+        return Ok(productDto);
     }
 
     /// <summary>
@@ -254,22 +263,24 @@ public class ProductsController(
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<IEnumerable<ProductFeedback>>> GetProductFeedback(
+    public async Task<ActionResult<IEnumerable<ProductFeedbackDto>>> GetProductFeedback(
         int productId, CancellationToken cancellationToken)
     {
-        OperationResult<IEnumerable<ProductFeedback>> result = await productService
+        OperationResult<IEnumerable<ProductFeedbackDto>> result = await productService
             .GetProductFeedbackAsync(productId, cancellationToken);
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
 
     /// <summary>
-    /// Allows to add feedback for a specific product.
+    /// Allows registered users to add feedback for a specific product.
     /// </summary>
     /// <param name="productId">The ID of the product to add feedback for.</param>
     /// <param name="feedback">The feedback information to be added.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="204">Indicates that the feedback was successfully added to the product.</response>
     /// <response code="400">Indicates that the request could not be processed due to invalid input.</response>
+    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
+    [Authorize]
     [Route("feedback/{productId}")]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -278,6 +289,34 @@ public class ProductsController(
     {
         string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         OperationResult result = await productService.AddFeedbackAsync(productId, userId, feedback, cancellationToken);
-        return result.Succeeded ? NoContent() : BadRequest(result.Message);
+        if (result.Succeeded)
+        {
+            await statisticsService.AddToProductNumberFeedbacks(productId);
+            return NoContent();
+        }
+        else
+        {
+            return BadRequest(result.Message);
+        }
+    }
+
+    /// <summary>
+    /// Allows administrator to delete product feedback by its ID.
+    /// </summary>
+    /// <param name="productId">The ID of the product to delete.</param>
+    /// <param name="feedbackId">The ID of the product to delete.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="204">Indicates that the product was successfully deleted.</response>
+    /// <response code="400">Indicates that the request to delete the product was invalid.</response>
+    /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
+    [Authorize(Roles = DefaultRoles.Administrator)]
+    [Route("feedback/{productId}/{feedbackId}")]
+    [HttpDelete]
+    public async Task<ActionResult> DeleteFeedback(int productId, int feedbackId, CancellationToken cancellationToken)
+    {
+        OperationResult response = await productService
+            .DeleteProductFeedbackAsync(productId, feedbackId, cancellationToken);
+        return response.Succeeded ? NoContent() : BadRequest(response.Message);
     }
 }

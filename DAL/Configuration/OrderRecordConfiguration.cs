@@ -11,5 +11,7 @@ public class OrderRecordConfiguration : IEntityTypeConfiguration<OrderRecord>
         builder.HasKey(o => o.Id);
         builder.Property(o => o.Price)
             .HasPrecision(10, 2);
+        builder.Property(o => o.Discount)
+            .HasPrecision(10, 2);
     }
 }

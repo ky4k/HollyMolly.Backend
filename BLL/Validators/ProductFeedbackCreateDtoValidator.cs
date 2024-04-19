@@ -7,6 +7,10 @@ public class ProductFeedbackCreateDtoValidator : AbstractValidator<ProductFeedba
 {
     public ProductFeedbackCreateDtoValidator()
     {
+        RuleFor(feedback => feedback.AuthorName)
+            .NotEmpty()
+                .WithMessage("Name is required");
+
         RuleFor(feedback => feedback.Review)
            .NotEmpty()
            .Length(4, 2000)

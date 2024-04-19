@@ -86,7 +86,8 @@ public class OrderService(
                 ProductInstanceId = productInstance.Id,
                 ProductName = product.Name,
                 Price = productInstance.Price,
-                Quantity = orderRecordDto.Quantity
+                Quantity = orderRecordDto.Quantity,
+                Discount = orderRecordDto.Quantity * productInstance.GetCombinedDiscount()
             };
 
             productInstance.StockQuantity -= orderRecordDto.Quantity;

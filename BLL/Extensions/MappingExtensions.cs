@@ -67,21 +67,45 @@ public static class MappingExtensions
             Id = productInstance.Id,
             StockQuantity = productInstance.StockQuantity,
             Price = productInstance.Price,
+            Status = productInstance.Status,
+            IsNewCollection = productInstance.IsNewCollection,
             SKU = productInstance.SKU,
             Color = productInstance.Color,
             Size = productInstance.Size,
-            Discount = productInstance.Discount?.ToDiscountDto(),
+            Material = productInstance.Material,
+            AbsoluteDiscount = productInstance.AbsoluteDiscount,
+            PercentageDiscount = productInstance.PercentageDiscount,
             Images = images
         };
     }
 
-    public static DiscountDto ToDiscountDto(this Discount discount)
+    public static ProductInstance ToProductInstance(this ProductInstanceCreateDto productInstanceDto)
     {
-        return new DiscountDto()
+        return new ProductInstance()
         {
-            Id = discount.Id,
-            AbsoluteDiscount = discount.AbsoluteDiscount,
-            PercentageDiscount = discount.PercentageDiscount
+            StockQuantity = productInstanceDto.StockQuantity,
+            Price = productInstanceDto.Price,
+            Status = productInstanceDto.Status,
+            IsNewCollection = productInstanceDto.IsNewCollection,
+            SKU = productInstanceDto.SKU,
+            Color = productInstanceDto.Color,
+            Size = productInstanceDto.Size,
+            Material = productInstanceDto.Material,
+            AbsoluteDiscount = productInstanceDto.AbsoluteDiscount,
+            PercentageDiscount = productInstanceDto.PercentageDiscount
+        };
+    }
+
+    public static ProductFeedbackDto ToProductFeedbackDto(this ProductFeedback productFeedback)
+    {
+        return new ProductFeedbackDto()
+        {
+            Id= productFeedback.Id,
+            ProductId = productFeedback.ProductId,
+            AuthorName = productFeedback.AuthorName,
+            Created = productFeedback.Created,
+            Rating = productFeedback.Rating,
+            Review = productFeedback.Review
         };
     }
 
@@ -147,7 +171,8 @@ public static class MappingExtensions
             ProductInstanceId = orderRecord.ProductInstanceId,
             ProductName = orderRecord.ProductName,
             Quantity = orderRecord.Quantity,
-            Price = orderRecord.Price
+            Price = orderRecord.Price,
+            Discount = orderRecord.Discount
         };
     }
 

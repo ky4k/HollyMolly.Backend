@@ -9,11 +9,13 @@ public class ProductInstanceCreateDtoValidator : AbstractValidator<ProductInstan
     {
         RuleFor(product => product.Price)
             .GreaterThan(0)
-            .WithMessage("Product price must be greater than 0.");
+                .WithMessage("Product price must be greater than 0.")
+            .LessThan(1000000)
+                .WithMessage("Product price must be less than 1000000.");
 
         RuleFor(product => product.StockQuantity)
             .GreaterThanOrEqualTo(0)
-            .WithMessage("Stock Quantity must be greater than or equal to 0.");
+                .WithMessage("Stock Quantity must be greater than or equal to 0.");
 
         RuleFor(product => product.SKU)
             .MinimumLength(3)
