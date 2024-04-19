@@ -15,8 +15,8 @@ public interface ICategoryService
         IFormFile image, string baseUrlPath, CancellationToken cancellationToken);
     Task<OperationResult> DeleteCategoryGroupAsync(int categoryGroupId, CancellationToken cancellationToken);
 
-    Task<CategoryDto?> GetCategoryByIdAsync(int categoryGroupId,
-        int categoryId, CancellationToken cancellationToken);
+    Task<CategoryDto?> GetCategoryByIdAsync(int categoryGroupId, int categoryId, CancellationToken cancellationToken);
+    Task<bool> IsCategoryInCategoryGroupAsync(int categoryGroupId, int categoryId, CancellationToken cancellationToken);
     Task<OperationResult<CategoryDto>> CreateCategoryAsync(int categoryGroupId,
         CategoryCreateDto categoryDto, CancellationToken cancellationToken);
     Task<OperationResult> UpdateCategoryAsync(int categoryGroupId, int categoryId,

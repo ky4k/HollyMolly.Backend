@@ -1,6 +1,5 @@
 ﻿using HM.BLL.Models;
 using HM.DAL.Entities;
-using HM.DAL.Migrations;
 
 namespace HM.BLL.Extensions;
 
@@ -39,7 +38,7 @@ public static class MappingExtensions
     public static ProductDto ToProductDto(this Product product)
     {
         List<ProductInstanceDto> productInstancesDto = [];
-        foreach (HM.DAL.Entities.ProductInstance productInstance in product.ProductInstances)
+        foreach (ProductInstance productInstance in product.ProductInstances)
         {
             productInstancesDto.Add(productInstance.ToProductInstanceDto());
         }
@@ -50,13 +49,13 @@ public static class MappingExtensions
             Description = product.Description,
             Rating = product.Rating,
             TimesRated = product.TimesRated,
-            CategoryId = product.Category != null ? product.Category.Id : 0,
+            CategoryId = product.CategoryId,
             ProductsInstances = productInstancesDto,
             Feedbacks = product.Feedbacks
         };
     }
 
-    public static ProductInstanceDto ToProductInstanceDto(this HM.DAL.Entities.ProductInstance productInstance)
+    public static ProductInstanceDto ToProductInstanceDto(this ProductInstance productInstance)
     {
         var images = new List<ProductImageDto>();
         foreach (var image in productInstance.Images)
@@ -68,25 +67,49 @@ public static class MappingExtensions
             Id = productInstance.Id,
             StockQuantity = productInstance.StockQuantity,
             Price = productInstance.Price,
+            Status = productInstance.Status,
+            IsNewCollection = productInstance.IsNewCollection,
             SKU = productInstance.SKU,
             Color = productInstance.Color,
             Size = productInstance.Size,
-            Discount = productInstance.Discount?.ToDiscountDto(),
+            Material = productInstance.Material,
+            AbsoluteDiscount = productInstance.AbsoluteDiscount,
+            PercentageDiscount = productInstance.PercentageDiscount,
             Images = images
         };
     }
 
-    public static DiscountDto ToDiscountDto(this Discount discount)
+    public static ProductInstance ToProductInstance(this ProductInstanceCreateDto productInstanceDto)
     {
-        return new DiscountDto()
+        return new ProductInstance()
         {
-            Id = discount.Id,
-            AbsoluteDiscount = discount.AbsoluteDiscount,
-            PercentageDiscount = discount.PercentageDiscount
+            StockQuantity = productInstanceDto.StockQuantity,
+            Price = productInstanceDto.Price,
+            Status = productInstanceDto.Status,
+            IsNewCollection = productInstanceDto.IsNewCollection,
+            SKU = productInstanceDto.SKU,
+            Color = productInstanceDto.Color,
+            Size = productInstanceDto.Size,
+            Material = productInstanceDto.Material,
+            AbsoluteDiscount = productInstanceDto.AbsoluteDiscount,
+            PercentageDiscount = productInstanceDto.PercentageDiscount
         };
     }
 
-    private static ProductImageDto ToProductImageDto(this HM.DAL.Entities.ProductImage productImage)
+    public static ProductFeedbackDto ToProductFeedbackDto(this ProductFeedback productFeedback)
+    {
+        return new ProductFeedbackDto()
+        {
+            Id= productFeedback.Id,
+            ProductId = productFeedback.ProductId,
+            AuthorName = productFeedback.AuthorName,
+            Created = productFeedback.Created,
+            Rating = productFeedback.Rating,
+            Review = productFeedback.Review
+        };
+    }
+
+    private static ProductImageDto ToProductImageDto(this ProductImage productImage)
     {
         return new ProductImageDto()
         {
@@ -148,7 +171,8 @@ public static class MappingExtensions
             ProductInstanceId = orderRecord.ProductInstanceId,
             ProductName = orderRecord.ProductName,
             Quantity = orderRecord.Quantity,
-            Price = orderRecord.Price
+            Price = orderRecord.Price,
+            Discount = orderRecord.Discount
         };
     }
 
@@ -179,13 +203,12 @@ public static class MappingExtensions
             Link = category.ImageLink
         };
     }
-    public static WishListDto ToWishListDto(this HM.DAL.Entities.WishList wishList)
+    public static WishListDto ToWishListDto(this WishList wishList)
     {
         return new WishListDto()
         {
             Id = wishList.Id,
             UserId = wishList.UserId,
-            User = wishList.User.ToUserDto(),
             Products = wishList.Products.Select(p => p.ToProductDto()).ToList()
         };
     }

@@ -5,47 +5,40 @@ using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace HM.BLL.Services
 {
     public class WishListService(HmDbContext context,
         ILogger<OrderService> logger) : IWishListService
     {
-        public async Task<WishListDto?> GetWishListAsync(int userId, CancellationToken cancellationToken)
+        public async Task<WishListDto?> GetWishListAsync(string userId, CancellationToken cancellationToken)
         {
             var wishList = await context.WishLists
                 .Include(wl => wl.Products)
+                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(wl => wl.UserId == userId, cancellationToken);
-            if (wishList == null)
-            {
-                return null;
-            }
             return wishList?.ToWishListDto();
         }
 
-        public async Task<OperationResult<WishListDto>> AddProductToWishListAsync(int userId, int productId, CancellationToken cancellationToken)
+        public async Task<OperationResult<WishListDto>> AddProductToWishListAsync(string userId, int productId, CancellationToken cancellationToken)
         {
             var existingWishList = await context.WishLists
                 .Include(wl => wl.Products)
+                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(wl => wl.UserId == userId, cancellationToken);
 
             if (existingWishList == null)
             {
                 existingWishList = new WishList { UserId = userId };
-                context.WishLists.Add(existingWishList);
+                await context.WishLists.AddAsync(existingWishList, cancellationToken);
             }
 
-            if (existingWishList.Products.Any(p => p.Id == productId))
+            if (existingWishList.Products.Exists(p => p.Id == productId))
             {
                 return new OperationResult<WishListDto>(false, "Product already exists in the wish list.");
             }
 
-            var product = await context.Products.FindAsync(productId);
+            var product = await context.Products.FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
 
             if (product == null)
             {
@@ -66,10 +59,11 @@ namespace HM.BLL.Services
             }
         }
 
-        public async Task<OperationResult<WishListDto>> RemoveProductFromWishListAsync(int userId, int productId, CancellationToken cancellationToken)
+        public async Task<OperationResult<WishListDto>> RemoveProductFromWishListAsync(string userId, int productId, CancellationToken cancellationToken)
         {
             var wishList = await context.WishLists
                 .Include(wl => wl.Products)
+                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(wl => wl.UserId == userId, cancellationToken);
 
             if (wishList == null)
@@ -77,7 +71,7 @@ namespace HM.BLL.Services
                 return new OperationResult<WishListDto>(false, "Wish list not found.");
             }
 
-            var productToRemove = wishList.Products.FirstOrDefault(p => p.Id == productId);
+            var productToRemove = wishList.Products.Find(p => p.Id == productId);
 
             if (productToRemove == null)
             {

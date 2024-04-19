@@ -4,6 +4,7 @@ using HM.BLL.Models;
 using HM.DAL.Constants;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -95,6 +96,41 @@ public class AccountService(
         }
     }
 
+    public async Task<OperationResult<ConfirmationEmailDto>> GetConfirmationEmailKey(string userId)
+    {
+        User? user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new OperationResult<ConfirmationEmailDto>(false, "User with such an id does not exist.");
+        }
+        try
+        {
+            string confirmationEmailKey = await userManager.GenerateEmailConfirmationTokenAsync(user);
+            ConfirmationEmailDto confirmationEmailDto = new()
+            {
+                UserId = user.Id,
+                Token = confirmationEmailKey
+            };
+            return new OperationResult<ConfirmationEmailDto>(true, confirmationEmailDto);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while creating email confirmation token.");
+            return new OperationResult<ConfirmationEmailDto>(false, "Confirmation email token was not created.");
+        }
+    }
+
+    public async Task<OperationResult> ConfirmEmailAsync(string userId, string confirmationEmailKey)
+    {
+        User? user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new OperationResult<ConfirmationEmailDto>(false, "User with such an id does not exist.");
+        }
+        var result = await userManager.ConfirmEmailAsync(user, confirmationEmailKey);
+        return new OperationResult(result.Succeeded, string.Join(" ", result.Errors));
+    }
+
     public async Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest)
     {
         User? user = await userManager.FindByEmailAsync(loginRequest.Email.ToLower());
@@ -109,19 +145,40 @@ public class AccountService(
         return await GetLoginResultAsync(user);
     }
 
-    public async Task<OperationResult<LoginResponse>> LoginOidcUserAsync(string email)
+    public async Task<OperationResult<string>> GetOidcTokenAsync(string email)
     {
-        if (email == null)
-        {
-            return new OperationResult<LoginResponse>(false, "Login has failed.");
-        }
-
         User? user = await userManager.FindByEmailAsync(email.ToLower());
         if (user == null)
         {
-            return new OperationResult<LoginResponse>(false, "No user with such a email exists.");
+            return new OperationResult<string>(false, "No user with such a email exists.", "");
         }
-        return await GetLoginResultAsync(user);
+        try
+        {
+            string oidcToken = Guid.NewGuid().ToString();
+            user.OidcToken = oidcToken;
+            await userManager.UpdateAsync(user);
+            return new OperationResult<string>(true, "", oidcToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while creating OIDC token");
+            return new OperationResult<string>(false, "OIDC token was not created");
+        }
+    }
+
+    public async Task<OperationResult<LoginResponse>> LoginOidcUserAsync(string oidcToken)
+    {
+        User? user = userManager.Users
+            .FirstOrDefault(u => u.OidcToken != null && u.OidcToken == oidcToken);
+        if (user == null)
+        {
+            return new OperationResult<LoginResponse>(false, "Login failed.");
+        }
+        else
+        {
+            user.OidcToken = null;
+            return await GetLoginResultAsync(user);
+        }
     }
 
     private async Task<OperationResult<LoginResponse>> GetLoginResultAsync(User user)
@@ -207,23 +264,82 @@ public class AccountService(
         }
     }
 
-    public async Task<OperationResult> ChangePasswordAsync(string userId, ChangePasswordDto passwords)
+    public async Task<OperationResult<ResetPasswordTokenDto>> ChangePasswordAsync(string userId, ChangePasswordDto passwords)
     {
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return new OperationResult(false, "User with such an id does not exist.");
+            return new OperationResult<ResetPasswordTokenDto>(false, "User with such an id does not exist.");
         }
         var result = await userManager.ChangePasswordAsync(
             user, passwords.OldPassword, passwords.NewPassword);
         if (result.Succeeded)
         {
-            return new OperationResult(true);
+            string resetKey = Guid.NewGuid().ToString();
+            ResetPasswordTokenDto resetPasswordDto = new()
+            {
+                UserId = user.Id,
+                Token = resetKey
+            };
+            await userManager.UpdateAsync(user);
+            return new OperationResult<ResetPasswordTokenDto>(true, resetPasswordDto);
         }
         else
         {
             var errors = string.Join(' ', result.Errors.Select(e => e.Description));
-            return new OperationResult(false, $"Password has not been changed: {errors}");
+            return new OperationResult<ResetPasswordTokenDto>(false, $"Password has not been changed: {errors}");
+        }
+    }
+
+    public async Task<OperationResult<ResetPasswordTokenDto>> CreatePasswordResetKeyAsync(string email)
+    {
+        User? user = await userManager.FindByEmailAsync(email.ToLower());
+        if (user == null)
+        {
+            return new OperationResult<ResetPasswordTokenDto>(false, $"User with the email {email} does not exist");
+        }
+        try
+        {
+            string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);
+            ResetPasswordTokenDto resetPasswordKeyDto = new()
+            {
+                UserId = user.Id,
+                Token = resetToken
+            };
+            return new OperationResult<ResetPasswordTokenDto>(true, resetPasswordKeyDto);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An exception occurred while creating password reset token for user " +
+                "with Id {userId}", user.Id);
+            return new OperationResult<ResetPasswordTokenDto>(false, "Reset token was not created.");
+        }
+    }
+
+    public async Task<OperationResult<UserDto>> ResetPasswordAsync(string userId, ResetPasswordDto resetPassword)
+    {
+        User? user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new OperationResult<UserDto>(false, "No user with such an id exist.");
+        }
+        if (!await userManager.VerifyUserTokenAsync(user, userManager.Options.Tokens.PasswordResetTokenProvider,
+            "ResetPassword", resetPassword.ResetToken))
+        {
+            return new OperationResult<UserDto>(false, "Reset token is incorrect.");
+        }
+        try
+        {
+            await userManager.RemovePasswordAsync(user);
+            await userManager.AddPasswordAsync(user, resetPassword.NewPassword);
+            user.IsOidcUser = false;
+            await userManager.UpdateAsync(user);
+            return new OperationResult<UserDto>(true, user.ToUserDto());
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while resetting the password.");
+            return new OperationResult<UserDto>(false, "Password has not been reset.");
         }
     }
 }

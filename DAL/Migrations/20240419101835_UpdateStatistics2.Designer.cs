@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HM.DAL.Migrations
 {
     [DbContext(typeof(HmDbContext))]
-    [Migration("20240419160455_ChangeTypeOfUserIdInWishlist")]
-    partial class ChangeTypeOfUserIdInWishlist
+    [Migration("20240419101835_UpdateStatistics2")]
+    partial class UpdateStatistics2
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -123,7 +123,7 @@ namespace HM.DAL.Migrations
                     b.ToTable("CustomerInfo");
                 });
 
-            modelBuilder.Entity("HM.DAL.Entities.Discount", b =>
+            modelBuilder.Entity("HM.DAL.Entities.EmailLog", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -131,17 +131,41 @@ namespace HM.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("AbsoluteDiscount")
-                        .HasPrecision(8, 2)
-                        .HasColumnType("decimal(8,2)");
+                    b.Property<string>("RecipientEmail")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<decimal>("PercentageDiscount")
-                        .HasPrecision(8, 4)
-                        .HasColumnType("decimal(8,4)");
+                    b.Property<DateTimeOffset>("SendAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.ToTable("Discount");
+                    b.ToTable("EmailLogs");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.NewsSubscription", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("RemoveToken")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("NewsSubscriptions");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Order", b =>
@@ -184,6 +208,10 @@ namespace HM.DAL.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<decimal>("Discount")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
 
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
@@ -251,6 +279,10 @@ namespace HM.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("AuthorName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<DateTimeOffset>("Created")
                         .HasColumnType("datetimeoffset");
 
@@ -310,11 +342,22 @@ namespace HM.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<decimal>("AbsoluteDiscount")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
+
                     b.Property<string>("Color")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("DiscountId")
-                        .HasColumnType("int");
+                    b.Property<bool>("IsNewCollection")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Material")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PercentageDiscount")
+                        .HasPrecision(8, 4)
+                        .HasColumnType("decimal(8,4)");
 
                     b.Property<decimal>("Price")
                         .HasPrecision(10, 2)
@@ -329,16 +372,47 @@ namespace HM.DAL.Migrations
                     b.Property<string>("Size")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Status")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("StockQuantity")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DiscountId");
-
                     b.HasIndex("ProductId");
 
                     b.ToTable("ProductInstance");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.ProductInstanceStatistics", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("NumberOfPurchases")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductInstanceId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ProductStatisticsId")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalRevenue")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductInstanceId");
+
+                    b.HasIndex("ProductStatisticsId");
+
+                    b.ToTable("ProductInstanceStatistics");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
@@ -349,7 +423,13 @@ namespace HM.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("NumberPurchases")
+                    b.Property<int>("Day")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Month")
+                        .HasColumnType("int");
+
+                    b.Property<int>("NumberFeedbacks")
                         .HasColumnType("int");
 
                     b.Property<int>("NumberViews")
@@ -361,10 +441,12 @@ namespace HM.DAL.Migrations
                     b.Property<int>("ProductId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId")
-                        .IsUnique();
+                    b.HasIndex("ProductId");
 
                     b.ToTable("ProductStatistics");
                 });
@@ -447,6 +529,9 @@ namespace HM.DAL.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
 
+                    b.Property<string>("OidcToken")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
 
@@ -487,16 +572,13 @@ namespace HM.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId1")
+                    b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId1");
+                    b.HasIndex("UserId");
 
                     b.ToTable("WishLists");
                 });
@@ -703,26 +785,39 @@ namespace HM.DAL.Migrations
 
             modelBuilder.Entity("HM.DAL.Entities.ProductInstance", b =>
                 {
-                    b.HasOne("HM.DAL.Entities.Discount", "Discount")
-                        .WithMany("ProductInstances")
-                        .HasForeignKey("DiscountId");
-
                     b.HasOne("HM.DAL.Entities.Product", "Product")
                         .WithMany("ProductInstances")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Discount");
-
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.ProductInstanceStatistics", b =>
+                {
+                    b.HasOne("HM.DAL.Entities.ProductInstance", "ProductInstance")
+                        .WithMany("ProductInstanceStatistics")
+                        .HasForeignKey("ProductInstanceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("HM.DAL.Entities.ProductStatistics", "ProductStatistics")
+                        .WithMany("ProductInstanceStatistics")
+                        .HasForeignKey("ProductStatisticsId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("ProductInstance");
+
+                    b.Navigation("ProductStatistics");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
                 {
                     b.HasOne("HM.DAL.Entities.Product", "Product")
-                        .WithOne("ProductStatistics")
-                        .HasForeignKey("HM.DAL.Entities.ProductStatistics", "ProductId")
+                        .WithMany("ProductStatistics")
+                        .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -733,7 +828,7 @@ namespace HM.DAL.Migrations
                 {
                     b.HasOne("HM.DAL.Entities.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId1")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -816,11 +911,6 @@ namespace HM.DAL.Migrations
                     b.Navigation("Categories");
                 });
 
-            modelBuilder.Entity("HM.DAL.Entities.Discount", b =>
-                {
-                    b.Navigation("ProductInstances");
-                });
-
             modelBuilder.Entity("HM.DAL.Entities.Order", b =>
                 {
                     b.Navigation("Customer")
@@ -835,8 +925,7 @@ namespace HM.DAL.Migrations
 
                     b.Navigation("ProductInstances");
 
-                    b.Navigation("ProductStatistics")
-                        .IsRequired();
+                    b.Navigation("ProductStatistics");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductInstance", b =>
@@ -844,6 +933,13 @@ namespace HM.DAL.Migrations
                     b.Navigation("Images");
 
                     b.Navigation("OrderRecords");
+
+                    b.Navigation("ProductInstanceStatistics");
+                });
+
+            modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
+                {
+                    b.Navigation("ProductInstanceStatistics");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.User", b =>

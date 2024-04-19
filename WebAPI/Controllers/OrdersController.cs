@@ -10,7 +10,9 @@ namespace HM.WebAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class OrdersController(
-    IOrderService orderService
+    IOrderService orderService,
+    IStatisticsService statisticsService,
+    IEmailService emailService
     ) : ControllerBase
 {
     /// <summary>
@@ -80,6 +82,7 @@ public class OrdersController(
     /// Allows to create a new order.
     /// </summary>
     /// <param name="order">The order to create.</param>
+    /// <param name="sendEmail">A real email will be sent only if this parameter is set to true.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Indicates that the order has been successfully created and returns the created order.</response>
     /// <response code="400">Indicates that the request to create the order is invalid or incomplete.</response>
@@ -90,15 +93,15 @@ public class OrdersController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<OrderDto>> CreateOrder(OrderCreateDto order, CancellationToken cancellationToken)
+    public async Task<ActionResult<OrderDto>> CreateOrder(OrderCreateDto order,
+        CancellationToken cancellationToken, bool sendEmail = false)
     {
         string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null)
         {
             return Unauthorized();
         }
-
-        return await CreateOrder(userId, order, cancellationToken);
+        return await CreateOrder(userId, order, cancellationToken, sendEmail);
     }
 
     /// <summary>
@@ -106,6 +109,7 @@ public class OrdersController(
     /// </summary>
     /// <param name="userId">The Id of the user to create a new order for.</param>
     /// <param name="order">The order to create.</param>
+    /// <param name="sendEmail">A real email will be sent only if this parameter is set to true.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Indicates that the order has been successfully created and returns the created order.</response>
     /// <response code="400">Indicates that the request to create the order is invalid or incomplete.</response>
@@ -116,12 +120,20 @@ public class OrdersController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<OrderDto>> CreateOrder(string userId, OrderCreateDto order, CancellationToken cancellationToken)
+    public async Task<ActionResult<OrderDto>> CreateOrder(string userId, OrderCreateDto order,
+        CancellationToken cancellationToken, bool sendEmail = false)
     {
         OperationResult<OrderDto> result = await orderService.CreateOrderAsync(order, userId, cancellationToken);
-        return result.Succeeded && result.Payload != null
-            ? CreatedAtAction(nameof(GetOrderById), new { orderId = result.Payload.Id }, result.Payload)
-            : BadRequest(result.Message);
+        if (!result.Succeeded || result.Payload == null)
+        {
+            return BadRequest(result.Message);
+        }
+        if (sendEmail)
+        {
+            await emailService.SendOrderCreatedEmailAsync(result.Payload, cancellationToken);
+        }
+        await statisticsService.AddToProductNumberPurchasesAsync(result.Payload);
+        return CreatedAtAction(nameof(GetOrderById), new { orderId = result.Payload.Id }, result.Payload);
     }
 
     /// <summary>
@@ -129,6 +141,7 @@ public class OrdersController(
     /// </summary>
     /// <param name="orderId">The ID of the order to update.</param>
     /// <param name="updatedOrder">The updated order information.</param>
+    /// <param name="sendEmail">A real email will be sent only if this parameter is set to true.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Indicates that the order has been successfully updated and returns the updated order.</response>
     /// <response code="400">Indicates that the request to update the order is invalid or incomplete.</response>
@@ -141,9 +154,18 @@ public class OrdersController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<OrderDto>> UpdateOrderStatus(int orderId, OrderUpdateDto updatedOrder, CancellationToken cancellationToken)
+    public async Task<ActionResult<OrderDto>> UpdateOrderStatus(int orderId, OrderUpdateDto updatedOrder,
+        CancellationToken cancellationToken, bool sendEmail = false)
     {
         OperationResult<OrderDto> result = await orderService.UpdateOrderAsync(orderId, updatedOrder, cancellationToken);
-        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+        if (!result.Succeeded || result.Payload == null)
+        {
+            return BadRequest(result.Message);
+        }
+        if (sendEmail)
+        {
+            await emailService.SendOrderStatusUpdatedEmailAsync(result.Payload, cancellationToken);
+        }
+        return Ok(result.Payload);
     }
 }

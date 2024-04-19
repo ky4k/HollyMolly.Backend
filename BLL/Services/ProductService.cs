@@ -6,6 +6,7 @@ using HM.DAL.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Drawing;
 
 namespace HM.BLL.Services;
 
@@ -15,19 +16,25 @@ public class ProductService(
     ILogger<ProductService> logger
     ) : IProductService
 {
-    public async Task<IEnumerable<ProductDto>> GetProductsAsync(int? categoryId, string? name,
-        bool sortByPrice, bool sortByRating, bool sortAsc, CancellationToken cancellationToken)
+    public async Task<IEnumerable<ProductDto>> GetProductsAsync(int? categoryGroupId, int? categoryId,
+        string? name, bool sortByPrice, bool sortByRating, bool sortAsc, CancellationToken cancellationToken)
     {
         IQueryable<Product> products = context.Products
             .Include(p => p.ProductInstances)
                 .ThenInclude(pi => pi.Images)
-            .Include(p => p.ProductInstances)
-                .ThenInclude(pi => pi.Discount)
             .Include(p => p.Category)
             .Include(p => p.Feedbacks);
         if (categoryId != null)
         {
             products = products.Where(p => p.Category.Id == categoryId);
+        }
+        else if(categoryGroupId != null)
+        { 
+            var categoriesId = await context.Categories
+                .Where(c => c.CategoryGroupId == categoryGroupId)
+                .Select(c => c.Id)
+                .ToListAsync(cancellationToken);
+            products = products.Where(p => categoriesId.Contains(p.CategoryId));
         }
         if (!string.IsNullOrWhiteSpace(name))
         {
@@ -58,8 +65,6 @@ public class ProductService(
         Product? product = await context.Products
             .Include(p => p.ProductInstances)
                 .ThenInclude(pi => pi.Images)
-            .Include(p => p.ProductInstances)
-                .ThenInclude(pi => pi.Discount)
             .Include(p => p.Category)
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
@@ -82,14 +87,7 @@ public class ProductService(
         List<ProductInstance> productInstances = [];
         foreach (ProductInstanceCreateDto productInstanceDto in productDto.ProductInstances)
         {
-            productInstances.Add(new ProductInstance()
-            {
-                SKU = productInstanceDto.SKU,
-                Color = productInstanceDto.Color,
-                Size = productInstanceDto.Size,
-                Price = productInstanceDto.Price,
-                StockQuantity = productInstanceDto.StockQuantity
-            });
+            productInstances.Add(productInstanceDto.ToProductInstance());
         }
 
         Product product = new()
@@ -161,9 +159,14 @@ public class ProductService(
 
         productInstance.StockQuantity = productInstanceDto.StockQuantity;
         productInstance.Price = productInstanceDto.Price;
+        productInstance.Status = productInstanceDto.Status;
+        productInstance.IsNewCollection = productInstanceDto.IsNewCollection;
         productInstance.SKU = productInstanceDto.SKU;
         productInstance.Color = productInstanceDto.Color;
         productInstance.Size = productInstanceDto.Size;
+        productInstance.Material = productInstanceDto.Material;
+        productInstance.AbsoluteDiscount = productInstanceDto.AbsoluteDiscount;
+        productInstance.PercentageDiscount = productInstanceDto.PercentageDiscount;
 
         try
         {
@@ -292,8 +295,6 @@ public class ProductService(
         Product? product = await context.Products
             .Include(p => p.ProductInstances)
                 .ThenInclude(pi => pi.Images)
-            .Include(p => p.ProductInstances)
-                .ThenInclude(pi => pi.Discount)
             .Include(p => p.Category)
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
@@ -321,6 +322,40 @@ public class ProductService(
         }
     }
 
+    public async Task<IEnumerable<ProductFeedbackDto>> GetAllProductsFeedbackAsync(
+        string? category, CancellationToken cancellationToken)
+    {
+        IQueryable<Product> products = context.Products
+            .Include(p => p.Category)
+            .Include(p => p.Feedbacks);
+        if (category != null)
+        {
+            products = products.Where(p => p.Category.Name == category);
+        }
+        return await products
+            .SelectMany(p => p.Feedbacks)
+            .Select(f => f.ToProductFeedbackDto())
+            .OrderByDescending(f => f.Created)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<OperationResult<IEnumerable<ProductFeedbackDto>>> GetProductFeedbackAsync(int productId, CancellationToken cancellationToken)
+    {
+        var product = await context.Products
+            .Include(p => p.Feedbacks)
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        if (product == null)
+        {
+            return new OperationResult<IEnumerable<ProductFeedbackDto>>(false,
+                "Product with such an id does not exist.");
+        }
+        List<ProductFeedbackDto> productFeedbacksDto = [];
+        foreach(var feedback in product.Feedbacks)
+        {
+            productFeedbacksDto.Add(feedback.ToProductFeedbackDto());
+        }
+        return new OperationResult<IEnumerable<ProductFeedbackDto>>(true, productFeedbacksDto);
+    }
 
     public async Task<OperationResult> AddFeedbackAsync(int productId, string? userId, ProductFeedbackCreateDto feedbackDto, CancellationToken cancellationToken)
     {
@@ -335,6 +370,7 @@ public class ProductService(
         ProductFeedback feedback = new()
         {
             ProductId = productId,
+            AuthorName = feedbackDto.AuthorName,
             UserId = userId,
             Created = DateTimeOffset.UtcNow,
             Rating = feedbackDto.Rating,
@@ -356,33 +392,33 @@ public class ProductService(
         }
     }
 
-    public async Task<OperationResult<IEnumerable<ProductFeedback>>> GetProductFeedbackAsync(int productId, CancellationToken cancellationToken)
+    public async Task<OperationResult> DeleteProductFeedbackAsync(int productId, int feedbackId,
+        CancellationToken cancellationToken)
     {
-        var product = await context.Products
+        Product? product = await context.Products
             .Include(p => p.Feedbacks)
-            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-        if (product == null)
+            .FirstOrDefaultAsync(p => p.Id ==productId, cancellationToken);
+        if(product == null)
         {
-            return new OperationResult<IEnumerable<ProductFeedback>>(false, "Product with such an id does not exist.");
+            return new OperationResult(false, $"No product with the id {productId} exists");
         }
-
-        return new OperationResult<IEnumerable<ProductFeedback>>(true, product.Feedbacks);
-    }
-
-    public async Task<IEnumerable<ProductFeedback>> GetAllProductsFeedbackAsync(
-        string? category, CancellationToken cancellationToken)
-    {
-        IQueryable<Product> products = context.Products
-            .Include(p => p.Category)
-            .Include(p => p.Feedbacks);
-        if (category != null)
+        ProductFeedback? feedback = product.Feedbacks.Find(f => f.Id == feedbackId);
+        if (feedback == null)
         {
-            products = products.Where(p => p.Category.Name == category);
+            return new OperationResult(false, $"Product with the id {productId} does not contain " +
+                $"the feedback with id {feedbackId}");
         }
-        return await products
-            .SelectMany(p => p.Feedbacks)
-            .OrderByDescending(f => f.Created)
-            .ToListAsync(cancellationToken);
+        try
+        {
+            context.Remove(feedback);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult(true);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while deleting feedback {@feedback}", feedback);
+            return new OperationResult(false, "Feedback has not been deleted.");
+        }
     }
 
     private async Task<OperationResult<ProductInstance>> GetProductInstanceAsync(int productId,
@@ -391,8 +427,6 @@ public class ProductService(
         Product? product = await context.Products
             .Include(p => p.ProductInstances)
                 .ThenInclude(pi => pi.Images)
-            .Include(p => p.ProductInstances)
-                .ThenInclude(pi => pi.Discount)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
         {

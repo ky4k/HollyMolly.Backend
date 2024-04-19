@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models;
 using HM.DAL.Constants;
+using HM.DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,7 +10,8 @@ namespace HM.WebAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class CategoriesController(
-    ICategoryService categoryService
+    ICategoryService categoryService,
+    IProductService productService
     ) : ControllerBase
 {
     /// <summary>
@@ -31,13 +33,32 @@ public class CategoriesController(
     /// <param name="categoryGroupId">The id of the category group.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Returns a list of categories groups.</response>
+    /// <response code="404">Indicates that there are no category group with such an id.</response>
     [Route("{categoryGroupId}")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CategoryGroupDto?>> GetCategoryGroup(
         int categoryGroupId, CancellationToken cancellationToken)
     {
-        return Ok(await categoryService.GetCategoryGroupByIdAsync(categoryGroupId, cancellationToken));
+        var response = await categoryService.GetCategoryGroupByIdAsync(categoryGroupId, cancellationToken);
+        return response == null ? NotFound() : Ok(response);
+    }
+
+    /// <summary>
+    /// Allows to retrieve the all products of the specific category group.
+    /// </summary>
+    /// <param name="categoryGroupId">Id of the category group to retrieve products.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns a list of products in the category group.</response>
+    [Route("{categoryGroupId}/products")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetCategoryGroupProducts(
+        int categoryGroupId, CancellationToken cancellationToken)
+    {
+        return Ok(await productService.GetProductsAsync(categoryGroupId, null,
+            null, false, false, true, cancellationToken));
     }
 
     /// <summary>
@@ -147,14 +168,41 @@ public class CategoriesController(
     /// <param name="categoryId">The id of the category to get.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Returns a list of categories groups.</response>
+    /// <response code="404">Indicates that there are no category with such an id in the specified category group.</response>
     [Route("{categoryGroupId}/{categoryId}")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CategoryDto?>> GetCategory(int categoryGroupId,
         int categoryId, CancellationToken cancellationToken)
     {
-        return Ok(await categoryService.GetCategoryByIdAsync(
-            categoryGroupId, categoryId, cancellationToken));
+        if(!await categoryService.IsCategoryInCategoryGroupAsync(categoryGroupId, categoryId, cancellationToken))
+        {
+            return NotFound();
+        }
+        var category = await categoryService.GetCategoryByIdAsync(categoryGroupId, categoryId, cancellationToken);
+        return category == null ? NotFound() : Ok(category);
+    }
+
+    /// <summary>
+    /// Allows to retrieve the all products of the specific category group.
+    /// </summary>
+    /// <param name="categoryGroupId">Id of the category group to retrieve products.</param>
+    /// <param name="categoryId">Id of the category to retrieve products.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns a list of products in the product in the specific category.</response>
+    [Route("{categoryGroupId}/{categoryId}/products")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetCategoryProducts(int categoryGroupId,
+        int categoryId, CancellationToken cancellationToken)
+    {
+        if(!await categoryService.IsCategoryInCategoryGroupAsync(categoryGroupId, categoryId, cancellationToken))
+        {
+            return BadRequest($"Category group with id {categoryGroupId} does not contain category with id {categoryId}");
+        }
+        return Ok(await productService.GetProductsAsync(categoryGroupId, categoryId,
+            null, false, false, true, cancellationToken));
     }
 
     /// <summary>
@@ -214,7 +262,7 @@ public class CategoriesController(
     }
 
     /// <summary>
-    /// Allows administrators to update an image of the category group.
+    /// Allows administrators to update an image of the category.
     /// </summary>
     /// <param name="categoryGroupId">The ID of the category group that contains the category
     /// to update image.</param>

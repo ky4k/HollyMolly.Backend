@@ -1,6 +1,9 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models;
+using HM.DAL.Data;
+using HM.DAL.Entities;
 using MailKit.Net.Smtp;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
@@ -10,6 +13,7 @@ namespace HM.BLL.Services;
 
 public class EmailSender : IEmailSender
 {
+    private readonly HmDbContext _context;
     private readonly ILogger<EmailSender> _logger;
     private readonly IConfiguration _configuration;
     private readonly string _smtpHost;
@@ -17,12 +21,15 @@ public class EmailSender : IEmailSender
     private readonly bool _useSsl;
     private readonly string _userName;
     private readonly string _userPassword;
+    private readonly string _sender;
 
     public EmailSender(
+        HmDbContext context,
         IConfiguration configuration,
         ILogger<EmailSender> logger
         )
     {
+        _context = context;
         _configuration = configuration;
         _logger = logger;
         _smtpHost = ReadConfiguration("SMTPServer:Host");
@@ -36,16 +43,19 @@ public class EmailSender : IEmailSender
         }
         _userName = ReadConfiguration("SMTPServer:User");
         _userPassword = ReadConfiguration("SMTPServer:Password");
+        _sender = ReadConfiguration("SMTPServer:Sender");
     }
 
-    public async Task<OperationResult> SendEmailAsync(IUserMailInfo recipient, string subject,
+    public async Task<OperationResult> SendEmailAsync(UserMailInfo recipient, string subject,
         string htmlText, CancellationToken cancellationToken)
     {
-        var email = new MimeMessage();
-        email.From.Add(new MailboxAddress("Holly Molly", "backteamchellenge@gmail.com"));
-        email.To.Add(new MailboxAddress($"{recipient.FirstName} {recipient.LastName})",
-            recipient.Email));
+        if (await ExceededTodayEmailLimitAsync(cancellationToken))
+        {
+            return new OperationResult(false, "Email was not sent. You reached today's email limit.");
+        }
 
+        var email = new MimeMessage();
+        email.From.Add(new MailboxAddress("Holly Molly", _sender));
         email.Subject = subject;
         email.Body = new TextPart(TextFormat.Html)
         {
@@ -57,8 +67,19 @@ public class EmailSender : IEmailSender
             using var smtp = new SmtpClient();
             await smtp.ConnectAsync(_smtpHost, _smtpPort, _useSsl, cancellationToken);
             await smtp.AuthenticateAsync(_userName, _userPassword, cancellationToken);
+
+            await _context.EmailLogs.AddAsync(new EmailLog()
+            {
+                RecipientEmail = recipient.Email,
+                Subject = email.Subject,
+                SendAt = DateTimeOffset.UtcNow
+            }, cancellationToken);
+
+            email.To.Add(new MailboxAddress($"{recipient.FirstName} {recipient.LastName}", recipient.Email));
             await smtp.SendAsync(email, cancellationToken);
             await smtp.DisconnectAsync(true, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation("Email has been sent: {@emailTo}, \n{emailSubject}, \n{emailBody}", email.To, email.Subject, email.HtmlBody);
             return new OperationResult(true);
         }
         catch (Exception ex)
@@ -78,5 +99,12 @@ public class EmailSender : IEmailSender
                 "the configuration. Mail sending may not work correctly.", key);
         }
         return value ?? "";
+    }
+
+    private async Task<bool> ExceededTodayEmailLimitAsync(CancellationToken cancellationToken)
+    {
+        int sentEmailCount = await _context.EmailLogs
+            .CountAsync(el => el.SendAt > DateTimeOffset.UtcNow.AddDays(-1), cancellationToken);
+        return sentEmailCount > 100;
     }
 }

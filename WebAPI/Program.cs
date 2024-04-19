@@ -7,6 +7,7 @@ using HM.DAL.Entities;
 using HM.WebAPI.Middleware;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -36,7 +37,8 @@ builder.Services.AddIdentity<User, Role>(options =>
     options.Password.RequireLowercase = false;
     options.Password.RequireDigit = false;
 })
-    .AddEntityFrameworkStores<HmDbContext>();
+    .AddEntityFrameworkStores<HmDbContext>()
+    .AddTokenProvider<DataProtectorTokenProvider<User>>(TokenOptions.DefaultProvider);
 
 builder.Services.AddValidatorsFromAssemblyContaining<LoginRequestValidator>();
 builder.Services.AddFluentValidationAutoValidation();
@@ -130,7 +132,10 @@ builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IImageService, ImageService>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<INewsSubscriptionService, NewsSubscriptionService>();
+builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddScoped<IWishListService, WishListService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

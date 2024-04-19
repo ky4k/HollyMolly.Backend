@@ -13,6 +13,9 @@ public class HmDbContext(DbContextOptions<HmDbContext> options)
     public DbSet<Product> Products => Set<Product>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<WishList> WishLists => Set<WishList>();
+    public DbSet<NewsSubscription> NewsSubscriptions => Set<NewsSubscription>();
+    public DbSet<EmailLog> EmailLogs => Set<EmailLog>();
+    public DbSet<ProductStatistics> ProductStatistics => Set<ProductStatistics>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
