@@ -19,37 +19,37 @@ public class CheckoutService(
         var order = await context.Orders
             .Include(o => o.OrderRecords)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
-        if(order == null)
+        if (order == null)
         {
             return new OperationResult<string>(false, "No order with such an id.", null!);
         }
-        if(order.UserId != userId)
+        if (order.UserId != userId)
         {
             return new OperationResult<string>(false, "You may pay only for your orders.", null!);
         }
-        if(order.PaymentReceived)
+        if (order.PaymentReceived)
         {
             return new OperationResult<string>(false, "The order has already been paid for.", null!);
         }
         decimal total = 0;
 
         List<SessionLineItemOptions> lineItemOptions = [];
-        foreach(var record in order.OrderRecords)
+        foreach (var record in order.OrderRecords)
         {
             var productInstance = await context.Products
                 .Include(p => p.ProductInstances)
                 .SelectMany(p => p.ProductInstances)
                 .FirstOrDefaultAsync(pi => pi.Id == record.ProductInstanceId, cancellationToken);
             List<string> images = [];
-            foreach(var image in productInstance?.Images ?? [])
+            foreach (var image in productInstance?.Images ?? [])
             {
                 string link = Uri.EscapeDataString(image.Link ?? string.Empty);
-                if(!string.IsNullOrEmpty(link))
+                if (!string.IsNullOrEmpty(link))
                 {
                     images.Add(link);
                 }
             }
-            if(record.Quantity == 0)
+            if (record.Quantity == 0)
             {
                 continue;
             }
@@ -69,14 +69,14 @@ public class CheckoutService(
                 },
                 Quantity = record.Quantity
             };
-            if(images.Count > 0)
+            if (images.Count > 0)
             {
                 itemPriceDataOptions.PriceData.ProductData.Images = images;
             }
 
             lineItemOptions.Add(itemPriceDataOptions);
         }
-        if(total < 20)
+        if (total < 20)
         {
             return new OperationResult<string>(false, "Sorry, the payment system accepts payment " +
                 $"starting on 20 hryvnias. Your total cost is {total} hryvnias.");
@@ -86,7 +86,7 @@ public class CheckoutService(
         {
             SuccessUrl = $"{baseUrl}/api/Checkout/success?sessionId=" + "{CHECKOUT_SESSION_ID}",
             CancelUrl = $"{baseUrl}/api/Checkout/failed",
-            PaymentMethodTypes = [ "card" ],
+            PaymentMethodTypes = ["card"],
             Metadata = new Dictionary<string, string>() { { "orderId", $"{order.Id}" } },
             LineItems = lineItemOptions,
             Mode = "payment"
@@ -97,7 +97,7 @@ public class CheckoutService(
             var session = await sessionService.CreateAsync(options, cancellationToken: cancellationToken);
             return new OperationResult<string>(true, "", $"{session.Url}");
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             logger.LogError(ex, "Cannot create Stripe session with options: {options}", options);
             return new OperationResult<string>(false, "Payment system was unable to process the payment.");
@@ -107,12 +107,12 @@ public class CheckoutService(
     public async Task<OperationResult> CheckoutSuccessAsync(string sessionId)
     {
         var session = await sessionService.GetAsync(sessionId);
-        if(session.PaymentStatus == "paid")
+        if (session.PaymentStatus == "paid")
         {
             int orderId = int.Parse(session.Metadata["orderId"]);
             var order = await context.Orders
                 .FirstOrDefaultAsync(o => o.Id == orderId);
-            if(order == null)
+            if (order == null)
             {
                 return new OperationResult(false, "Payment was not processed correctly. "
                     + "Contact the support for the details.");
@@ -125,7 +125,7 @@ public class CheckoutService(
                 await context.SaveChangesAsync();
                 return new OperationResult(true);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 logger.LogError(ex, "Order was not updated after receiving payment: {order}", order);
                 return new OperationResult(false, "Payment was not processed correctly. "

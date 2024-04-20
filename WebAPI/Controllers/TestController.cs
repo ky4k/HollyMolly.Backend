@@ -1,6 +1,4 @@
-﻿using Azure;
-using HM.BLL.Models;
-using HM.BLL.Services;
+﻿using HM.BLL.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -125,7 +123,9 @@ public class TestController : ControllerBase
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<LinkDto> CheckoutOrder(int orderId, 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter",
+        Justification = "orderId parameter is used to reflect the real endpoint signature but is not required for the testing purposes.")]
+    public ActionResult<LinkDto> CheckoutOrder(int orderId,
         string frontendUrlToHandleResponse, bool imitateSuccess = true)
     {
         string url = $"https://{Request.Host}{Request.PathBase}/api/checkout/{(imitateSuccess ? "success" : "failed")}?redirectTo={frontendUrlToHandleResponse}";

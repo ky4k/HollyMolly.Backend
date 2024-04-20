@@ -14,8 +14,8 @@ public interface IStatisticsService
         bool yearly, bool monthly, bool daily, CancellationToken cancellationToken);
 
     Task<IEnumerable<OrderStatisticDto>> GetOrderStatisticsAsync(
-        DateOnly? fromDate, DateOnly? toDate,
-        bool yearly, bool monthly, bool daily, CancellationToken cancellationToken);
+        DateOnly? fromDate, DateOnly? toDate, bool yearly, bool monthly, bool daily,
+        bool includeUnpaid, CancellationToken cancellationToken);
 
     Task<IEnumerable<EmailLog>> GetEmailLogsAsync(string? recipientEmail, string? subject,
         DateOnly? startDateTime, DateOnly? endDateTime, CancellationToken cancellationToken);

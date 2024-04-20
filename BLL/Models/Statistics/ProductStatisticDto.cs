@@ -13,7 +13,7 @@ public class ProductStatisticDto
         get
         {
             int sum = 0;
-            foreach(var instance in InstancesStatistics)
+            foreach (var instance in InstancesStatistics)
             {
                 sum += instance.NumberOfPurchases;
             }

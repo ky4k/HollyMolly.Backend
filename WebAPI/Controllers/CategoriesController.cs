@@ -1,7 +1,6 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models;
 using HM.DAL.Constants;
-using HM.DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -58,7 +57,7 @@ public class CategoriesController(
         int categoryGroupId, CancellationToken cancellationToken)
     {
         return Ok(await productService.GetProductsAsync(categoryGroupId, null,
-            null, false, false, true, cancellationToken));
+            null, false, false, false, true, cancellationToken));
     }
 
     /// <summary>
@@ -176,7 +175,7 @@ public class CategoriesController(
     public async Task<ActionResult<CategoryDto?>> GetCategory(int categoryGroupId,
         int categoryId, CancellationToken cancellationToken)
     {
-        if(!await categoryService.IsCategoryInCategoryGroupAsync(categoryGroupId, categoryId, cancellationToken))
+        if (!await categoryService.IsCategoryInCategoryGroupAsync(categoryGroupId, categoryId, cancellationToken))
         {
             return NotFound();
         }
@@ -197,12 +196,12 @@ public class CategoriesController(
     public async Task<ActionResult<IEnumerable<ProductDto>>> GetCategoryProducts(int categoryGroupId,
         int categoryId, CancellationToken cancellationToken)
     {
-        if(!await categoryService.IsCategoryInCategoryGroupAsync(categoryGroupId, categoryId, cancellationToken))
+        if (!await categoryService.IsCategoryInCategoryGroupAsync(categoryGroupId, categoryId, cancellationToken))
         {
             return BadRequest($"Category group with id {categoryGroupId} does not contain category with id {categoryId}");
         }
         return Ok(await productService.GetProductsAsync(categoryGroupId, categoryId,
-            null, false, false, true, cancellationToken));
+            null, false, false, false, true, cancellationToken));
     }
 
     /// <summary>

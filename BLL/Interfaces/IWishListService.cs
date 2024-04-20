@@ -1,4 +1,4 @@
-﻿﻿using HM.BLL.Models;
+﻿using HM.BLL.Models;
 
 namespace HM.BLL.Interfaces
 {

@@ -6,7 +6,6 @@ using HM.DAL.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Drawing;
 
 namespace HM.BLL.Services;
 
@@ -17,19 +16,24 @@ public class ProductService(
     ) : IProductService
 {
     public async Task<IEnumerable<ProductDto>> GetProductsAsync(int? categoryGroupId, int? categoryId,
-        string? name, bool sortByPrice, bool sortByRating, bool sortAsc, CancellationToken cancellationToken)
+        string? name, bool onlyNewCollection, bool sortByPrice, bool sortByRating, bool sortAsc,
+        CancellationToken cancellationToken)
     {
         IQueryable<Product> products = context.Products
             .Include(p => p.ProductInstances)
                 .ThenInclude(pi => pi.Images)
             .Include(p => p.Category)
             .Include(p => p.Feedbacks);
+        if (onlyNewCollection)
+        {
+            products = products.Where(p => p.ProductInstances.Any(pi => pi.IsNewCollection));
+        }
         if (categoryId != null)
         {
             products = products.Where(p => p.Category.Id == categoryId);
         }
-        else if(categoryGroupId != null)
-        { 
+        else if (categoryGroupId != null)
+        {
             var categoriesId = await context.Categories
                 .Where(c => c.CategoryGroupId == categoryGroupId)
                 .Select(c => c.Id)
@@ -38,7 +42,7 @@ public class ProductService(
         }
         if (!string.IsNullOrWhiteSpace(name))
         {
-            products = products.Where(p => p.Name.ToLower().Contains(name.ToLower()));
+            products = FilterByName(products, name);
         }
         if (sortByPrice)
         {
@@ -58,6 +62,13 @@ public class ProductService(
             productsDto.Add(product.ToProductDto());
         }
         return productsDto;
+    }
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons",
+        Justification = "https://github.com/dotnet/efcore/issues/20995#issuecomment-631358780 EF Core does not translate the overload that accepts StringComparison.InvariantCultureIgnoreCase (or any other StringComparison).")]
+    private static IQueryable<Product> FilterByName(IQueryable<Product> products, string name)
+    {
+        return products.Where(p => p.Name.ToLower().Contains(name.ToLower()));
     }
 
     public async Task<ProductDto?> GetProductByIdAsync(int productId, CancellationToken cancellationToken)
@@ -146,6 +157,31 @@ public class ProductService(
         }
     }
 
+    public async Task<OperationResult<ProductInstanceDto>> AddProductInstanceToProduct(int productId,
+        ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
+    {
+        var product = await context.Products
+            .Include(p => p.ProductInstances)
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        if (product == null)
+        {
+            return new OperationResult<ProductInstanceDto>(false, $"The product with id {productId} does not exist");
+        }
+        ProductInstance productInstance = productInstanceDto.ToProductInstance();
+        try
+        {
+            product.ProductInstances.Add(productInstance);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult<ProductInstanceDto>(true, productInstance.ToProductInstanceDto());
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while adding new product instance for the product with {id}: " +
+                "{@productInstance}", productId, productInstance);
+            return new OperationResult<ProductInstanceDto>(false, "Product instance was not added");
+        }
+    }
+
     public async Task<OperationResult<ProductInstanceDto>> UpdateProductInstanceAsync(int productId, int productInstanceId,
         ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
     {
@@ -179,7 +215,35 @@ public class ProductService(
             logger.LogError(ex, "An error occurred while updating produceInstance {@productInstance}", productInstance);
             return new OperationResult<ProductInstanceDto>(false, "The product instance has not been updated.");
         }
+    }
 
+    public async Task<OperationResult> DeleteProductInstanceAsync(int productId, int productInstanceId,
+        CancellationToken cancellationToken)
+    {
+        Product? product = await context.Products
+            .Include(p => p.ProductInstances)
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        if (product == null)
+        {
+            return new OperationResult(false, $"The product with id {productId} does not exist");
+        }
+        ProductInstance? productInstance = product.ProductInstances.Find(pi => pi.Id == productInstanceId);
+        if (productInstance == null)
+        {
+            return new OperationResult(false, $"The product with id {productId} does not " +
+                $"contain the product instance with id {productInstanceId}");
+        }
+        try
+        {
+            product.ProductInstances.Remove(productInstance);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult(true);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while deleting product instance {@productInstance}", productInstance);
+            return new OperationResult(false, "Product instance was not deleted.");
+        }
     }
 
     public async Task<OperationResult<ProductInstanceDto>> UploadProductImagesAsync(int productId,
@@ -290,6 +354,8 @@ public class ProductService(
         }
     }
 
+
+
     public async Task<OperationResult> DeleteProductAsync(int productId, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
@@ -350,7 +416,7 @@ public class ProductService(
                 "Product with such an id does not exist.");
         }
         List<ProductFeedbackDto> productFeedbacksDto = [];
-        foreach(var feedback in product.Feedbacks)
+        foreach (var feedback in product.Feedbacks)
         {
             productFeedbacksDto.Add(feedback.ToProductFeedbackDto());
         }
@@ -397,8 +463,8 @@ public class ProductService(
     {
         Product? product = await context.Products
             .Include(p => p.Feedbacks)
-            .FirstOrDefaultAsync(p => p.Id ==productId, cancellationToken);
-        if(product == null)
+            .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
+        if (product == null)
         {
             return new OperationResult(false, $"No product with the id {productId} exists");
         }

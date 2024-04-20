@@ -11,7 +11,8 @@ namespace HM.WebAPI.Controllers;
 public class AccountController(
     IAccountService accountService,
     IGoogleOAuthService googleOAuthService,
-    IEmailService emailService
+    IEmailService emailService,
+    IUserService userService
     ) : ControllerBase
 {
     /// <summary>
@@ -151,56 +152,74 @@ public class AccountController(
     }
 
     /// <summary>
-    /// Allows a user to update the profile information.
+    /// Allows a user to get their profile information.
     /// </summary>
-    /// <param name="userId">Id of the user to update.</param>
+    /// <response code="200">Returns the profile of the user.</response>
+    /// <response code="401">Indicates that the user is unauthenticated.</response>
+    /// <response code="404">Indicates that the profile was not found.</response>
+    [Authorize]
+    [Route("profile")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<UserDto>> GetProfile()
+    {
+        string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+        UserDto? user = await userService.GetUserByIdAsync(userId);
+        return user == null ? NotFound() : Ok(user);
+    }
+
+    /// <summary>
+    /// Allows a user to update their profile information.
+    /// </summary>
     /// <param name="profile">Updated profile information.</param>
     /// <response code="200">Indicates that the profile has been updated and returns updated user.</response>
     /// <response code="400">Indicates that the profile has not been updated and returns the error message.</response>
     /// <response code="401">Indicates that the user is unauthenticated and therefore cannot update profile.</response>
-    /// <response code="403">Indicates that the user has no permission to update profile of the user 
-    /// with the specified <paramref name="userId"/>.</response>
     [Authorize]
-    [Route("{userId}")]
+    [Route("profile")]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<UserDto>> UpdateProfile(string userId, ProfileUpdateDto profile)
+    public async Task<ActionResult<UserDto>> UpdateProfile(ProfileUpdateDto profile)
     {
-        if (User.FindFirst(ClaimTypes.NameIdentifier)?.Value != userId)
+        string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
         {
-            return Forbid();
+            return Unauthorized();
         }
-
         var response = await accountService.UpdateUserProfileAsync(userId, profile);
         return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
     }
 
     /// <summary>
-    /// Allows a user to change password.
+    /// Allows a user to change their password.
     /// </summary>
-    /// <param name="userId">Id of the user to change password.</param>
     /// <param name="passwords">The current and the new passwords.</param>
     /// <param name="sendEmail">A real email will be sent only if this parameter is set to true.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="204">Indicates that the password has been changed.</response>
     /// <response code="400">Indicates that the password has not been updated and returns the error message.</response>
     /// <response code="401">Indicates that the user is unauthenticated and therefore cannot change the password.</response>
-    /// <response code="403">Indicates that the user has no permission to change password of the user
-    /// with the specified <paramref name="userId"/>.</response>
     [Authorize]
-    [Route("{userId}/password")]
+    [Route("profile/password")]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> ChangeUserPassword(string userId, ChangePasswordDto passwords,
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> ChangeUserPassword(ChangePasswordDto passwords,
         CancellationToken cancellationToken, bool sendEmail = false)
     {
-        if (User.FindFirst(ClaimTypes.NameIdentifier)?.Value != userId)
+        string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
         {
-            return Forbid();
+            return Unauthorized();
         }
         OperationResult<ResetPasswordTokenDto> response = await accountService.ChangePasswordAsync(userId, passwords);
         if (!response.Succeeded || response.Payload == null)
@@ -233,8 +252,8 @@ public class AccountController(
     public async Task<ActionResult> SendForgetPasswordEmail(string email,
         CancellationToken cancellationToken, bool sendEmail = false)
     {
-        OperationResult<ResetPasswordTokenDto> response = await accountService
-            .CreatePasswordResetKeyAsync(email);
+        OperationResult<ResetPasswordTokenDto> response =
+            await accountService.CreatePasswordResetKeyAsync(email);
         if (!response.Succeeded || response.Payload == null)
         {
             return BadRequest(response.Message);

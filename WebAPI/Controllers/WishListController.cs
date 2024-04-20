@@ -1,7 +1,6 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models;
 using HM.DAL.Constants;
-using HM.DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
