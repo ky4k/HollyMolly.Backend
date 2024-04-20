@@ -90,11 +90,11 @@ public class AccountController(
     [Route("login/google")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult RedirectOnGoogleOAuthServer()
+    public ActionResult<LinkDto> RedirectOnGoogleOAuthServer()
     {
         string redirectUrl = $"https://{Request.Host}{Request.PathBase}/api/account/login/google/getToken";
         var url = googleOAuthService.GenerateOAuthRequestUrl(redirectUrl);
-        return Ok(new { RedirectUrl = url });
+        return Ok(new LinkDto { RedirectToUrl = url });
     }
 
     /// <summary>

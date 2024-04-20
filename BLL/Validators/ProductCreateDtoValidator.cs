@@ -16,7 +16,7 @@ public class ProductCreateDtoValidator : AbstractValidator<ProductCreateDto>
 
         RuleFor(product => product.Description)
             .MaximumLength(500)
-            .Matches(@"^[\p{L}0-9\s!#$%&""/?,.\-_]+$")
+            .Matches(@"^[\p{L}0-9\s!#$%'&""/?,.\-_]+$")
             .When(product => !string.IsNullOrEmpty(product.Description))
                 .WithMessage("Product Description may only contain Latin or Ukrainian letters, " +
                     "numbers, and special characters (!#$%&\"/?.,-_).");

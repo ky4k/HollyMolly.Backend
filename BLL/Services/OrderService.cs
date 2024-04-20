@@ -56,6 +56,7 @@ public class OrderService(
             OrderRecords = []
         };
 
+        decimal totalCost = 0;
         foreach (var orderRecordDto in orderDto.OrderRecords)
         {
             Product? product = await context.Products
@@ -89,6 +90,7 @@ public class OrderService(
                 Quantity = orderRecordDto.Quantity,
                 Discount = orderRecordDto.Quantity * productInstance.GetCombinedDiscount()
             };
+            totalCost += orderRecord.Price * orderRecord.Quantity - orderRecord.Discount;
 
             productInstance.StockQuantity -= orderRecordDto.Quantity;
             order.OrderRecords.Add(orderRecord);
@@ -97,6 +99,11 @@ public class OrderService(
         if (order.OrderRecords.Count == 0)
         {
             return new OperationResult<OrderDto>(false, "The order contains no products.");
+        }
+        if (totalCost < 20)
+        {
+            return new OperationResult<OrderDto>(false, "Sorry, we only accept orders starting at 20 hryvnias." +
+                $"Total cost of your order currently is {totalCost} hryvnias.");
         }
 
         try
