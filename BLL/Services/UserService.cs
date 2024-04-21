@@ -1,6 +1,8 @@
 ﻿using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.Users;
+using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,16 +11,28 @@ namespace HM.BLL.Services;
 
 public class UserService(
     UserManager<User> userManager,
-    RoleManager<Role> roleManager
+    RoleManager<Role> roleManager,
+    HmDbContext context
     ) : IUserService
 {
-    public async Task<IEnumerable<UserDto>> GetUsersAsync()
+    public async Task<IEnumerable<UserDto>> GetUsersAsync(CancellationToken cancellationToken)
     {
+        Dictionary<string, string?> allRoles = await context.Roles
+            .Where(r => r.Name != null)
+            .AsNoTracking()
+            .ToDictionaryAsync(r => r.Id, r => r.Name, cancellationToken);
+        List<IdentityUserRole<string>> allUsersRoles = await context.UserRoles
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
         List<UserDto> users = [];
-        foreach (var user in await userManager.Users.ToListAsync())
+        foreach (var user in await userManager.Users.AsNoTracking().ToListAsync(cancellationToken))
         {
-            IEnumerable<string> roles = await userManager.GetRolesAsync(user);
-            UserDto userDto = user.ToUserDto(roles);
+            List<string> userRoles = [];
+            foreach (var r in allUsersRoles.Where(ur => ur.UserId == user.Id))
+            {
+                userRoles.Add(allRoles[r.RoleId]!);
+            }
+            UserDto userDto = user.ToUserDto(userRoles);
             users.Add(userDto);
         }
         return users;

@@ -1,4 +1,7 @@
-﻿using HM.BLL.Models;
+﻿using HM.BLL.Models.Common;
+using HM.BLL.Models.NewsSubscriptions;
+using HM.BLL.Models.Orders;
+using HM.BLL.Models.Users;
 
 namespace HM.BLL.Interfaces;
 
@@ -6,10 +9,10 @@ public interface IEmailService
 {
     Task<OperationResult> SendRegistrationResultEmailAsync(string email,
         ConfirmationEmailDto confirmationEmail, CancellationToken cancellationToken);
-    Task<OperationResult> SendForgetPasswordEmailAsync(string email, ResetPasswordTokenDto resetPassword,
-        CancellationToken cancellationToken);
-    Task<OperationResult> SendPasswordChangedEmail(string email, ResetPasswordTokenDto resetPassword,
-        CancellationToken cancellationToken);
+    Task<OperationResult> SendForgetPasswordEmailAsync(string email,
+        ResetPasswordTokenDto resetPassword, CancellationToken cancellationToken);
+    Task<OperationResult> SendPasswordChangedEmail(string email,
+        ResetPasswordTokenDto resetPassword, CancellationToken cancellationToken);
     Task<OperationResult> SendOrderCreatedEmailAsync(OrderDto order, CancellationToken cancellationToken);
     Task<OperationResult> SendOrderStatusUpdatedEmailAsync(OrderDto order, CancellationToken cancellationToken);
     Task<OperationResult> SendNewsEmailAsync(IEnumerable<NewsSubscriptionDto> subscriptions,

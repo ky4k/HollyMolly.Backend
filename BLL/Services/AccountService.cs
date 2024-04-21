@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.Users;
 using HM.DAL.Constants;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -21,25 +22,24 @@ public class AccountService(
 {
     public async Task<OperationResult<RegistrationResponse>> RegisterUserAsync(RegistrationRequest request)
     {
-        var existedUser = await userManager.FindByEmailAsync(request.Email.ToLower());
-        if (existedUser != null && !existedUser.IsOidcUser)
+        User? user = await userManager.FindByEmailAsync(request.Email.ToLower());
+        if (user != null && !user.IsOidcUser)
         {
             return new OperationResult<RegistrationResponse>(false, "A user with such an email already exist.");
         }
+        user ??= new User()
+        {
+            UserName = request.Email.ToLower(),
+            Email = request.Email.ToLower()
+        };
         try
         {
-            var user = existedUser ?? new User()
+            if (user.IsOidcUser)
             {
-                UserName = request.Email.ToLower(),
-                Email = request.Email.ToLower()
-            };
-
-            if (existedUser != null && existedUser.IsOidcUser)
-            {
-                await userManager.RemovePasswordAsync(existedUser);
-                await userManager.AddPasswordAsync(existedUser, request.Password);
-                existedUser.IsOidcUser = false;
-                await userManager.UpdateAsync(existedUser);
+                await userManager.RemovePasswordAsync(user);
+                await userManager.AddPasswordAsync(user, request.Password);
+                user.IsOidcUser = false;
+                await userManager.UpdateAsync(user);
             }
             else
             {
@@ -53,7 +53,6 @@ public class AccountService(
                 Email = user.Email!,
                 Roles = await userManager.GetRolesAsync(user),
             };
-
             return new OperationResult<RegistrationResponse>(true, response);
         }
         catch (Exception ex)
@@ -69,7 +68,6 @@ public class AccountService(
         {
             return new OperationResult(false);
         }
-
         if (await userManager.FindByEmailAsync(email.ToLower()) != null)
         {
             return new OperationResult(true);
@@ -126,7 +124,7 @@ public class AccountService(
         {
             return new OperationResult<ConfirmationEmailDto>(false, "User with such an id does not exist.");
         }
-        var result = await userManager.ConfirmEmailAsync(user, confirmationEmailKey);
+        IdentityResult result = await userManager.ConfirmEmailAsync(user, confirmationEmailKey);
         return new OperationResult(result.Succeeded, string.Join(" ", result.Errors));
     }
 
@@ -161,7 +159,7 @@ public class AccountService(
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while creating OIDC token");
-            return new OperationResult<string>(false, "OIDC token was not created");
+            return new OperationResult<string>(false, "OIDC token was not created", null!);
         }
     }
 
@@ -222,7 +220,10 @@ public class AccountService(
         double expiresIn = double.TryParse(
             configuration?["JwtSettings:ExpirationTimeInMinutes"], out double exp) ? exp : 60.0;
 
-        var key = Encoding.UTF8.GetBytes(configuration?["JwtSettings:SecurityKey"] ?? "defaultKey_that_is_32_characters");
+        byte[] key = Encoding.UTF8.GetBytes(
+            Environment.GetEnvironmentVariable("JwtSettings:SecurityKey")
+            ?? configuration?["JwtSettings:SecurityKey"]
+            ?? "defaultKey_that_is_32_characters");
         var secret = new SymmetricSecurityKey(key);
 
         return new JwtSecurityToken(
@@ -248,12 +249,11 @@ public class AccountService(
         user.City = profile.City;
         user.DeliveryAddress = profile.DeliveryAddress;
 
-        var result = await userManager.UpdateAsync(user);
+        IdentityResult result = await userManager.UpdateAsync(user);
         if (result.Succeeded)
         {
             IEnumerable<string> roles = await userManager.GetRolesAsync(user);
-            UserDto userDto = user.ToUserDto(roles);
-            return new OperationResult<UserDto>(true, userDto);
+            return new OperationResult<UserDto>(true, user.ToUserDto(roles));
         }
         else
         {
@@ -270,22 +270,15 @@ public class AccountService(
         {
             return new OperationResult<ResetPasswordTokenDto>(false, "User with such an id does not exist.");
         }
-        var result = await userManager.ChangePasswordAsync(
+        IdentityResult result = await userManager.ChangePasswordAsync(
             user, passwords.OldPassword, passwords.NewPassword);
         if (result.Succeeded)
         {
-            string resetKey = Guid.NewGuid().ToString();
-            ResetPasswordTokenDto resetPasswordDto = new()
-            {
-                UserId = user.Id,
-                Token = resetKey
-            };
-            await userManager.UpdateAsync(user);
-            return new OperationResult<ResetPasswordTokenDto>(true, resetPasswordDto);
+            return await CreatePasswordResetKeyAsync(user);
         }
         else
         {
-            var errors = string.Join(' ', result.Errors.Select(e => e.Description));
+            string errors = string.Join(' ', result.Errors.Select(e => e.Description));
             return new OperationResult<ResetPasswordTokenDto>(false, $"Password has not been changed: {errors}");
         }
     }
@@ -297,6 +290,11 @@ public class AccountService(
         {
             return new OperationResult<ResetPasswordTokenDto>(false, $"User with the email {email} does not exist");
         }
+        return await CreatePasswordResetKeyAsync(user);
+    }
+
+    private async Task<OperationResult<ResetPasswordTokenDto>> CreatePasswordResetKeyAsync(User user)
+    {
         try
         {
             string resetToken = await userManager.GeneratePasswordResetTokenAsync(user);

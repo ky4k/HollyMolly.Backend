@@ -1,5 +1,6 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.NewsSubscriptions;
 using HM.DAL.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -44,9 +45,9 @@ public class NewsSubscriptionsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> AddSubscription(NewsSubscriptionCreateDto subscription, CancellationToken cancellationToken)
     {
-        OperationResult response = await subscriptionService
+        OperationResult result = await subscriptionService
             .AddSubscriptionAsync(subscription, cancellationToken);
-        return response.Succeeded ? Ok(response.Message) : BadRequest(response.Message);
+        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
     }
 
     /// <summary>
@@ -62,9 +63,9 @@ public class NewsSubscriptionsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> CancelSubscription(string removeToken, CancellationToken cancellationToken)
     {
-        OperationResult response = await subscriptionService
+        OperationResult result = await subscriptionService
             .RemoveSubscriptionAsync(removeToken, cancellationToken);
-        return response.Succeeded ? Ok(response.Message) : BadRequest(response.Message);
+        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
     }
 
     /// <summary>
@@ -93,8 +94,8 @@ public class NewsSubscriptionsController(
                 $"You try to send email to {subscriptions.Count()} subscribers. Remove some subscribers before sending news.");
         }
 
-        OperationResult response = await emailService
+        OperationResult result = await emailService
             .SendNewsEmailAsync(subscriptions, subject, bodyTextHtml, cancellationToken);
-        return response.Succeeded ? Ok(response.Message) : BadRequest(response.Message);
+        return result.Succeeded ? Ok(result.Message) : BadRequest(result.Message);
     }
 }

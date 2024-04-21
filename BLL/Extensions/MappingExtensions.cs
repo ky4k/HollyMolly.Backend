@@ -1,4 +1,8 @@
-﻿using HM.BLL.Models;
+﻿using HM.BLL.Models.Categories;
+using HM.BLL.Models.Orders;
+using HM.BLL.Models.Products;
+using HM.BLL.Models.Users;
+using HM.BLL.Models.WishLists;
 using HM.DAL.Entities;
 
 namespace HM.BLL.Extensions;
@@ -58,7 +62,7 @@ public static class MappingExtensions
     public static ProductInstanceDto ToProductInstanceDto(this ProductInstance productInstance)
     {
         var images = new List<ProductImageDto>();
-        foreach (var image in productInstance.Images)
+        foreach (ProductImage image in productInstance.Images)
         {
             images.Add(image.ToProductImageDto());
         }
@@ -122,7 +126,7 @@ public static class MappingExtensions
     public static OrderDto ToOrderDto(this Order order)
     {
         var orderRecordsDto = new List<OrderRecordDto>();
-        foreach (var orderRecord in order.OrderRecords)
+        foreach (OrderRecord orderRecord in order.OrderRecords)
         {
             orderRecordsDto.Add(orderRecord.ToOrderRecordDto());
         }
@@ -180,7 +184,7 @@ public static class MappingExtensions
     public static CategoryGroupDto ToCategoryGroupDto(this CategoryGroup categoryGroup)
     {
         List<CategoryDto> categoriesDto = [];
-        foreach (var category in categoryGroup.Categories)
+        foreach (Category category in categoryGroup.Categories)
         {
             categoriesDto.Add(category.ToCategoryDto());
         }

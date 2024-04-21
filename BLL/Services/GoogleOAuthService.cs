@@ -64,9 +64,9 @@ public class GoogleOAuthService : IGoogleOAuthService
 
         try
         {
-            var response = await _httpClient.PostAsync(_tokenUri, content, cancellationToken);
+            HttpResponseMessage response = await _httpClient.PostAsync(_tokenUri, content, cancellationToken);
             using var stream = response.Content.ReadAsStream(cancellationToken);
-            var token = JsonSerializer.Deserialize<TokenResult>(stream);
+            TokenResult? token = JsonSerializer.Deserialize<TokenResult>(stream);
             return token?.AccessToken;
         }
         catch (Exception ex)
@@ -83,9 +83,9 @@ public class GoogleOAuthService : IGoogleOAuthService
 
         try
         {
-            var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
+            HttpResponseMessage response = await _httpClient.SendAsync(requestMessage, cancellationToken);
             using var stream = response.Content.ReadAsStream(cancellationToken);
-            var userInfo = JsonSerializer.Deserialize<UserInfo>(stream);
+            UserInfo? userInfo = JsonSerializer.Deserialize<UserInfo>(stream);
             return userInfo?.Email;
         }
         catch (Exception ex)

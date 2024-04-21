@@ -1,5 +1,7 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Categories;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.Products;
 using HM.DAL.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -40,8 +42,8 @@ public class CategoriesController(
     public async Task<ActionResult<CategoryGroupDto?>> GetCategoryGroup(
         int categoryGroupId, CancellationToken cancellationToken)
     {
-        var response = await categoryService.GetCategoryGroupByIdAsync(categoryGroupId, cancellationToken);
-        return response == null ? NotFound() : Ok(response);
+        CategoryGroupDto? categoryGroup = await categoryService.GetCategoryGroupByIdAsync(categoryGroupId, cancellationToken);
+        return categoryGroup == null ? NotFound() : Ok(categoryGroup);
     }
 
     /// <summary>
@@ -179,7 +181,7 @@ public class CategoriesController(
         {
             return NotFound();
         }
-        var category = await categoryService.GetCategoryByIdAsync(categoryGroupId, categoryId, cancellationToken);
+        CategoryDto? category = await categoryService.GetCategoryByIdAsync(categoryGroupId, categoryId, cancellationToken);
         return category == null ? NotFound() : Ok(category);
     }
 

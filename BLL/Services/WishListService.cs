@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.WishLists;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +16,6 @@ namespace HM.BLL.Services
         {
             var wishList = await context.WishLists
                 .Include(wl => wl.Products)
-                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(wl => wl.UserId == userId, cancellationToken);
             return wishList?.ToWishListDto();
         }
@@ -24,7 +24,6 @@ namespace HM.BLL.Services
         {
             var existingWishList = await context.WishLists
                 .Include(wl => wl.Products)
-                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(wl => wl.UserId == userId, cancellationToken);
 
             if (existingWishList == null)
@@ -63,7 +62,6 @@ namespace HM.BLL.Services
         {
             var wishList = await context.WishLists
                 .Include(wl => wl.Products)
-                    .ThenInclude(p => p.Category)
                 .FirstOrDefaultAsync(wl => wl.UserId == userId, cancellationToken);
 
             if (wishList == null)

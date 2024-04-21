@@ -13,7 +13,7 @@ public class ProductStatisticDto
         get
         {
             int sum = 0;
-            foreach (var instance in InstancesStatistics)
+            foreach (ProductInstanceStatisticDto instance in InstancesStatistics)
             {
                 sum += instance.NumberOfPurchases;
             }
@@ -25,7 +25,7 @@ public class ProductStatisticDto
         get
         {
             decimal sum = 0;
-            foreach (var instance in InstancesStatistics)
+            foreach (ProductInstanceStatisticDto instance in InstancesStatistics)
             {
                 sum += instance.TotalRevenue;
             }

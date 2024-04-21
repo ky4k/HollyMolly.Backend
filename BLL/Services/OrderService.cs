@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.Orders;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -17,17 +18,13 @@ public class OrderService(
     {
         IQueryable<Order> orders = context.Orders
             .Include(o => o.Customer)
-            .Include(o => o.OrderRecords);
+            .Include(o => o.OrderRecords)
+            .AsNoTracking();
         if (userId != null)
         {
             orders = orders.Where(o => o.UserId == userId);
         }
-        List<OrderDto> ordersDto = [];
-        foreach (Order order in await orders.ToListAsync(cancellationToken))
-        {
-            ordersDto.Add(order.ToOrderDto());
-        }
-        return ordersDto;
+        return await orders.Select(o => o.ToOrderDto()).ToListAsync(cancellationToken);
     }
 
     public async Task<OrderDto?> GetOrderByIdAsync(int orderId, CancellationToken cancellationToken)
@@ -36,11 +33,7 @@ public class OrderService(
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
-        if (order == null)
-        {
-            return null;
-        }
-        return order.ToOrderDto();
+        return order?.ToOrderDto();
     }
 
     public async Task<OperationResult<OrderDto>> CreateOrderAsync(OrderCreateDto orderDto, string userId,
@@ -57,7 +50,7 @@ public class OrderService(
         };
 
         decimal totalCost = 0;
-        foreach (var orderRecordDto in orderDto.OrderRecords)
+        foreach (OrderRecordCreateDto orderRecordDto in orderDto.OrderRecords)
         {
             Product? product = await context.Products
                 .Include(p => p.ProductInstances)

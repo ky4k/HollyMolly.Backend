@@ -1,5 +1,5 @@
 ﻿using FluentValidation;
-using HM.BLL.Models;
+using HM.BLL.Models.Orders;
 
 namespace HM.BLL.Validators;
 

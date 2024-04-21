@@ -1,5 +1,6 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.Products;
 using HM.DAL.Constants;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
@@ -288,7 +289,9 @@ public class ProductsController(
     /// <summary>
     /// Allows administrators and managers to retrieve the feedback about all products or products in the specified category.
     /// </summary>
-    /// <param name="category">Optional. Filters feedback for the products in the specified category.</param>
+    /// <param name="categoryGroupId">Optional. Filters feedback for the products in the specified category group.
+    /// Has effect only if <paramref name="categoryId"/> is not specified.</param>
+    /// <param name="categoryId">Optional. Filters feedback for the products in the specified category.</param>
     /// <response code="200">Indicates that the feedback entries were successfully retrieved.</response>
     /// <response code="401">Indicates that the request lacks valid authentication credentials for the target resource.</response>
     /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
@@ -298,9 +301,11 @@ public class ProductsController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<ProductFeedback>>> GetAllFeedback(string? category = null)
+    public async Task<ActionResult<IEnumerable<ProductFeedback>>> GetAllFeedback(
+        int? categoryGroupId = null, int? categoryId = null)
     {
-        return Ok(await productService.GetAllProductsFeedbackAsync(category, Request.HttpContext.RequestAborted));
+        return Ok(await productService.GetAllProductsFeedbackAsync(
+            categoryGroupId, categoryId, Request.HttpContext.RequestAborted));
     }
 
     /// <summary>
@@ -366,8 +371,8 @@ public class ProductsController(
     [HttpDelete]
     public async Task<ActionResult> DeleteFeedback(int productId, int feedbackId, CancellationToken cancellationToken)
     {
-        OperationResult response = await productService
+        OperationResult result = await productService
             .DeleteProductFeedbackAsync(productId, feedbackId, cancellationToken);
-        return response.Succeeded ? NoContent() : BadRequest(response.Message);
+        return result.Succeeded ? NoContent() : BadRequest(result.Message);
     }
 }
