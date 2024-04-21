@@ -91,5 +91,5 @@ namespace HM.BLL.Services
                 return new OperationResult<WishListDto>(false, "Failed to remove product from the wish list.");
             }
         }
-    }   
+    }
 }

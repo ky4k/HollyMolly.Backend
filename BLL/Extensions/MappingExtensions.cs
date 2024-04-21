@@ -100,7 +100,7 @@ public static class MappingExtensions
     {
         return new ProductFeedbackDto()
         {
-            Id= productFeedback.Id,
+            Id = productFeedback.Id,
             ProductId = productFeedback.ProductId,
             AuthorName = productFeedback.AuthorName,
             Created = productFeedback.Created,
@@ -132,6 +132,7 @@ public static class MappingExtensions
             Customer = order.Customer.ToCustomerDto(),
             OrderDate = order.OrderDate,
             Status = order.Status,
+            PaymentReceived = order.PaymentReceived,
             Notes = order.Notes,
             OrderRecords = orderRecordsDto
         };

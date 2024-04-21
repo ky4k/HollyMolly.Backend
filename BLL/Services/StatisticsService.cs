@@ -36,7 +36,7 @@ public class StatisticsService(
 
         return sortedProductStatistics;
     }
-    
+
     private async Task<IQueryable<ProductStatistics>> FilterProductStatisticsAsync(
         IQueryable<ProductStatistics> productStatistics, int? productId, int? categoryId,
         int? categoryGroupId, DateOnly? fromDate, DateOnly? toDate, CancellationToken cancellationToken)
@@ -104,6 +104,8 @@ public class StatisticsService(
         return groupedResult;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S2219:Runtime type checking should be simplified",
+        Justification = "An expression tree may not contain an 'is' pattern-matching operator")]
     private static IQueryable<ProductStatisticDto> GetProductStatisticDto(
         IQueryable<IGrouping<AllTimeProductKey, ProductStatistics>> groupedResult)
     {
@@ -184,7 +186,7 @@ public class StatisticsService(
         List<CategoryStatisticDto> categoryStatisticDtos = [];
         (bool succeeded, int useId, string useName) = await GetCategoryIdAndNameAsync(
             categoryGroupId, categoryId, cancellationToken);
-        if(!succeeded)
+        if (!succeeded)
         {
             return categoryStatisticDtos;
         }
@@ -277,18 +279,22 @@ public class StatisticsService(
     }
 
     public async Task<IEnumerable<OrderStatisticDto>> GetOrderStatisticsAsync(
-        DateOnly? fromDate, DateOnly? toDate,
-        bool yearly, bool monthly, bool daily, CancellationToken cancellationToken)
+        DateOnly? fromDate, DateOnly? toDate, bool yearly, bool monthly, bool daily,
+        bool includeUnpaid, CancellationToken cancellationToken)
     {
         IQueryable<Order> orders = context.Orders
             .Include(o => o.OrderRecords);
-        if(fromDate != null)
+        if (fromDate != null)
         {
-            orders.Where(o => o.OrderDate > fromDate.Value.ToDateTime(new TimeOnly(0, 0, 0)));
+            orders = orders.Where(o => o.OrderDate > fromDate.Value.ToDateTime(new TimeOnly(0, 0, 0)));
         }
-        if(toDate != null)
+        if (toDate != null)
         {
-            orders.Where(o => o.OrderDate < toDate.Value.ToDateTime(new TimeOnly(23, 59, 59)));
+            orders = orders.Where(o => o.OrderDate < toDate.Value.ToDateTime(new TimeOnly(23, 59, 59)));
+        }
+        if (!includeUnpaid)
+        {
+            orders = orders.Where(o => o.PaymentReceived);
         }
 
         List<OrderStatisticDto> orderStatisticDtos = [];
@@ -337,6 +343,8 @@ public class StatisticsService(
         return orderStatisticDtos;
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S2219:Runtime type checking should be simplified",
+        Justification = "An expression tree may not contain an 'is' pattern-matching operator")]
     private static IQueryable<OrderStatisticDto> GetOrdersStatisticDto(
         IQueryable<IGrouping<YearKey, Order>> groupedResult)
     {
@@ -355,19 +363,21 @@ public class StatisticsService(
             });
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons",
+        Justification = "https://github.com/dotnet/efcore/issues/20995#issuecomment-631358780 EF Core does not translate the overload that accepts StringComparison.InvariantCultureIgnoreCase (or any other StringComparison).")]
     public async Task<IEnumerable<EmailLog>> GetEmailLogsAsync(string? recipientEmail, string? subject,
         DateOnly? startDateTime, DateOnly? endDateTime, CancellationToken cancellationToken)
     {
         IQueryable<EmailLog> emails = context.EmailLogs;
-        if(recipientEmail != null)
+        if (recipientEmail != null)
         {
             emails = emails.Where(e => e.RecipientEmail.ToLower().Contains(recipientEmail.ToLower()));
         }
-        if(subject != null)
+        if (subject != null)
         {
             emails = emails.Where(e => e.Subject.ToLower().Contains(subject.ToLower()));
         }
-        if(startDateTime != null)
+        if (startDateTime != null)
         {
             emails = emails.Where(e => e.SendAt >= startDateTime.Value.ToDateTime(new TimeOnly(0, 0, 0)));
         }
@@ -401,13 +411,13 @@ public class StatisticsService(
                 var product = await context.Products
                     .Include(p => p.ProductInstances)
                     .FirstOrDefaultAsync(p => p.ProductInstances.Any(pi => pi.Id == record.ProductInstanceId));
-                if(product == null)
+                if (product == null)
                 {
                     return;
                 }
                 var productStatistic = await GetProductStatisticsAsync(product.Id);
                 var productInstanceStatistics = GetProductInstanceStatistics(productStatistic, record.ProductInstanceId);
-                
+
                 productInstanceStatistics.NumberOfPurchases += record.Quantity;
                 productInstanceStatistics.TotalRevenue += record.TotalCost;
             }

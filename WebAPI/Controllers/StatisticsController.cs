@@ -74,7 +74,7 @@ public class StatisticsController(
         int categoryGroupId, DateOnly? fromDate = null, DateOnly? toDate = null,
         bool yearly = false, bool monthly = false, bool daily = false)
     {
-        return Ok(await statisticsService.GetCategoryStatisticsAsync(categoryGroupId, 
+        return Ok(await statisticsService.GetCategoryStatisticsAsync(categoryGroupId,
             null, fromDate, toDate, yearly, monthly, daily, Request.HttpContext.RequestAborted));
     }
 
@@ -112,6 +112,7 @@ public class StatisticsController(
     /// <param name="yearly">Optional. If set to true returns statistics for every year.</param>
     /// <param name="monthly">Optional. If set to true returns statistics for every month.</param>
     /// <param name="daily">Optional. If set to true returns statistics for every day.</param>
+    /// <param name="includeUnpaid">Optional. If set to true includes the orders for which payment has not been received.</param>
     /// <response code="200">Returns the orders statistics.</response>
     /// <response code="401">Indicates that the endpoint has been called by an unauthenticated user.</response>
     /// <response code="403">Indicates that the user is not authorized to access the orders.</response>
@@ -121,11 +122,11 @@ public class StatisticsController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<OrderStatisticDto>>> GetOrdersStatistics(
-        DateOnly? fromDate = null, DateOnly? toDate = null,
-        bool yearly = false, bool monthly = false, bool daily = false)
+        DateOnly? fromDate = null, DateOnly? toDate = null, bool yearly = false, bool monthly = false,
+        bool daily = false, bool includeUnpaid = false)
     {
         return Ok(await statisticsService.GetOrderStatisticsAsync(
-            fromDate, toDate, yearly, monthly, daily, Request.HttpContext.RequestAborted));
+            fromDate, toDate, yearly, monthly, daily, includeUnpaid, Request.HttpContext.RequestAborted));
     }
 
     /// <summary>

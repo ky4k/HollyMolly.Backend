@@ -67,7 +67,7 @@ public class TestController : ControllerBase
     public ActionResult ImitateGetRedirectUrl(string frontendUrlToRedirectUserTo)
     {
         string redirectUrl = $"https://{Request.Host}{Request.PathBase}/api/Test/login/google/getToken?redirectTo={frontendUrlToRedirectUserTo}";
-        return Ok(new { RedirectUrl = redirectUrl });
+        return Ok(new LinkDto { RedirectToUrl = redirectUrl });
     }
 
     /// <summary>
@@ -112,5 +112,51 @@ public class TestController : ControllerBase
         {
             return BadRequest("Token is invalid");
         }
+    }
+
+    /// <summary>
+    /// Allows to imitate payment processing.
+    /// </summary>
+    /// <response code="200">Returns link to the payment page where user should be redirected by the frontend.</response>
+    /// <response code="400">Indicates that payment link was not created and returns error message.</response>
+    [Route("checkout/{orderId}")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0060:Remove unused parameter",
+        Justification = "orderId parameter is used to reflect the real endpoint signature but is not required for the testing purposes.")]
+    public ActionResult<LinkDto> CheckoutOrder(int orderId,
+        string frontendUrlToHandleResponse, bool imitateSuccess = true)
+    {
+        string url = $"https://{Request.Host}{Request.PathBase}/api/checkout/{(imitateSuccess ? "success" : "failed")}?redirectTo={frontendUrlToHandleResponse}";
+        return Ok(new LinkDto { RedirectToUrl = url });
+    }
+
+    /// <summary>
+    /// Allows to imitate successful payment.
+    /// </summary>
+    /// <response code="302">Indicates that payment was not completed
+    /// and redirects user to the frontend page setting paymentSucceeded query parameter to false.</response>
+    [Route("checkout/success")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult CheckoutSucceeded(string frontendUrlToHandleResponse)
+    {
+        return Redirect(frontendUrlToHandleResponse + "?paymentSucceeded=true");
+    }
+
+    /// <summary>
+    /// Allows to imitate payment failure.
+    /// </summary>
+    /// <response code="200">Returns link to the payment page where user should be redirected by the frontend.</response>
+    /// <response code="400">Indicates that payment link was not created and returns error message.</response>
+    [Route("checkout/failed")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public ActionResult CheckoutFailed(string frontendUrlToHandleResponse)
+    {
+        return Redirect(frontendUrlToHandleResponse + "?paymentSucceeded=false");
     }
 }

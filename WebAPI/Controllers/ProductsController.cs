@@ -22,6 +22,7 @@ public class ProductsController(
     /// if <paramref name="categoryId"/> is not specified.</param>
     /// <param name="categoryId">Optional. Filters products by category.</param>
     /// <param name="name">Optional. Filters products by name.</param>
+    /// <param name="onlyNewCollection">Optional. Filters only products that have product instances from the new collection.</param>
     /// <param name="sortByPrice">Optional. If true, sorts products by price.</param>
     /// <param name="sortByRating">Optional. If true, sorts products by rating.
     ///     Is not applied if <paramref name="sortByPrice"/> is set to true</param>
@@ -31,11 +32,11 @@ public class ProductsController(
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<ProductDto>>> GetProductsByCategory(
-        int? categoryGroupId, int? categoryId = null, string? name = null,
+        int? categoryGroupId, int? categoryId = null, string? name = null, bool onlyNewCollection = false,
         bool sortByPrice = false, bool sortByRating = false, bool sortAsc = true)
     {
-        return Ok(await productService.GetProductsAsync(categoryGroupId, categoryId,
-            name, sortByPrice, sortByRating, sortAsc, Request.HttpContext.RequestAborted));
+        return Ok(await productService.GetProductsAsync(categoryGroupId, categoryId, name,
+            onlyNewCollection, sortByPrice, sortByRating, sortAsc, Request.HttpContext.RequestAborted));
     }
 
     /// <summary>
@@ -52,7 +53,7 @@ public class ProductsController(
     public async Task<ActionResult<ProductDto>> GetProductById(int productId, CancellationToken cancellationToken)
     {
         ProductDto? productDto = await productService.GetProductByIdAsync(productId, cancellationToken);
-        if(productDto == null)
+        if (productDto == null)
         {
             return NotFound();
         }
@@ -108,6 +109,31 @@ public class ProductsController(
     }
 
     /// <summary>
+    /// Allows administrators and managers to add new instance to the product.
+    /// </summary>
+    /// <param name="productId">Product to add instance to.</param>
+    /// <param name="productInstance">Product instance to add.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="204">Indicates that the product instance was successfully added to the product.</response>
+    /// <response code="400">Indicates that the request was invalid and returns the error message.</response>
+    /// <response code="401">Indicates that the user is unauthenticated.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
+    [Authorize(Roles = $"{DefaultRoles.Administrator}, {DefaultRoles.Manager}")]
+    [Route("{productId}/productInstances")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> AddProductInstance(int productId, ProductInstanceCreateDto productInstance,
+        CancellationToken cancellationToken)
+    {
+        OperationResult<ProductInstanceDto> result = await productService.AddProductInstanceToProduct(
+            productId, productInstance, cancellationToken);
+        return result.Succeeded ? NoContent() : BadRequest(result.Message);
+    }
+
+    /// <summary>
     /// Allows administrators and managers to update an existing product instance.
     /// </summary>
     /// <param name="productId">The ID of the product that contains instance.</param>
@@ -131,6 +157,31 @@ public class ProductsController(
         OperationResult<ProductInstanceDto> result = await productService.UpdateProductInstanceAsync(
             productId, productInstanceId, productInstanceDto, cancellationToken);
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
+
+    /// <summary>
+    /// Allows administrators to delete new instance from the product.
+    /// </summary>
+    /// <param name="productId">ID of the product that contains product instance.</param>
+    /// <param name="productInstanceId">ID of the product instance to delete.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="204">Indicates that the product instance was successfully deleted.</response>
+    /// <response code="400">Indicates that the request was invalid and returns the error message.</response>
+    /// <response code="401">Indicates that the user is unauthenticated.</response>
+    /// <response code="403">Indicates that the server understood the request but refuses to authorize it.</response>
+    [Authorize(Roles = $"{DefaultRoles.Administrator}")]
+    [Route("{productId}/{productInstanceId}")]
+    [HttpDelete]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult> DeleteProductInstance(int productId, int productInstanceId,
+        CancellationToken cancellationToken)
+    {
+        OperationResult result = await productService.DeleteProductInstanceAsync(
+            productId, productInstanceId, cancellationToken);
+        return result.Succeeded ? NoContent() : BadRequest(result.Message);
     }
 
     /// <summary>

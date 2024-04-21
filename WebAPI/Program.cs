@@ -120,6 +120,9 @@ builder.Services.AddSerilog(options =>
         .WriteTo.File("./logs/log.txt", LogEventLevel.Information, rollingInterval: RollingInterval.Day)
         .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Debug));
 
+Stripe.StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
+    ?? builder.Configuration["Stripe:SecretKey"] ?? "";
+
 builder.Services.AddHttpClient();
 
 builder.Services.AddScoped<HmDbContextInitializer>();
@@ -135,6 +138,8 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INewsSubscriptionService, NewsSubscriptionService>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddScoped<IWishListService, WishListService>();
+builder.Services.AddScoped<ICheckoutService, CheckoutService>();
+builder.Services.AddScoped<Stripe.Checkout.SessionService>();
 
 var app = builder.Build();
 
