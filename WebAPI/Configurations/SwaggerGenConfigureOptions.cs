@@ -34,7 +34,7 @@ public class SwaggerGenConfigureOptions : IConfigureOptions<SwaggerGenOptions>
                 Array.Empty<string>()
             }
         });
-            string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-            options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
-        }
+        string xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+    }
 }

@@ -57,11 +57,7 @@ public class OrderService(
                 .FirstOrDefaultAsync(p =>
                     p.ProductInstances.Select(pi => pi.Id).Contains(orderRecordDto.ProductInstanceId),
                     cancellationToken);
-            if (product == null)
-            {
-                continue;
-            }
-            ProductInstance? productInstance = product.ProductInstances
+            ProductInstance? productInstance = product?.ProductInstances
                 .Find(pi => pi.Id == orderRecordDto.ProductInstanceId);
             if (productInstance == null)
             {
@@ -78,7 +74,7 @@ public class OrderService(
             var orderRecord = new OrderRecord()
             {
                 ProductInstanceId = productInstance.Id,
-                ProductName = product.Name,
+                ProductName = product!.Name,
                 Price = productInstance.Price,
                 Quantity = orderRecordDto.Quantity,
                 Discount = orderRecordDto.Quantity * productInstance.GetCombinedDiscount()

@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Options;
-using Serilog;
+﻿using Serilog;
 using Serilog.Events;
 
 namespace HM.WebAPI.Configurations;

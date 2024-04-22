@@ -95,7 +95,7 @@ public class ProductService(
             Name = productDto.Name,
             Description = productDto.Description,
             Category = category,
-            ProductInstances = productDto.ProductInstances .Select(pid => pid.ToProductInstance()).ToList()
+            ProductInstances = productDto.ProductInstances.Select(pid => pid.ToProductInstance()).ToList()
         };
         try
         {
@@ -174,7 +174,7 @@ public class ProductService(
     public async Task<OperationResult<ProductInstanceDto>> UpdateProductInstanceAsync(int productId, int productInstanceId,
         ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
     {
-        OperationResult<ProductInstance> instanceResult = 
+        OperationResult<ProductInstance> instanceResult =
             await GetProductInstanceAsync(productId, productInstanceId, cancellationToken);
         if (!instanceResult.Succeeded || instanceResult.Payload == null)
         {

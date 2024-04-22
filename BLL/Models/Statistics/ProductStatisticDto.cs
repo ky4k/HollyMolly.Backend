@@ -32,7 +32,7 @@ public class ProductStatisticDto
             return sum;
         }
     }
-    public decimal ConversionRate => NumberPurchases == 0 ? 0 : NumberViews / (decimal)NumberPurchases;
+    public decimal ConversionRate => NumberPurchases == 0 ? 0 : NumberPurchases / (decimal)NumberViews;
     public int NumberWishListAddition { get; set; }
     public int NumberReviews { get; set; }
     public decimal Rating { get; set; }
