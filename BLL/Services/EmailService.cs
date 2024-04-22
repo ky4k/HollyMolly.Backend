@@ -1,5 +1,8 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.NewsSubscriptions;
+using HM.BLL.Models.Orders;
+using HM.BLL.Models.Users;
 using System.Text;
 
 namespace HM.BLL.Services;
@@ -101,7 +104,7 @@ public class EmailService(
         int succeeded = 0;
         int failed = 0;
         StringBuilder sb = new();
-        foreach (var subscription in subscriptions)
+        foreach (NewsSubscriptionDto subscription in subscriptions)
         {
             UserMailInfo userMailInfo = new() { Email = subscription.Email };
             string emailBody = NewsTemplate

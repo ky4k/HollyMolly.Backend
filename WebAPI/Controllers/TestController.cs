@@ -1,4 +1,5 @@
-﻿using HM.BLL.Models;
+﻿using HM.BLL.Models.Common;
+using HM.BLL.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 

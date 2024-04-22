@@ -21,13 +21,14 @@ public class HmDbContextInitializer(
         {
             if (!context.Database.IsRelational())
             {
-                logger.LogInformation("Migrations cannot be applied to a non relational database");
+                logger.LogInformation("Migrations cannot be applied to a non relational database.");
             }
 
             if (context.Database.GetPendingMigrations().Any())
             {
                 logger.LogInformation("Apply migrations.");
                 await context.Database.MigrateAsync();
+                logger.LogInformation("All migrations was successfully applied.");
             }
             else
             {
@@ -99,7 +100,7 @@ public class HmDbContextInitializer(
 
     private string? GetConfigurationValue(string key)
     {
-        var value = Environment.GetEnvironmentVariable(key);
+        string? value = Environment.GetEnvironmentVariable(key);
         if (string.IsNullOrEmpty(value))
         {
             value = configuration[key];

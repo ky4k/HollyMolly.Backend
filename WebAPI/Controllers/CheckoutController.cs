@@ -1,5 +1,5 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -30,13 +30,13 @@ public class CheckoutController(
             return Unauthorized();
         }
         string baseUrl = $"https://{Request.Host}{Request.PathBase}";
-        OperationResult<string> response = await checkoutService
+        OperationResult<string> result = await checkoutService
             .PayForOrderAsync(orderId, userId, baseUrl, cancellationToken);
-        if (!response.Succeeded || response.Payload == null)
+        if (!result.Succeeded || result.Payload == null)
         {
-            return BadRequest(response.Message);
+            return BadRequest(result.Message);
         }
-        return Ok(new LinkDto { RedirectToUrl = response.Payload });
+        return Ok(new LinkDto { RedirectToUrl = result.Payload });
     }
 
     /// <summary>
@@ -52,10 +52,10 @@ public class CheckoutController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> CheckoutSucceeded(string sessionId)
     {
-        OperationResult response = await checkoutService.CheckoutSuccessAsync(sessionId);
-        if (!response.Succeeded)
+        OperationResult result = await checkoutService.CheckoutSuccessAsync(sessionId);
+        if (!result.Succeeded)
         {
-            return BadRequest(response.Message);
+            return BadRequest(result.Message);
         }
         string redirectToFrontendUrl = $"https://holly-molly.vercel.app/?paymentSucceeded=true";
         return Redirect(redirectToFrontendUrl);

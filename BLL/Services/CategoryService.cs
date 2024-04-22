@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Categories;
+using HM.BLL.Models.Common;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Http;
@@ -19,13 +20,9 @@ public class CategoryService(
     {
         List<CategoryGroup> groups = await context.CategoryGroups
             .Include(c => c.Categories)
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
-        List<CategoryGroupDto> groupsDto = [];
-        foreach (var group in groups)
-        {
-            groupsDto.Add(group.ToCategoryGroupDto());
-        }
-        return groupsDto;
+        return groups.Select(g => g.ToCategoryGroupDto());
     }
 
     public async Task<CategoryGroupDto?> GetCategoryGroupByIdAsync(int categoryGroupId,
@@ -291,7 +288,7 @@ public class CategoryService(
     {
         try
         {
-            string savePath = $"images/categories/";
+            string savePath = $"images/categories";
             OperationResult<ImageDto> result = await imageService
                 .UploadImageAsync(image, baseUrlPath, savePath, cancellationToken);
 
@@ -316,7 +313,7 @@ public class CategoryService(
     {
         try
         {
-            string savePath = $"images/categoryGroups/";
+            string savePath = $"images/categoryGroups";
             OperationResult<ImageDto> result = await imageService
                 .UploadImageAsync(image, baseUrlPath, savePath, cancellationToken);
             if (result.Payload != null)

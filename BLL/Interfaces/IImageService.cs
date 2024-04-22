@@ -1,4 +1,4 @@
-﻿using HM.BLL.Models;
+﻿using HM.BLL.Models.Common;
 using Microsoft.AspNetCore.Http;
 
 namespace HM.BLL.Interfaces;

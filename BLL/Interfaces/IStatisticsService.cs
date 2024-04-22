@@ -1,4 +1,4 @@
-﻿using HM.BLL.Models;
+﻿using HM.BLL.Models.Orders;
 using HM.BLL.Models.Statistics;
 using HM.DAL.Entities;
 

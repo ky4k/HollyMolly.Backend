@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
 using HM.DAL.Data;
+using HM.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Stripe.Checkout;
@@ -16,7 +17,7 @@ public class CheckoutService(
     public async Task<OperationResult<string>> PayForOrderAsync(int orderId, string userId,
         string baseUrl, CancellationToken cancellationToken)
     {
-        var order = await context.Orders
+        Order? order = await context.Orders
             .Include(o => o.OrderRecords)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         if (order == null)
@@ -32,16 +33,15 @@ public class CheckoutService(
             return new OperationResult<string>(false, "The order has already been paid for.", null!);
         }
         decimal total = 0;
-
         List<SessionLineItemOptions> lineItemOptions = [];
-        foreach (var record in order.OrderRecords)
+        foreach (OrderRecord record in order.OrderRecords)
         {
-            var productInstance = await context.Products
+            ProductInstance? productInstance = await context.Products
                 .Include(p => p.ProductInstances)
                 .SelectMany(p => p.ProductInstances)
                 .FirstOrDefaultAsync(pi => pi.Id == record.ProductInstanceId, cancellationToken);
             List<string> images = [];
-            foreach (var image in productInstance?.Images ?? [])
+            foreach (ProductImage image in productInstance?.Images ?? [])
             {
                 string link = Uri.EscapeDataString(image.Link ?? string.Empty);
                 if (!string.IsNullOrEmpty(link))
@@ -94,7 +94,7 @@ public class CheckoutService(
 
         try
         {
-            var session = await sessionService.CreateAsync(options, cancellationToken: cancellationToken);
+            Session session = await sessionService.CreateAsync(options, cancellationToken: cancellationToken);
             return new OperationResult<string>(true, "", $"{session.Url}");
         }
         catch (Exception ex)
@@ -106,11 +106,11 @@ public class CheckoutService(
 
     public async Task<OperationResult> CheckoutSuccessAsync(string sessionId)
     {
-        var session = await sessionService.GetAsync(sessionId);
+        Session session = await sessionService.GetAsync(sessionId);
         if (session.PaymentStatus == "paid")
         {
             int orderId = int.Parse(session.Metadata["orderId"]);
-            var order = await context.Orders
+            Order? order = await context.Orders
                 .FirstOrDefaultAsync(o => o.Id == orderId);
             if (order == null)
             {

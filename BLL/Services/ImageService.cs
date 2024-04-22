@@ -1,5 +1,5 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Text;
@@ -27,7 +27,7 @@ public class ImageService(
         Directory.CreateDirectory(savePath);
         List<ImageDto> imagesDto = [];
         StringBuilder errorMessage = new();
-        foreach (var image in images)
+        foreach (IFormFile image in images)
         {
             OperationResult validationResult = ValidateImage(image);
             if (!validationResult.Succeeded)
@@ -43,7 +43,7 @@ public class ImageService(
                 {
                     await image.CopyToAsync(stream, cancellationToken);
                 }
-                var imageUrl = $"{baseUrlPath}/{filePath.Replace("wwwroot/", "")}";
+                string imageUrl = $"{baseUrlPath}/{filePath.Replace("wwwroot/", "")}";
                 imagesDto.Add(new()
                 {
                     FilePath = filePath,

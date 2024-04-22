@@ -1,5 +1,6 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
@@ -31,22 +32,22 @@ public class AccountController(
     public async Task<ActionResult<RegistrationResponse>> Registration(RegistrationRequest request,
         CancellationToken cancellationToken, bool sendEmail = false)
     {
-        OperationResult<RegistrationResponse> response = await accountService.RegisterUserAsync(request);
-        if (!response.Succeeded || response.Payload == null)
+        OperationResult<RegistrationResponse> result = await accountService.RegisterUserAsync(request);
+        if (!result.Succeeded || result.Payload == null)
         {
-            return BadRequest(response.Message);
+            return BadRequest(result.Message);
         }
         if (sendEmail)
         {
             OperationResult<ConfirmationEmailDto> confirmationEmailResult = await accountService
-                .GetConfirmationEmailKey(response.Payload.Id);
+                .GetConfirmationEmailKey(result.Payload.Id);
             if (confirmationEmailResult.Succeeded && confirmationEmailResult.Payload != null)
             {
-                await emailService.SendRegistrationResultEmailAsync(response.Payload.Email,
+                await emailService.SendRegistrationResultEmailAsync(result.Payload.Email,
                     confirmationEmailResult.Payload, cancellationToken);
             }
         }
-        return Ok(response.Payload);
+        return Ok(result.Payload);
     }
 
     /// <summary>
@@ -63,8 +64,8 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<RegistrationResponse>> ConfirmEmail(string userId, string confirmationEmailToken)
     {
-        OperationResult response = await accountService.ConfirmEmailAsync(userId, confirmationEmailToken);
-        return response.Succeeded ? NoContent() : BadRequest(response.Message);
+        OperationResult result = await accountService.ConfirmEmailAsync(userId, confirmationEmailToken);
+        return result.Succeeded ? NoContent() : BadRequest(result.Message);
     }
 
     /// <summary>
@@ -80,8 +81,8 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<LoginResponse>> Login(LoginRequest request)
     {
-        OperationResult<LoginResponse> response = await accountService.LoginAsync(request);
-        return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
+        OperationResult<LoginResponse> result = await accountService.LoginAsync(request);
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
 
     /// <summary>
@@ -94,7 +95,7 @@ public class AccountController(
     public ActionResult<LinkDto> RedirectOnGoogleOAuthServer()
     {
         string redirectUrl = $"https://{Request.Host}{Request.PathBase}/api/account/login/google/getToken";
-        var url = googleOAuthService.GenerateOAuthRequestUrl(redirectUrl);
+        string url = googleOAuthService.GenerateOAuthRequestUrl(redirectUrl);
         return Ok(new LinkDto { RedirectToUrl = url });
     }
 
@@ -123,10 +124,10 @@ public class AccountController(
             return BadRequest("Google does not return a valid user email address.");
         }
 
-        OperationResult response = await accountService.RegisterOidcUserAsync(email);
-        if (!response.Succeeded)
+        OperationResult result = await accountService.RegisterOidcUserAsync(email);
+        if (!result.Succeeded)
         {
-            return BadRequest(response.Message);
+            return BadRequest(result.Message);
         }
         string? oidcToken = (await accountService.GetOidcTokenAsync(email)).Payload;
 
@@ -146,9 +147,9 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> LoginViaToken(LoginOidcRequest loginRequest)
     {
-        OperationResult<LoginResponse> response = await accountService
+        OperationResult<LoginResponse> result = await accountService
             .LoginOidcUserAsync(loginRequest.Token);
-        return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
 
     /// <summary>
@@ -194,8 +195,8 @@ public class AccountController(
         {
             return Unauthorized();
         }
-        var response = await accountService.UpdateUserProfileAsync(userId, profile);
-        return response.Succeeded ? Ok(response.Payload) : BadRequest(response.Message);
+        OperationResult<UserDto> result = await accountService.UpdateUserProfileAsync(userId, profile);
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
 
     /// <summary>
@@ -221,17 +222,17 @@ public class AccountController(
         {
             return Unauthorized();
         }
-        OperationResult<ResetPasswordTokenDto> response = await accountService.ChangePasswordAsync(userId, passwords);
-        if (!response.Succeeded || response.Payload == null)
+        OperationResult<ResetPasswordTokenDto> result = await accountService.ChangePasswordAsync(userId, passwords);
+        if (!result.Succeeded || result.Payload == null)
         {
-            return BadRequest(response.Message);
+            return BadRequest(result.Message);
         }
         if (sendEmail)
         {
             string? email = User.FindFirst(ClaimTypes.Email)?.Value;
             if (email != null)
             {
-                await emailService.SendPasswordChangedEmail(email, response.Payload, cancellationToken);
+                await emailService.SendPasswordChangedEmail(email, result.Payload, cancellationToken);
             }
         }
         return NoContent();
@@ -252,15 +253,15 @@ public class AccountController(
     public async Task<ActionResult> SendForgetPasswordEmail(string email,
         CancellationToken cancellationToken, bool sendEmail = false)
     {
-        OperationResult<ResetPasswordTokenDto> response =
+        OperationResult<ResetPasswordTokenDto> result =
             await accountService.CreatePasswordResetKeyAsync(email);
-        if (!response.Succeeded || response.Payload == null)
+        if (!result.Succeeded || result.Payload == null)
         {
-            return BadRequest(response.Message);
+            return BadRequest(result.Message);
         }
         if (sendEmail)
         {
-            await emailService.SendForgetPasswordEmailAsync(email, response.Payload, cancellationToken);
+            await emailService.SendForgetPasswordEmailAsync(email, result.Payload, cancellationToken);
         }
         return NoContent();
     }
@@ -278,10 +279,10 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> ResetPassword(string userId, ResetPasswordDto resetPassword)
     {
-        OperationResult<UserDto> response = await accountService.ResetPasswordAsync(userId, resetPassword);
-        if (!response.Succeeded || response.Payload == null)
+        OperationResult<UserDto> result = await accountService.ResetPasswordAsync(userId, resetPassword);
+        if (!result.Succeeded || result.Payload == null)
         {
-            return BadRequest(response.Message);
+            return BadRequest(result.Message);
         }
         return NoContent();
     }

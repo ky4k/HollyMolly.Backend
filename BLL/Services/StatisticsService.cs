@@ -1,5 +1,5 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Orders;
 using HM.BLL.Models.Statistics;
 using HM.DAL.Data;
 using HM.DAL.Entities;
@@ -20,7 +20,8 @@ public class StatisticsService(
         IQueryable<ProductStatistics> productStatistics = context.ProductStatistics
             .Include(ps => ps.Product)
             .Include(ps => ps.ProductInstanceStatistics)
-                .ThenInclude(p => p.ProductInstance);
+                .ThenInclude(p => p.ProductInstance)
+            .AsNoTracking();
 
         productStatistics = await FilterProductStatisticsAsync(productStatistics, productId, categoryId,
             categoryGroupId, fromDate, toDate, cancellationToken);
@@ -51,12 +52,14 @@ public class StatisticsService(
         }
         else if (categoryGroupId != null)
         {
-            var categoriesId = await context.CategoryGroups
-            .Include(cg => cg.Categories)
-                .Where(cg => cg.Id == categoryGroupId)
-                .SelectMany(cg => cg.Categories.Select(c => c.Id))
-            .Distinct()
-                .ToListAsync(cancellationToken);
+            CategoryGroup? categoryGroup = await context.CategoryGroups
+                .Include(cg => cg.Categories)
+                .FirstOrDefaultAsync(cg => cg.Id == categoryGroupId, cancellationToken);
+            List<int> categoriesId = [];
+            if (categoryGroup != null)
+            {
+                categoriesId = categoryGroup.Categories.Select(c => c.Id).ToList();
+            }
             productStatistics = productStatistics.Where(ps => categoriesId.Contains(ps.Product.CategoryId));
         }
 
@@ -126,21 +129,16 @@ public class StatisticsService(
     private static List<ProductInstanceStatisticDto> GetProductInstanceStatisticDtos(
         IEnumerable<ProductInstanceStatistics> productInstanceStatistics)
     {
-        List<ProductInstanceStatisticDto> productInstanceStatisticDtos = [];
-        foreach (var instanceStatistics in productInstanceStatistics)
+        return productInstanceStatistics.Select(ps => new ProductInstanceStatisticDto
         {
-            productInstanceStatisticDtos.Add(new ProductInstanceStatisticDto
-            {
-                Id = instanceStatistics.ProductInstanceId,
-                Color = instanceStatistics.ProductInstance.Color,
-                Size = instanceStatistics.ProductInstance.Size,
-                SKU = instanceStatistics.ProductInstance.SKU,
-                Material = instanceStatistics.ProductInstance.Material,
-                NumberOfPurchases = instanceStatistics.NumberOfPurchases,
-                TotalRevenue = instanceStatistics.TotalRevenue
-            });
-        }
-        return productInstanceStatisticDtos;
+            Id = ps.ProductInstanceId,
+            Color = ps.ProductInstance.Color,
+            Size = ps.ProductInstance.Size,
+            SKU = ps.ProductInstance.SKU,
+            Material = ps.ProductInstance.Material,
+            NumberOfPurchases = ps.NumberOfPurchases,
+            TotalRevenue = ps.TotalRevenue
+        }).ToList();
     }
 
     private static IOrderedEnumerable<ProductStatisticDto> SortProductStatistic(List<ProductStatisticDto> productStatisticDtos,
@@ -191,8 +189,9 @@ public class StatisticsService(
             return categoryStatisticDtos;
         }
 
-        IEnumerable<ProductStatisticDto> productsStatistics = await GetProductStatisticsAsync(null, categoryId, categoryGroupId,
-            fromDate, toDate, yearly, monthly, daily, true, false, true, cancellationToken);
+        IEnumerable<ProductStatisticDto> productsStatistics = await GetProductStatisticsAsync(
+            null, categoryId, categoryGroupId, fromDate, toDate, yearly, monthly, daily,
+            true, false, true, cancellationToken);
 
         IEnumerable<IGrouping<YearKey, ProductStatisticDto>> groupedResult;
         if (daily)
@@ -233,7 +232,7 @@ public class StatisticsService(
         string useName = "";
         if (categoryGroupId != null)
         {
-            var categoryGroup = await context.CategoryGroups
+            CategoryGroup? categoryGroup = await context.CategoryGroups
                 .FirstOrDefaultAsync(cg => cg.Id == categoryGroupId, cancellationToken);
             if (categoryGroup == null)
             {
@@ -244,7 +243,7 @@ public class StatisticsService(
         }
         else if (categoryId != null)
         {
-            var category = await context.Categories
+            Category? category = await context.Categories
                 .FirstOrDefaultAsync(c => c.Id == categoryId, cancellationToken);
             if (category == null)
             {
@@ -283,7 +282,8 @@ public class StatisticsService(
         bool includeUnpaid, CancellationToken cancellationToken)
     {
         IQueryable<Order> orders = context.Orders
-            .Include(o => o.OrderRecords);
+            .Include(o => o.OrderRecords)
+            .AsNoTracking();
         if (fromDate != null)
         {
             orders = orders.Where(o => o.OrderDate > fromDate.Value.ToDateTime(new TimeOnly(0, 0, 0)));
@@ -331,13 +331,13 @@ public class StatisticsService(
         }
         else
         {
-            var ordersList = await orders.ToListAsync(cancellationToken);
+            List<Order> ordersList = await orders.ToListAsync(cancellationToken);
             orderStatisticDtos.Add(new OrderStatisticDto()
             {
                 NumberOfOrders = ordersList.Select(o => o.Id).Count(),
                 TotalDiscount = ordersList.SelectMany(o => o.OrderRecords.Select(or => or.Discount)).Sum(),
-                TotalCost = ordersList
-                    .SelectMany(o => o.OrderRecords.Select(or => or.Price * or.Quantity - or.Discount).DefaultIfEmpty()).Sum(),
+                TotalCost = ordersList .SelectMany(o => o.OrderRecords
+                    .Select(or => or.Price * or.Quantity - or.Discount).DefaultIfEmpty()).Sum(),
             });
         }
         return orderStatisticDtos;
@@ -406,17 +406,17 @@ public class StatisticsService(
     {
         try
         {
-            foreach (var record in order.OrderRecords)
+            foreach (OrderRecordDto record in order.OrderRecords)
             {
-                var product = await context.Products
+                Product? product = await context.Products
                     .Include(p => p.ProductInstances)
                     .FirstOrDefaultAsync(p => p.ProductInstances.Any(pi => pi.Id == record.ProductInstanceId));
                 if (product == null)
                 {
-                    return;
+                    continue;
                 }
-                var productStatistic = await GetProductStatisticsAsync(product.Id);
-                var productInstanceStatistics = GetProductInstanceStatistics(productStatistic, record.ProductInstanceId);
+                ProductStatistics productStatistic = await GetProductStatisticsAsync(product.Id);
+                ProductInstanceStatistics productInstanceStatistics = GetProductInstanceStatistics(productStatistic, record.ProductInstanceId);
 
                 productInstanceStatistics.NumberOfPurchases += record.Quantity;
                 productInstanceStatistics.TotalRevenue += record.TotalCost;
@@ -460,7 +460,7 @@ public class StatisticsService(
     private async Task<ProductStatistics> GetProductStatisticsAsync(int productId)
     {
         var date = DateTimeOffset.UtcNow;
-        var productStatistic = await context.ProductStatistics
+        ProductStatistics? productStatistic = await context.ProductStatistics
             .Include(p => p.ProductInstanceStatistics)
             .FirstOrDefaultAsync(ps => ps.ProductId == productId
                 && ps.Year == date.Year && ps.Month == date.Month && ps.Day == date.Day);
@@ -481,8 +481,8 @@ public class StatisticsService(
     private static ProductInstanceStatistics GetProductInstanceStatistics(
         ProductStatistics productStatistics, int productInstanceId)
     {
-        var productInstanceStatistics = productStatistics.ProductInstanceStatistics
-                    .Find(pis => pis.ProductInstanceId == productInstanceId);
+        ProductInstanceStatistics? productInstanceStatistics = productStatistics.ProductInstanceStatistics
+            .Find(pis => pis.ProductInstanceId == productInstanceId);
         if (productInstanceStatistics == null)
         {
             productInstanceStatistics = new ProductInstanceStatistics()

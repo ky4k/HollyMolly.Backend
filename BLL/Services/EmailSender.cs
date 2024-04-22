@@ -1,5 +1,6 @@
 ﻿using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.Users;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using MailKit.Net.Smtp;

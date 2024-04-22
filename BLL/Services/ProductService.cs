@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
-using HM.BLL.Models;
+using HM.BLL.Models.Common;
+using HM.BLL.Models.Products;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Http;
@@ -23,7 +24,9 @@ public class ProductService(
             .Include(p => p.ProductInstances)
                 .ThenInclude(pi => pi.Images)
             .Include(p => p.Category)
-            .Include(p => p.Feedbacks);
+            .Include(p => p.Feedbacks)
+            .AsSplitQuery()
+            .AsNoTracking();
         if (onlyNewCollection)
         {
             products = products.Where(p => p.ProductInstances.Any(pi => pi.IsNewCollection));
@@ -34,7 +37,7 @@ public class ProductService(
         }
         else if (categoryGroupId != null)
         {
-            var categoriesId = await context.Categories
+            List<int> categoriesId = await context.Categories
                 .Where(c => c.CategoryGroupId == categoryGroupId)
                 .Select(c => c.Id)
                 .ToListAsync(cancellationToken);
@@ -56,12 +59,7 @@ public class ProductService(
                 ? products.OrderBy(p => p.Rating)
                 : products.OrderByDescending(p => p.Rating);
         }
-        var productsDto = new List<ProductDto>();
-        foreach (var product in await products.ToListAsync(cancellationToken))
-        {
-            productsDto.Add(product.ToProductDto());
-        }
-        return productsDto;
+        return await products.Select(p => p.ToProductDto()).ToListAsync(cancellationToken);
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons",
@@ -79,11 +77,7 @@ public class ProductService(
             .Include(p => p.Category)
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-        if (product == null)
-        {
-            return null;
-        }
-        return product.ToProductDto();
+        return product?.ToProductDto();
     }
 
     public async Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateDto productDto, CancellationToken cancellationToken)
@@ -95,18 +89,13 @@ public class ProductService(
             return new OperationResult<ProductDto>(false, $"Category with ID {productDto.CategoryId} " +
                 $"does not exist. Create the category first or specify another category.");
         }
-        List<ProductInstance> productInstances = [];
-        foreach (ProductInstanceCreateDto productInstanceDto in productDto.ProductInstances)
-        {
-            productInstances.Add(productInstanceDto.ToProductInstance());
-        }
 
         Product product = new()
         {
             Name = productDto.Name,
             Description = productDto.Description,
             Category = category,
-            ProductInstances = productInstances
+            ProductInstances = productDto.ProductInstances .Select(pid => pid.ToProductInstance()).ToList()
         };
         try
         {
@@ -160,7 +149,7 @@ public class ProductService(
     public async Task<OperationResult<ProductInstanceDto>> AddProductInstanceToProduct(int productId,
         ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
     {
-        var product = await context.Products
+        Product? product = await context.Products
             .Include(p => p.ProductInstances)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
@@ -185,25 +174,14 @@ public class ProductService(
     public async Task<OperationResult<ProductInstanceDto>> UpdateProductInstanceAsync(int productId, int productInstanceId,
         ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
     {
-        OperationResult<ProductInstance> instanceResult = await GetProductInstanceAsync(
-            productId, productInstanceId, cancellationToken);
+        OperationResult<ProductInstance> instanceResult = 
+            await GetProductInstanceAsync(productId, productInstanceId, cancellationToken);
         if (!instanceResult.Succeeded || instanceResult.Payload == null)
         {
             return new OperationResult<ProductInstanceDto>(false, instanceResult.Message ?? "");
         }
         ProductInstance productInstance = instanceResult.Payload;
-
-        productInstance.StockQuantity = productInstanceDto.StockQuantity;
-        productInstance.Price = productInstanceDto.Price;
-        productInstance.Status = productInstanceDto.Status;
-        productInstance.IsNewCollection = productInstanceDto.IsNewCollection;
-        productInstance.SKU = productInstanceDto.SKU;
-        productInstance.Color = productInstanceDto.Color;
-        productInstance.Size = productInstanceDto.Size;
-        productInstance.Material = productInstanceDto.Material;
-        productInstance.AbsoluteDiscount = productInstanceDto.AbsoluteDiscount;
-        productInstance.PercentageDiscount = productInstanceDto.PercentageDiscount;
-
+        UpdateProductInstanceProperties(productInstance, productInstanceDto);
         try
         {
             context.Update(productInstance);
@@ -215,6 +193,20 @@ public class ProductService(
             logger.LogError(ex, "An error occurred while updating produceInstance {@productInstance}", productInstance);
             return new OperationResult<ProductInstanceDto>(false, "The product instance has not been updated.");
         }
+    }
+
+    private static void UpdateProductInstanceProperties(ProductInstance toUpdate, ProductInstanceCreateDto updated)
+    {
+        toUpdate.StockQuantity = updated.StockQuantity;
+        toUpdate.Price = updated.Price;
+        toUpdate.Status = updated.Status;
+        toUpdate.IsNewCollection = updated.IsNewCollection;
+        toUpdate.SKU = updated.SKU;
+        toUpdate.Color = updated.Color;
+        toUpdate.Size = updated.Size;
+        toUpdate.Material = updated.Material;
+        toUpdate.AbsoluteDiscount = updated.AbsoluteDiscount;
+        toUpdate.PercentageDiscount = updated.PercentageDiscount;
     }
 
     public async Task<OperationResult> DeleteProductInstanceAsync(int productId, int productInstanceId,
@@ -301,7 +293,7 @@ public class ProductService(
             return instanceResult;
         }
         ProductInstance productInstance = instanceResult.Payload;
-        foreach (var image in productInstance.Images)
+        foreach (ProductImage image in productInstance.Images)
         {
             ProductImageRearrangeDto? rearrangeDto = imageRearrangesDto.Find(ird => ird.Id == image.Id);
             if (rearrangeDto != null)
@@ -354,8 +346,6 @@ public class ProductService(
         }
     }
 
-
-
     public async Task<OperationResult> DeleteProductAsync(int productId, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
@@ -370,9 +360,9 @@ public class ProductService(
         }
         try
         {
-            foreach (var productInstance in product.ProductInstances)
+            foreach (ProductInstance productInstance in product.ProductInstances)
             {
-                foreach (var image in productInstance.Images)
+                foreach (ProductImage image in productInstance.Images)
                 {
                     imageService.DeleteImage(image.FilePath);
                 }
@@ -389,37 +379,48 @@ public class ProductService(
     }
 
     public async Task<IEnumerable<ProductFeedbackDto>> GetAllProductsFeedbackAsync(
-        string? category, CancellationToken cancellationToken)
+        int? categoryGroupId, int? categoryId, CancellationToken cancellationToken)
     {
         IQueryable<Product> products = context.Products
-            .Include(p => p.Category)
             .Include(p => p.Feedbacks);
-        if (category != null)
+        if (categoryId != null)
         {
-            products = products.Where(p => p.Category.Name == category);
+            products = products.Where(p => p.CategoryId == categoryId);
         }
-        return await products
+        else if (categoryGroupId != null)
+        {
+            CategoryGroup? categoryGroup = await context.CategoryGroups
+                .Include(cg => cg.Categories)
+                .FirstOrDefaultAsync(cg => cg.Id == categoryGroupId, cancellationToken);
+            List<int> categoriesIds = [];
+            if (categoryGroup != null)
+            {
+                categoriesIds = categoryGroup.Categories.Select(c => c.Id).ToList();
+            }
+            products = products.Where(p => categoriesIds.Contains(p.CategoryId));
+        }
+        List<ProductFeedback> feedbacks = await products
             .SelectMany(p => p.Feedbacks)
-            .Select(f => f.ToProductFeedbackDto())
             .OrderByDescending(f => f.Created)
+            .AsNoTracking()
             .ToListAsync(cancellationToken);
+        return feedbacks.Select(f => f.ToProductFeedbackDto());
     }
 
     public async Task<OperationResult<IEnumerable<ProductFeedbackDto>>> GetProductFeedbackAsync(int productId, CancellationToken cancellationToken)
     {
-        var product = await context.Products
+        Product? product = await context.Products
             .Include(p => p.Feedbacks)
+            .AsNoTracking()
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
         if (product == null)
         {
             return new OperationResult<IEnumerable<ProductFeedbackDto>>(false,
                 "Product with such an id does not exist.");
         }
-        List<ProductFeedbackDto> productFeedbacksDto = [];
-        foreach (var feedback in product.Feedbacks)
-        {
-            productFeedbacksDto.Add(feedback.ToProductFeedbackDto());
-        }
+        List<ProductFeedbackDto> productFeedbacksDto = product.Feedbacks
+            .Select(f => f.ToProductFeedbackDto())
+            .ToList();
         return new OperationResult<IEnumerable<ProductFeedbackDto>>(true, productFeedbacksDto);
     }
 
