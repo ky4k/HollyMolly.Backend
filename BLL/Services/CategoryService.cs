@@ -39,7 +39,8 @@ public class CategoryService(
     {
         CategoryGroup group = new()
         {
-            Name = categoryGroupDto.Name
+            Name = categoryGroupDto.Name,
+            Position = categoryGroupDto.Position
         };
         try
         {
@@ -67,6 +68,7 @@ public class CategoryService(
         try
         {
             group.Name = categoryGroupDto.Name;
+            group.Position = categoryGroupDto.Position;
             context.CategoryGroups.Update(group);
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true);
@@ -166,6 +168,7 @@ public class CategoryService(
             Category category = new()
             {
                 Name = categoryDto.CategoryName,
+                Position = categoryDto.Position,
                 ImageFilePath = "",
                 ImageLink = "",
                 CategoryGroup = categoryGroup
@@ -205,6 +208,7 @@ public class CategoryService(
         try
         {
             category.Name = categoryDto.CategoryName;
+            category.Position = categoryDto.Position;
             category.CategoryGroupId = categoryDto.CategoryGroupId;
             context.Categories.Update(category);
             await context.SaveChangesAsync(cancellationToken);

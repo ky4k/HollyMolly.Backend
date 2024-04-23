@@ -17,6 +17,8 @@ public class EmailService(
     private const string ForgetPasswordTemplate = "<p>Ви надіслали запит на оновлення паролю до HollyMolly.<br />Щоб скинути поточний пароль перейдіть за посиланням:<br /><a title=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\" href=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\">https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}</a></p><p>Якщо це були не Ви, просто ігноруйте цей лист.</p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string PasswordChangedSubject = "Пароль було змінено";
     private const string PasswordChangedTemplate = "<p>Ваш пароль до HollyMolly було змінено. Якщо ці зміни були зроблені не Вами, перейдіть, будь ласка, за посиланням нижче та встановіть новий пароль:<br /><a title=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\" href=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\">https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
+    private const string EmailChangedSubject = "Адресу електронної пошти було змінено";
+    private const string EmailChangedTemplate = "<p>Вашу адресу електронної пошти для входу до HollyMolly було змінено. Якщо ці зміни були зроблені не Вами, будь ласка, зверніться до технічної підтримки сайту.</p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string OrderCreatedSubject = "Замовлення створено";
     private const string OrderCreatedTemplate = "<p>Ваше замовлення з ідентифікатором {{orderId}} було успішно створено. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"https://holly-molly.vercel.app/\" href=\"https://holly-molly.vercel.app/\">https://holly-molly.vercel.app/</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string OrderStatusUpdatedSubject = "Статус замовлення оновлено";
@@ -67,6 +69,16 @@ public class EmailService(
             .Replace("{{token}}", resetPassword.Token);
 
         return await emailSender.SendEmailAsync(userMailInfo, PasswordChangedSubject, emailBody, cancellationToken);
+    }
+
+    public async Task<OperationResult> SendEmailChangedEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        UserMailInfo userMailInfo = new()
+        {
+            Email = email,
+        };
+
+        return await emailSender.SendEmailAsync(userMailInfo, EmailChangedSubject, EmailChangedTemplate, cancellationToken);
     }
 
     public async Task<OperationResult> SendOrderCreatedEmailAsync(OrderDto order, CancellationToken cancellationToken)

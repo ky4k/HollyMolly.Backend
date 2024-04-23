@@ -12,4 +12,5 @@ public class User : IdentityUser
     public string? City { get; set; }
     public string? DeliveryAddress { get; set; }
     public List<Order> Orders { get; set; } = [];
+    public long? InvalidateTokenBefore { get; set; }
 }
