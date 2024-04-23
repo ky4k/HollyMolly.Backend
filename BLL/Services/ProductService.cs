@@ -47,19 +47,10 @@ public class ProductService(
         {
             products = FilterByName(products, name);
         }
-        if (sortByPrice)
-        {
-            products = sortAsc
-                ? products.OrderBy(p => p.ProductInstances.Select(pi => pi.Price).Min())
-                : products.OrderByDescending(p => p.ProductInstances.Select(pi => pi.Price).Max());
-        }
-        else if (sortByRating)
-        {
-            products = sortAsc
-                ? products.OrderBy(p => p.Rating)
-                : products.OrderByDescending(p => p.Rating);
-        }
-        return await products.Select(p => p.ToProductDto()).ToListAsync(cancellationToken);
+        IEnumerable<Product> sortedProducts = SortProducts(await products.ToListAsync(cancellationToken),
+            sortByPrice, sortByRating, sortAsc);
+
+        return sortedProducts.Select(p => p.ToProductDto()).ToList();
     }
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons",
@@ -68,7 +59,31 @@ public class ProductService(
     {
         return products.Where(p => p.Name.ToLower().Contains(name.ToLower()));
     }
+    private static IEnumerable<Product> SortProducts(List<Product> products, bool sortByPrice,
+        bool sortByRating, bool sortAsc)
+    {
+        if (sortByPrice)
+        {
+            return sortAsc
+                ? products.OrderBy(p => p.ProductInstances.Select(pi => CalculatePriceAfterDiscount(pi)).Min())
+                : products.OrderByDescending(p => p.ProductInstances.Select(pi => CalculatePriceAfterDiscount(pi)).Max());
+        }
+        else if (sortByRating)
+        {
+            return sortAsc
+                ? products.OrderBy(p => p.Rating)
+                : products.OrderByDescending(p => p.Rating);
+        }
+        else
+        {
+            return products;
+        }
+    }
 
+    private static decimal CalculatePriceAfterDiscount(ProductInstance productInstance)
+    {
+        return (productInstance.Price - productInstance.AbsoluteDiscount) * (100 - productInstance.PercentageDiscount);
+    }
     public async Task<ProductDto?> GetProductByIdAsync(int productId, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
@@ -146,7 +161,7 @@ public class ProductService(
         }
     }
 
-    public async Task<OperationResult<ProductInstanceDto>> AddProductInstanceToProduct(int productId,
+    public async Task<OperationResult<ProductInstanceDto>> AddProductInstanceToProductAsync(int productId,
         ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
@@ -176,11 +191,11 @@ public class ProductService(
     {
         OperationResult<ProductInstance> instanceResult =
             await GetProductInstanceAsync(productId, productInstanceId, cancellationToken);
-        if (!instanceResult.Succeeded || instanceResult.Payload == null)
+        if (!instanceResult.Succeeded)
         {
-            return new OperationResult<ProductInstanceDto>(false, instanceResult.Message ?? "");
+            return new OperationResult<ProductInstanceDto>(false, instanceResult.Message!);
         }
-        ProductInstance productInstance = instanceResult.Payload;
+        ProductInstance productInstance = instanceResult.Payload!;
         UpdateProductInstanceProperties(productInstance, productInstanceDto);
         try
         {
@@ -243,21 +258,20 @@ public class ProductService(
     {
         OperationResult<ProductInstance> instanceResult = await GetProductInstanceAsync(
             productId, productInstanceId, cancellationToken);
-        if (!instanceResult.Succeeded || instanceResult.Payload == null)
+        if (!instanceResult.Succeeded)
         {
-            return new OperationResult<ProductInstanceDto>(false, instanceResult.Message ?? "");
+            return new OperationResult<ProductInstanceDto>(false, instanceResult.Message!);
         }
-        ProductInstance productInstance = instanceResult.Payload;
+        ProductInstance productInstance = instanceResult.Payload!;
 
         string savePath = $"images/products/{productInstance.Id}";
         OperationResult<List<ImageDto>> result = await imageService
             .UploadImagesAsync(images, baseUrlPath, savePath, cancellationToken);
 
-        if (!result.Succeeded || result.Payload == null || result.Payload.Count == 0)
+        if (!result.Succeeded || result.Payload!.Count == 0)
         {
             return new OperationResult<ProductInstanceDto>(false, $"No images were added. {result.Message}");
         }
-        productInstance.Images ??= [];
         int startPosition = productInstance.Images.Select(i => i.Position).DefaultIfEmpty(0).Max();
         foreach (ImageDto imageDto in result.Payload)
         {
@@ -288,11 +302,11 @@ public class ProductService(
     {
         OperationResult<ProductInstance> instanceResult = await GetProductInstanceAsync(
             productId, productInstanceId, cancellationToken);
-        if (!instanceResult.Succeeded || instanceResult.Payload == null)
+        if (!instanceResult.Succeeded)
         {
             return instanceResult;
         }
-        ProductInstance productInstance = instanceResult.Payload;
+        ProductInstance productInstance = instanceResult.Payload!;
         foreach (ProductImage image in productInstance.Images)
         {
             ProductImageRearrangeDto? rearrangeDto = imageRearrangesDto.Find(ird => ird.Id == image.Id);
@@ -320,11 +334,11 @@ public class ProductService(
     {
         OperationResult<ProductInstance> instanceResult = await GetProductInstanceAsync(
             productId, productInstanceId, cancellationToken);
-        if (!instanceResult.Succeeded || instanceResult.Payload == null)
+        if (!instanceResult.Succeeded)
         {
             return instanceResult;
         }
-        ProductInstance productInstance = instanceResult.Payload;
+        ProductInstance productInstance = instanceResult.Payload!;
         ProductImage? image = productInstance.Images.Find(i => i.Id == imageId);
         if (image == null)
         {

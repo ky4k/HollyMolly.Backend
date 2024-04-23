@@ -1,6 +1,4 @@
-﻿using HM.DAL.Entities;
-
-namespace HM.BLL.Models.Products;
+﻿namespace HM.BLL.Models.Products;
 
 public class ProductDto
 {
@@ -11,5 +9,5 @@ public class ProductDto
     public int TimesRated { get; set; }
     public int CategoryId { get; set; }
     public List<ProductInstanceDto> ProductsInstances { get; set; } = [];
-    public List<ProductFeedback> Feedbacks { get; set; } = [];
+    public List<ProductFeedbackDto> Feedbacks { get; set; } = [];
 }

@@ -41,11 +41,6 @@ public static class MappingExtensions
 
     public static ProductDto ToProductDto(this Product product)
     {
-        List<ProductInstanceDto> productInstancesDto = [];
-        foreach (ProductInstance productInstance in product.ProductInstances)
-        {
-            productInstancesDto.Add(productInstance.ToProductInstanceDto());
-        }
         return new ProductDto()
         {
             Id = product.Id,
@@ -54,8 +49,8 @@ public static class MappingExtensions
             Rating = product.Rating,
             TimesRated = product.TimesRated,
             CategoryId = product.CategoryId,
-            ProductsInstances = productInstancesDto,
-            Feedbacks = product.Feedbacks
+            ProductsInstances = product.ProductInstances.Select(pi => pi.ToProductInstanceDto()).ToList(),
+            Feedbacks = product.Feedbacks.Select(pf => pf.ToProductFeedbackDto()).ToList()
         };
     }
 
@@ -125,11 +120,6 @@ public static class MappingExtensions
 
     public static OrderDto ToOrderDto(this Order order)
     {
-        var orderRecordsDto = new List<OrderRecordDto>();
-        foreach (OrderRecord orderRecord in order.OrderRecords)
-        {
-            orderRecordsDto.Add(orderRecord.ToOrderRecordDto());
-        }
         return new OrderDto()
         {
             Id = order.Id,
@@ -138,7 +128,7 @@ public static class MappingExtensions
             Status = order.Status,
             PaymentReceived = order.PaymentReceived,
             Notes = order.Notes,
-            OrderRecords = orderRecordsDto
+            OrderRecords = order.OrderRecords.Select(or => or.ToOrderRecordDto()).ToList()
         };
 
     }
@@ -183,19 +173,13 @@ public static class MappingExtensions
 
     public static CategoryGroupDto ToCategoryGroupDto(this CategoryGroup categoryGroup)
     {
-        List<CategoryDto> categoriesDto = [];
-        foreach (Category category in categoryGroup.Categories)
-        {
-            categoriesDto.Add(category.ToCategoryDto());
-        }
-        var categoryGroupDto = new CategoryGroupDto()
+        return new CategoryGroupDto()
         {
             Id = categoryGroup.Id,
             Name = categoryGroup.Name,
             Link = categoryGroup.ImageLink,
-            Categories = categoriesDto
+            Categories = categoryGroup.Categories.Select(c => c.ToCategoryDto()).ToList()
         };
-        return categoryGroupDto;
     }
 
     public static CategoryDto ToCategoryDto(this Category category)

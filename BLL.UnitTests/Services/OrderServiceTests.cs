@@ -15,17 +15,18 @@ public class OrderServiceTests
 {
     private readonly HmDbContext _context;
     private readonly OrderService _orderService;
+    private readonly ILogger<OrderService> _logger;
     public OrderServiceTests()
     {
-        var logger = Substitute.For<ILogger<OrderService>>();
+        _logger = Substitute.For<ILogger<OrderService>>();
         _context = ServiceHelper.GetTestDbContext();
-        _orderService = new OrderService(_context, logger);
+        _orderService = new OrderService(_context, _logger);
     }
 
     [Fact]
     public async Task GetOrdersAsync_ShouldReturnAllOrders()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
 
         IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(null, CancellationToken.None);
 
@@ -35,7 +36,7 @@ public class OrderServiceTests
     [Fact]
     public async Task GetOrdersAsync_ShouldFilterOrdersByUserId()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         string userId = "1234-5678-9012-3456";
 
         IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(userId, CancellationToken.None);
@@ -46,7 +47,7 @@ public class OrderServiceTests
     [Fact]
     public async Task GetOrdersAsync_ShouldReturnAllTheOrdersInformation()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         string userId = "2234-5678-9012-3456";
         IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(userId, CancellationToken.None);
 
@@ -58,7 +59,7 @@ public class OrderServiceTests
     [Fact]
     public async Task GetOrdersAsync_ShouldReturnEmptyCollection_WhenThereAreNoOrders()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         string userId = "no-user-with-such-id";
         IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(userId, CancellationToken.None);
 
@@ -68,7 +69,7 @@ public class OrderServiceTests
     [Fact]
     public async Task GetOrderByIdAsync_ShouldReturnTheCorrectOrder()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderDto? order = await _orderService.GetOrderByIdAsync(2, CancellationToken.None);
 
         Assert.NotNull(order);
@@ -78,7 +79,7 @@ public class OrderServiceTests
     [Fact]
     public async Task GetOrderByIdAsync_ShouldReturnAllTheOrderInformation()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderDto? order = await _orderService.GetOrderByIdAsync(2, CancellationToken.None);
 
         Assert.NotNull(order);
@@ -89,7 +90,7 @@ public class OrderServiceTests
     [Fact]
     public async Task GetOrderByIdAsync_ShouldReturnNull_WhenOrderDoesNotExist()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderDto? order = await _orderService.GetOrderByIdAsync(9999, CancellationToken.None);
 
         Assert.Null(order);
@@ -98,7 +99,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldCreateOrder()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -139,7 +140,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldNotCreateOrder_WhenProductNotExist()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -162,7 +163,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldNotCreateOrder_WhenProductIsNotInTheStock()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -185,7 +186,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldNotAddProductInstances_ThatIsNotInTheStock()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -215,7 +216,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldNotAddMoreQuantityThanIsInStock()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -241,7 +242,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldApplyAbsoluteDiscountCorrectly()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -267,7 +268,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldApplyPercentageDiscountCorrectly()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -293,7 +294,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldCombineDiscountCorrectly()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -319,7 +320,7 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldNotCreateOrder_WhenTotalPriceIsLowerThanMinimum()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -343,13 +344,12 @@ public class OrderServiceTests
     [Fact]
     public async Task CreateOrderAsync_ShouldHandleDatabaseErrors()
     {
-        var logger = Substitute.For<ILogger<OrderService>>();
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
-        await SeedDbContext(dbContextMock);
+        await SeedDbContextAsync(dbContextMock);
         dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync<InvalidOperationException>();
 
-        var service = new OrderService(dbContextMock, logger);
+        var service = new OrderService(dbContextMock, _logger);
         OrderCreateDto orderDto = new()
         {
             Customer = Customer,
@@ -372,7 +372,7 @@ public class OrderServiceTests
     [Fact]
     public async Task UpdateOrderAsync_ShouldUpdateOrder()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         const string newStatus = "Updated";
         OrderUpdateDto orderUpdateDto = new()
         {
@@ -390,7 +390,7 @@ public class OrderServiceTests
     [Fact]
     public async Task UpdateOrderAsync_ShouldReturnUpdatedOrder()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         const string newStatus = "Updated";
         OrderUpdateDto orderUpdateDto = new()
         {
@@ -409,7 +409,7 @@ public class OrderServiceTests
     [Fact]
     public async Task UpdateOrderAsync_ShouldNotSucceed_WhenOrderDoesNotExist()
     {
-        await SeedDbContext();
+        await SeedDbContextAsync();
         OrderUpdateDto orderUpdateDto = new()
         {
             Status = "Updated",
@@ -429,7 +429,7 @@ public class OrderServiceTests
     {
         var logger = Substitute.For<ILogger<OrderService>>();
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
-        await SeedDbContext(dbContextMock);
+        await SeedDbContextAsync(dbContextMock);
         dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync<InvalidOperationException>();
 
@@ -449,12 +449,12 @@ public class OrderServiceTests
     }
 
 
-    private async Task SeedDbContext()
+    private async Task SeedDbContextAsync()
     {
-        await SeedDbContext(_context);
+        await SeedDbContextAsync(_context);
     }
 
-    private static async Task SeedDbContext(HmDbContext context)
+    private static async Task SeedDbContextAsync(HmDbContext context)
     {
         await context.AddAsync(CategoryGroup);
         await context.AddAsync(Category);

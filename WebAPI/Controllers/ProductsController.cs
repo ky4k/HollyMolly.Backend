@@ -129,7 +129,7 @@ public class ProductsController(
     public async Task<ActionResult> AddProductInstance(int productId, ProductInstanceCreateDto productInstance,
         CancellationToken cancellationToken)
     {
-        OperationResult<ProductInstanceDto> result = await productService.AddProductInstanceToProduct(
+        OperationResult<ProductInstanceDto> result = await productService.AddProductInstanceToProductAsync(
             productId, productInstance, cancellationToken);
         return result.Succeeded ? NoContent() : BadRequest(result.Message);
     }
