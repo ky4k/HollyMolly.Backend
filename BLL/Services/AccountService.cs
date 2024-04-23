@@ -287,7 +287,7 @@ public class AccountService(
         {
             return new OperationResult(false, "You are authorized via Google. Register account on our website.");
         }
-        if(await userManager.FindByEmailAsync(newEmail.ToLower()) != null)
+        if (await userManager.FindByEmailAsync(newEmail.ToLower()) != null)
         {
             return new OperationResult(false, $"User with the email {newEmail} already exist.");
         }
