@@ -93,7 +93,7 @@ public class AccountService(
         }
     }
 
-    public async Task<OperationResult<ConfirmationEmailDto>> GetConfirmationEmailKey(string userId)
+    public async Task<OperationResult<ConfirmationEmailDto>> GetConfirmationEmailKeyAsync(string userId)
     {
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
@@ -208,9 +208,9 @@ public class AccountService(
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user?.Id ?? string.Empty),
-            new(ClaimTypes.Name, user?.UserName ?? string.Empty),
-            new(ClaimTypes.Email, user?.Email ?? string.Empty),
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.UserName!),
+            new(ClaimTypes.Email, user.Email!),
             new("IssuedAt", DateTimeOffset.UtcNow.Ticks.ToString())
         };
         foreach (string role in roles)
@@ -312,7 +312,8 @@ public class AccountService(
         {
             user.InvalidateTokenBefore = DateTimeOffset.UtcNow.Ticks;
             await userManager.UpdateAsync(user);
-            return await CreatePasswordResetKeyAsync(user);
+            OperationResult<ResetPasswordTokenDto> createPasswordResult = await CreatePasswordResetKeyAsync(user);
+            return new OperationResult<ResetPasswordTokenDto>(true, createPasswordResult.Payload!);
         }
         else
         {
@@ -359,7 +360,7 @@ public class AccountService(
             return new OperationResult<UserDto>(false, "No user with such an id exist.");
         }
         if (!await userManager.VerifyUserTokenAsync(user, userManager.Options.Tokens.PasswordResetTokenProvider,
-            "ResetPassword", resetPassword.ResetToken))
+            UserManager<User>.ResetPasswordTokenPurpose, resetPassword.ResetToken))
         {
             return new OperationResult<UserDto>(false, "Reset token is incorrect.");
         }

@@ -9,7 +9,7 @@ public interface IAccountService
     Task<OperationResult> RegisterOidcUserAsync(string email);
     Task<OperationResult<string>> GetOidcTokenAsync(string email);
     Task<OperationResult<LoginResponse>> LoginOidcUserAsync(string oidcToken);
-    Task<OperationResult<ConfirmationEmailDto>> GetConfirmationEmailKey(string userId);
+    Task<OperationResult<ConfirmationEmailDto>> GetConfirmationEmailKeyAsync(string userId);
     Task<OperationResult> ConfirmEmailAsync(string userId, string confirmationEmailKey);
     Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest);
     Task<OperationResult> InvalidateAllPreviousTokensAsync(string userId);

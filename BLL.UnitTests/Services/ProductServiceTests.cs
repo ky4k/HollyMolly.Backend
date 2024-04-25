@@ -151,6 +151,7 @@ public class ProductServiceTests
         Assert.NotNull(product);
         Assert.Single(product.Feedbacks);
         Assert.Equal(2, product.ProductsInstances.Count);
+        Assert.Equal(70, product.ProductsInstances[0].PriceAfterDiscount);
     }
     [Fact]
     public async Task GetProductByIdAsync_ShouldReturnNull_WhenProductDoesNotExist()
@@ -194,10 +195,14 @@ public class ProductServiceTests
 
         OperationResult<ProductDto> result = await _productService
             .CreateProductAsync(productCreateDto, CancellationToken.None);
+        Product? product = await _context.Products
+            .FirstOrDefaultAsync(p => result.Payload != null && p.Id == result.Payload.Id);
 
         Assert.NotNull(result?.Payload);
         Assert.True(result.Succeeded);
         Assert.Equal(3, result.Payload.ProductsInstances.Count);
+        Assert.NotNull(product);
+        Assert.True(product.ProductInstances.TrueForAll(pi => pi.ProductId == product.Id));
     }
     [Fact]
     public async Task CreateProductAsync_ShouldReturnFalseResult_WhenCategoryDoesNotExist()
@@ -684,6 +689,7 @@ public class ProductServiceTests
         Assert.NotNull(result);
         Assert.True(result.Succeeded);
         Assert.NotNull(productImages);
+        Assert.True(productImages.TrueForAll(i => i.ProductInstanceId == 9));
         Assert.Equal(1, productImages.First(pi => pi.Id == 3).Position);
         Assert.Equal(2, productImages.First(pi => pi.Id == 1).Position);
         Assert.Equal(3, productImages.First(pi => pi.Id == 2).Position);

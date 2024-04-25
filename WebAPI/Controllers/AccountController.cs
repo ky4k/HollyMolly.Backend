@@ -40,7 +40,7 @@ public class AccountController(
         if (sendEmail)
         {
             OperationResult<ConfirmationEmailDto> confirmationEmailResult = await accountService
-                .GetConfirmationEmailKey(result.Payload.Id);
+                .GetConfirmationEmailKeyAsync(result.Payload.Id);
             if (confirmationEmailResult.Succeeded && confirmationEmailResult.Payload != null)
             {
                 await emailService.SendRegistrationResultEmailAsync(result.Payload.Email,
@@ -258,7 +258,7 @@ public class AccountController(
                 await emailService.SendEmailChangedEmailAsync(oldEmail, cancellationToken);
             }
             OperationResult<ConfirmationEmailDto> confirmationEmailResult = await accountService
-                .GetConfirmationEmailKey(userId);
+                .GetConfirmationEmailKeyAsync(userId);
             if (confirmationEmailResult.Succeeded && confirmationEmailResult.Payload != null)
             {
                 await emailService.SendRegistrationResultEmailAsync(updatedEmail.NewEmail,

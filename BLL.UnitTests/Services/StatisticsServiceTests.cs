@@ -705,7 +705,7 @@ public class StatisticsServiceTests
 
         await _statisticsService.AddToProductNumberViewsAsync(1);
         ProductStatistics? productStatistics = await _context.ProductStatistics
-            .FirstOrDefaultAsync(s => s.ProductId == 1 
+            .FirstOrDefaultAsync(s => s.ProductId == 1
                 && s.Year == today.Year && s.Month == today.Month && s.Day == today.Day);
 
         Assert.NotNull(productStatistics);
@@ -726,7 +726,7 @@ public class StatisticsServiceTests
         Assert.NotNull(productStatistics);
         Assert.Equal(2, productStatistics.NumberViews);
     }
-    
+
     [Fact]
     public async Task AddToProductNumberViewsAsync_ShouldHandleDatabaseErrors()
     {

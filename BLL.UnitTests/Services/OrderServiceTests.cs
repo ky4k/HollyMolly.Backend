@@ -86,6 +86,8 @@ public class OrderServiceTests
         Assert.NotNull(order);
         Assert.Equal("FirstName", order.Customer.FirstName);
         Assert.Equal("Test product", order.OrderRecords[0].ProductName);
+        Assert.Equal(100, order.OrderRecords[0].TotalCostBeforeDiscount);
+        Assert.Equal(100, order.OrderRecords[0].TotalCost);
     }
 
     [Fact]
@@ -121,6 +123,8 @@ public class OrderServiceTests
 
         Assert.True(result.Succeeded);
         Assert.NotNull(order);
+        Assert.True(order.OrderRecords.TrueForAll(or => or.OrderId == order.Id));
+        Assert.True(order.Customer.OrderId == order.Id);
     }
 
     [Fact]
