@@ -74,6 +74,7 @@ public class OrderServiceTests
 
         Assert.NotNull(order);
         Assert.Equal(2, order.Id);
+        Assert.Equal(100, order.TotalCost);
     }
 
     [Fact]
@@ -427,13 +428,12 @@ public class OrderServiceTests
     [Fact]
     public async Task UpdateOrderAsync_ShouldHandleDatabaseErrors()
     {
-        var logger = Substitute.For<ILogger<OrderService>>();
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
         await SeedDbContextAsync(dbContextMock);
         dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync<InvalidOperationException>();
 
-        var service = new OrderService(dbContextMock, logger);
+        var service = new OrderService(dbContextMock, _logger);
         OrderUpdateDto orderUpdateDto = new()
         {
             Status = "Updated",

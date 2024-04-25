@@ -74,7 +74,7 @@ public static partial class ValidatorExtensions
                 .WithMessage("First or last name may not be longer than 50 characters.")
             .Matches(NameRegex)
                 .WithMessage(InvalidNameMessage)
-            .Must(n => !InvalidCombinationSymbolsInName().IsMatch(n))
+            .Must(n => n == null || !InvalidCombinationSymbolsInName().IsMatch(n))
                 .WithMessage("Firs or last name may not contain two non-letter in a row.");
     }
 

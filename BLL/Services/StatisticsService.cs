@@ -26,7 +26,7 @@ public class StatisticsService(
         productStatistics = await FilterProductStatisticsAsync(productStatistics, productId, categoryId,
             categoryGroupId, fromDate, toDate, cancellationToken);
 
-        IQueryable<IGrouping<AllTimeProductKey, ProductStatistics>> groupedResult = GroupProductStatistic(
+        IQueryable<IGrouping<GroupKey, ProductStatistics>> groupedResult = GroupProductStatistic(
             productStatistics, yearly, monthly, daily);
 
         List<ProductStatisticDto> productStatisticDtos = await GetProductStatisticDto(groupedResult)
@@ -78,13 +78,13 @@ public class StatisticsService(
         return productStatistics;
     }
 
-    private static IQueryable<IGrouping<AllTimeProductKey, ProductStatistics>> GroupProductStatistic(
+    private static IQueryable<IGrouping<GroupKey, ProductStatistics>> GroupProductStatistic(
         IQueryable<ProductStatistics> productStatistics, bool yearly, bool monthly, bool daily)
     {
-        IQueryable<IGrouping<AllTimeProductKey, ProductStatistics>> groupedResult;
+        IQueryable<IGrouping<GroupKey, ProductStatistics>> groupedResult;
         if (daily)
         {
-            groupedResult = productStatistics.GroupBy(s => new DayProductKey
+            groupedResult = productStatistics.GroupBy(s => new GroupKey
             {
                 ProductId = s.ProductId,
                 Year = s.Year,
@@ -94,30 +94,28 @@ public class StatisticsService(
         }
         else if (monthly)
         {
-            groupedResult = productStatistics.GroupBy(s => new MonthProductKey { ProductId = s.ProductId, Year = s.Year, Month = s.Month });
+            groupedResult = productStatistics.GroupBy(s => new GroupKey { ProductId = s.ProductId, Year = s.Year, Month = s.Month });
         }
         else if (yearly)
         {
-            groupedResult = productStatistics.GroupBy(s => new YearProductKey() { ProductId = s.ProductId, Year = s.Year });
+            groupedResult = productStatistics.GroupBy(s => new GroupKey() { ProductId = s.ProductId, Year = s.Year });
         }
         else
         {
-            groupedResult = productStatistics.GroupBy(s => new AllTimeProductKey { ProductId = s.ProductId });
+            groupedResult = productStatistics.GroupBy(s => new GroupKey { ProductId = s.ProductId });
         }
         return groupedResult;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S2219:Runtime type checking should be simplified",
-        Justification = "An expression tree may not contain an 'is' pattern-matching operator")]
     private static IQueryable<ProductStatisticDto> GetProductStatisticDto(
-        IQueryable<IGrouping<AllTimeProductKey, ProductStatistics>> groupedResult)
+        IQueryable<IGrouping<GroupKey, ProductStatistics>> groupedResult)
     {
         return groupedResult.Select(g => new ProductStatisticDto()
         {
-            ProductId = g.Key.ProductId,
-            Year = (g.Key as YearProductKey) == null ? null : (g.Key as YearProductKey)!.Year,
-            Month = (g.Key as MonthProductKey) == null ? null : (g.Key as MonthProductKey)!.Month,
-            Day = (g.Key as DayProductKey) == null ? null : (g.Key as DayProductKey)!.Day,
+            ProductId = g.Key.ProductId!.Value,
+            Year = g.Key.Year,
+            Month = g.Key.Month,
+            Day = g.Key.Day,
             ProductName = g.Select(ps => ps.Product.Name).First(),
             NumberViews = g.Select(ps => ps.NumberViews).DefaultIfEmpty().Sum(),
             NumberWishListAddition = g.Select(ps => ps.NumberWishlistAdditions).DefaultIfEmpty().Sum(),
@@ -193,20 +191,20 @@ public class StatisticsService(
             null, categoryId, categoryGroupId, fromDate, toDate, yearly, monthly, daily,
             true, false, true, cancellationToken);
 
-        IEnumerable<IGrouping<YearKey, ProductStatisticDto>> groupedResult;
+        IEnumerable<IGrouping<GroupKey, ProductStatisticDto>> groupedResult;
         if (daily)
         {
-            groupedResult = productsStatistics.GroupBy(p => new DayKey { Year = p.Year, Month = p.Month, Day = p.Day });
+            groupedResult = productsStatistics.GroupBy(p => new GroupKey { Year = p.Year, Month = p.Month, Day = p.Day });
             categoryStatisticDtos = GetCategoryStatisticDtos(groupedResult, useId, useName);
         }
         else if (monthly)
         {
-            groupedResult = productsStatistics.GroupBy(p => new MonthKey { Year = p.Year, Month = p.Month });
+            groupedResult = productsStatistics.GroupBy(p => new GroupKey { Year = p.Year, Month = p.Month });
             categoryStatisticDtos = GetCategoryStatisticDtos(groupedResult, useId, useName);
         }
         else if (yearly)
         {
-            groupedResult = productsStatistics.GroupBy(p => new YearKey { Year = p.Year });
+            groupedResult = productsStatistics.GroupBy(p => new GroupKey { Year = p.Year });
             categoryStatisticDtos = GetCategoryStatisticDtos(groupedResult, useId, useName);
         }
         else
@@ -260,15 +258,15 @@ public class StatisticsService(
     }
 
     private static List<CategoryStatisticDto> GetCategoryStatisticDtos(
-        IEnumerable<IGrouping<YearKey, ProductStatisticDto>> groupedResult, int categoryId, string categoryName)
+        IEnumerable<IGrouping<GroupKey, ProductStatisticDto>> groupedResult, int categoryId, string categoryName)
     {
         return groupedResult.Select(g => new CategoryStatisticDto()
         {
             CategoryId = categoryId,
             CategoryName = categoryName,
             Year = g.Key.Year,
-            Month = (g.Key as MonthKey)?.Month,
-            Day = (g.Key as DayKey)?.Day,
+            Month = g.Key.Month,
+            Day = g.Key.Day,
             NumberPurchases = g.Select(p => p.NumberPurchases).DefaultIfEmpty().Sum(),
             NumberProductViews = g.Select(p => p.NumberViews).DefaultIfEmpty().Sum(),
             NumberReviews = g.Select(p => p.NumberReviews).DefaultIfEmpty().Sum(),
@@ -298,10 +296,10 @@ public class StatisticsService(
         }
 
         List<OrderStatisticDto> orderStatisticDtos = [];
-        IQueryable<IGrouping<YearKey, Order>> groupedResult;
+        IQueryable<IGrouping<GroupKey, Order>> groupedResult;
         if (daily)
         {
-            groupedResult = orders.GroupBy(o => new DayKey
+            groupedResult = orders.GroupBy(o => new GroupKey
             {
                 Year = o.OrderDate.Date.Year,
                 Month = o.OrderDate.Date.Month,
@@ -312,7 +310,7 @@ public class StatisticsService(
         }
         else if (monthly)
         {
-            groupedResult = orders.GroupBy(o => new MonthKey
+            groupedResult = orders.GroupBy(o => new GroupKey
             {
                 Year = o.OrderDate.Date.Year,
                 Month = o.OrderDate.Date.Month
@@ -322,7 +320,7 @@ public class StatisticsService(
         }
         else if (yearly)
         {
-            groupedResult = orders.GroupBy(o => new DayKey
+            groupedResult = orders.GroupBy(o => new GroupKey
             {
                 Year = o.OrderDate.Date.Year
             });
@@ -343,17 +341,15 @@ public class StatisticsService(
         return orderStatisticDtos;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S2219:Runtime type checking should be simplified",
-        Justification = "An expression tree may not contain an 'is' pattern-matching operator")]
     private static IQueryable<OrderStatisticDto> GetOrdersStatisticDto(
-        IQueryable<IGrouping<YearKey, Order>> groupedResult)
+        IQueryable<IGrouping<GroupKey, Order>> groupedResult)
     {
         return groupedResult
             .Select(g => new OrderStatisticDto()
             {
                 Year = g.Key.Year,
-                Month = (g.Key as MonthKey) == null ? null : (g.Key as MonthKey)!.Month,
-                Day = (g.Key as DayKey) == null ? null : (g.Key as DayKey)!.Day,
+                Month = g.Key.Month,
+                Day = g.Key.Day,
                 NumberOfOrders = g.Select(o => o.Id).DefaultIfEmpty().Count(),
                 TotalDiscount = g.SelectMany(o => o.OrderRecords.Select(or => or.Discount))
                     .DefaultIfEmpty().Sum(),
@@ -390,10 +386,10 @@ public class StatisticsService(
 
     public async Task AddToProductNumberViewsAsync(int productId)
     {
-        ProductStatistics productStatistic = await GetProductStatisticsAsync(productId);
-        productStatistic.NumberViews++;
         try
         {
+            ProductStatistics productStatistic = await GetProductStatisticsAsync(productId);
+            productStatistic.NumberViews++;
             await context.SaveChangesAsync();
         }
         catch (Exception ex)
@@ -475,6 +471,7 @@ public class StatisticsService(
                 ProductInstanceStatistics = []
             };
             await context.ProductStatistics.AddAsync(productStatistic);
+            await context.SaveChangesAsync();
         }
         return productStatistic;
     }
@@ -494,32 +491,11 @@ public class StatisticsService(
         return productInstanceStatistics;
     }
 
-    private class YearKey
+    private sealed class GroupKey
     {
+        public int? ProductId { get; set; }
         public int? Year { get; set; }
-    }
-    private class MonthKey : YearKey
-    {
         public int? Month { get; set; }
-    }
-    private sealed class DayKey : MonthKey
-    {
         public int? Day { get; set; }
-    }
-    private class AllTimeProductKey
-    {
-        public int ProductId { get; set; }
-    }
-    private class YearProductKey : AllTimeProductKey
-    {
-        public int Year { get; set; }
-    }
-    private class MonthProductKey : YearProductKey
-    {
-        public int Month { get; set; }
-    }
-    private sealed class DayProductKey : MonthProductKey
-    {
-        public int Day { get; set; }
     }
 }
