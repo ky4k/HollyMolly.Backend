@@ -10,7 +10,6 @@ public class OrderUpdateDtoValidator : AbstractValidator<OrderUpdateDto>
         RuleFor(order => order.Status).NotEmpty().Must(BeAValidStatus).WithMessage("Invalid order status.");
 
         RuleFor(order => order.Notes)
-            .NotEmpty()
             .MaximumLength(500)
             .Matches(@"^[\p{L}0-9\s!#$%&""/?,.\-_]+$")
             .WithMessage("Notes may only contain Latin or Ukrainian letters, numbers, spaces, and special characters ( ! # $ % & “ / ? , . - _ )");

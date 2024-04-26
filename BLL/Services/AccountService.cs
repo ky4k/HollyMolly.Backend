@@ -93,7 +93,7 @@ public class AccountService(
         }
     }
 
-    public async Task<OperationResult<ConfirmationEmailDto>> GetConfirmationEmailKey(string userId)
+    public async Task<OperationResult<ConfirmationEmailDto>> GetConfirmationEmailKeyAsync(string userId)
     {
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
@@ -208,9 +208,10 @@ public class AccountService(
     {
         var claims = new List<Claim>
         {
-            new(ClaimTypes.NameIdentifier, user?.Id ?? string.Empty),
-            new(ClaimTypes.Name, user?.UserName ?? string.Empty),
-            new(ClaimTypes.Email, user?.Email ?? string.Empty)
+            new(ClaimTypes.NameIdentifier, user.Id),
+            new(ClaimTypes.Name, user.UserName!),
+            new(ClaimTypes.Email, user.Email!),
+            new("IssuedAt", DateTimeOffset.UtcNow.Ticks.ToString())
         };
         foreach (string role in roles)
         {
@@ -232,6 +233,18 @@ public class AccountService(
             claims: claims,
             expires: DateTime.Now.AddMinutes(expiresIn),
             signingCredentials: new SigningCredentials(secret, SecurityAlgorithms.HmacSha256));
+    }
+
+    public async Task<OperationResult> InvalidateAllPreviousTokensAsync(string userId)
+    {
+        User? user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new OperationResult(false, "User with such an id does not exist.");
+        }
+        user.InvalidateTokenBefore = DateTimeOffset.UtcNow.Ticks;
+        await userManager.UpdateAsync(user);
+        return new OperationResult(true);
     }
 
     public async Task<OperationResult<UserDto>> UpdateUserProfileAsync(string userId, ProfileUpdateDto profile)
@@ -263,6 +276,29 @@ public class AccountService(
         }
     }
 
+    public async Task<OperationResult> UpdateEmailAsync(string userId, string newEmail)
+    {
+        User? user = await userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            return new OperationResult(false, "No user with such an id exist.");
+        }
+        if (user.IsOidcUser)
+        {
+            return new OperationResult(false, "You are authorized via Google. Register account on our website.");
+        }
+        if (await userManager.FindByEmailAsync(newEmail.ToLower()) != null)
+        {
+            return new OperationResult(false, $"User with the email {newEmail} already exist.");
+        }
+        user.Email = newEmail.ToLower();
+        user.UserName = newEmail.ToLower();
+        user.EmailConfirmed = false;
+        user.InvalidateTokenBefore = DateTimeOffset.UtcNow.Ticks;
+        await userManager.UpdateAsync(user);
+        return new OperationResult(true);
+    }
+
     public async Task<OperationResult<ResetPasswordTokenDto>> ChangePasswordAsync(string userId, ChangePasswordDto passwords)
     {
         User? user = await userManager.FindByIdAsync(userId);
@@ -274,7 +310,10 @@ public class AccountService(
             user, passwords.OldPassword, passwords.NewPassword);
         if (result.Succeeded)
         {
-            return await CreatePasswordResetKeyAsync(user);
+            user.InvalidateTokenBefore = DateTimeOffset.UtcNow.Ticks;
+            await userManager.UpdateAsync(user);
+            OperationResult<ResetPasswordTokenDto> createPasswordResult = await CreatePasswordResetKeyAsync(user);
+            return new OperationResult<ResetPasswordTokenDto>(true, createPasswordResult.Payload!);
         }
         else
         {
@@ -321,7 +360,7 @@ public class AccountService(
             return new OperationResult<UserDto>(false, "No user with such an id exist.");
         }
         if (!await userManager.VerifyUserTokenAsync(user, userManager.Options.Tokens.PasswordResetTokenProvider,
-            "ResetPassword", resetPassword.ResetToken))
+            UserManager<User>.ResetPasswordTokenPurpose, resetPassword.ResetToken))
         {
             return new OperationResult<UserDto>(false, "Reset token is incorrect.");
         }
@@ -330,6 +369,7 @@ public class AccountService(
             await userManager.RemovePasswordAsync(user);
             await userManager.AddPasswordAsync(user, resetPassword.NewPassword);
             user.IsOidcUser = false;
+            user.InvalidateTokenBefore = DateTimeOffset.UtcNow.Ticks;
             await userManager.UpdateAsync(user);
             return new OperationResult<UserDto>(true, user.ToUserDto());
         }

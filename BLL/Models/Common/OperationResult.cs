@@ -6,9 +6,6 @@ public class OperationResult
     public string? Message { get; set; }
     public List<string> Errors { get; set; } = [];
 
-    public OperationResult()
-    {
-    }
     public OperationResult(bool succeeded)
     {
         Succeeded = succeeded;
@@ -24,9 +21,6 @@ public class OperationResult<T> : OperationResult
 {
     public T? Payload { get; set; }
 
-    public OperationResult()
-    {
-    }
     public OperationResult(bool succeeded) : base(succeeded)
     {
     }

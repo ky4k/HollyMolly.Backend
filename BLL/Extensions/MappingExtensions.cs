@@ -177,6 +177,7 @@ public static class MappingExtensions
         {
             Id = categoryGroup.Id,
             Name = categoryGroup.Name,
+            Position = categoryGroup.Position,
             Link = categoryGroup.ImageLink,
             Categories = categoryGroup.Categories.Select(c => c.ToCategoryDto()).ToList()
         };
@@ -189,6 +190,7 @@ public static class MappingExtensions
             Id = category.Id,
             CategoryGroupId = category.CategoryGroupId,
             Name = category.Name,
+            Position = category.Position,
             Link = category.ImageLink
         };
     }

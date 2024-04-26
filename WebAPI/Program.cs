@@ -53,6 +53,7 @@ Stripe.StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("Stripe:S
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ReplaceAuthorizationHeaderMiddleware>();
+builder.Services.AddScoped<TokenRevocationMiddleware>();
 builder.Services.AddScoped<HmDbContextInitializer>();
 builder.Services.AddScoped<IGoogleOAuthService, GoogleOAuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
@@ -91,6 +92,7 @@ app.UseStaticFiles();
 app.UseMiddleware<ReplaceAuthorizationHeaderMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseMiddleware<TokenRevocationMiddleware>();
 
 app.MapControllers();
 

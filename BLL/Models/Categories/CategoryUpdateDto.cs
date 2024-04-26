@@ -4,4 +4,5 @@ public class CategoryUpdateDto
 {
     public string CategoryName { get; set; } = null!;
     public int CategoryGroupId { get; set; }
+    public int Position { get; set; }
 }

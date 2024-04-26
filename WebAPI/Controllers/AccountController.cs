@@ -40,7 +40,7 @@ public class AccountController(
         if (sendEmail)
         {
             OperationResult<ConfirmationEmailDto> confirmationEmailResult = await accountService
-                .GetConfirmationEmailKey(result.Payload.Id);
+                .GetConfirmationEmailKeyAsync(result.Payload.Id);
             if (confirmationEmailResult.Succeeded && confirmationEmailResult.Payload != null)
             {
                 await emailService.SendRegistrationResultEmailAsync(result.Payload.Email,
@@ -153,6 +153,29 @@ public class AccountController(
     }
 
     /// <summary>
+    /// Allows the user to logout from the site in all their active sessions.
+    /// </summary>
+    /// <response code="204">Indicates that the logout was successful.</response>
+    /// <response code="400">Indicates that the logout failed and returns the error message.</response>
+    /// <response code="401">Indicates that the user is unauthenticated.</response>
+    [Authorize]
+    [Route("logoutAllDevices")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> LogoutAllDevices()
+    {
+        string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+        OperationResult result = await accountService.InvalidateAllPreviousTokensAsync(userId);
+        return result.Succeeded ? NoContent() : BadRequest(result.Message);
+    }
+
+    /// <summary>
     /// Allows a user to get their profile information.
     /// </summary>
     /// <response code="200">Returns the profile of the user.</response>
@@ -197,6 +220,52 @@ public class AccountController(
         }
         OperationResult<UserDto> result = await accountService.UpdateUserProfileAsync(userId, profile);
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
+
+    /// <summary>
+    /// Allows a user to update their email.
+    /// </summary>
+    /// <param name="updatedEmail">Updated email information.</param>
+    /// <param name="sendEmail">A real email will be sent only if this parameter is set to true.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="204">Indicates that the email has been updated.</response>
+    /// <response code="400">Indicates that the email has not been updated and returns the error message.</response>
+    /// <response code="401">Indicates that the user is unauthenticated.</response>
+    [Authorize]
+    [Route("profile/email")]
+    [HttpPut]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<UserDto>> UpdateEmail(EmailUpdateDto updatedEmail,
+        CancellationToken cancellationToken, bool sendEmail = false)
+    {
+        string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+        string? oldEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+        OperationResult result = await accountService.UpdateEmailAsync(userId, updatedEmail.NewEmail);
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Message);
+        }
+        if (sendEmail)
+        {
+            if (oldEmail != null)
+            {
+                await emailService.SendEmailChangedEmailAsync(oldEmail, cancellationToken);
+            }
+            OperationResult<ConfirmationEmailDto> confirmationEmailResult = await accountService
+                .GetConfirmationEmailKeyAsync(userId);
+            if (confirmationEmailResult.Succeeded && confirmationEmailResult.Payload != null)
+            {
+                await emailService.SendRegistrationResultEmailAsync(updatedEmail.NewEmail,
+                    confirmationEmailResult.Payload, cancellationToken);
+            }
+        }
+        return NoContent();
     }
 
     /// <summary>

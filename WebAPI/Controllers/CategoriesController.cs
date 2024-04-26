@@ -25,7 +25,7 @@ public class CategoriesController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     public async Task<ActionResult<IEnumerable<CategoryGroupDto>>> GetAllCategories(CancellationToken cancellationToken)
     {
-        return Ok(await categoryService.GetAllCategoryGroups(cancellationToken));
+        return Ok(await categoryService.GetAllCategoryGroupsAsync(cancellationToken));
     }
 
     /// <summary>

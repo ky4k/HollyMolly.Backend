@@ -16,7 +16,7 @@ public class CategoryService(
     ILogger<CategoryService> logger
     ) : ICategoryService
 {
-    public async Task<IEnumerable<CategoryGroupDto>> GetAllCategoryGroups(CancellationToken cancellationToken)
+    public async Task<IEnumerable<CategoryGroupDto>> GetAllCategoryGroupsAsync(CancellationToken cancellationToken)
     {
         List<CategoryGroup> groups = await context.CategoryGroups
             .Include(c => c.Categories)
@@ -39,7 +39,8 @@ public class CategoryService(
     {
         CategoryGroup group = new()
         {
-            Name = categoryGroupDto.Name
+            Name = categoryGroupDto.Name,
+            Position = categoryGroupDto.Position
         };
         try
         {
@@ -67,6 +68,7 @@ public class CategoryService(
         try
         {
             group.Name = categoryGroupDto.Name;
+            group.Position = categoryGroupDto.Position;
             context.CategoryGroups.Update(group);
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true);
@@ -88,23 +90,14 @@ public class CategoryService(
             return new OperationResult(false, $"The category group with id {categoryGroupId} does not exist");
         }
 
-        try
-        {
-            string filePath = group.ImageFilePath;
-            OperationResult result = await AddImageToCategoryGroupAsync(group, image, baseUrlPath, cancellationToken);
+        string filePath = group.ImageFilePath;
+        OperationResult result = await AddImageToCategoryGroupAsync(group, image, baseUrlPath, cancellationToken);
 
-            if (result.Succeeded && !string.IsNullOrEmpty(filePath))
-            {
-                imageService.DeleteImage(filePath);
-            }
-            await context.SaveChangesAsync(cancellationToken);
-            return result;
-        }
-        catch (Exception ex)
+        if (result.Succeeded && !string.IsNullOrEmpty(filePath))
         {
-            logger.LogError(ex, "An error occurred while adding categoryGroup image.");
-            return new OperationResult(false, "The image has not been updated.");
+            imageService.DeleteImage(filePath);
         }
+        return result;
     }
 
     public async Task<OperationResult> DeleteCategoryGroupAsync(int categoryGroupId, CancellationToken cancellationToken)
@@ -166,6 +159,7 @@ public class CategoryService(
             Category category = new()
             {
                 Name = categoryDto.CategoryName,
+                Position = categoryDto.Position,
                 ImageFilePath = "",
                 ImageLink = "",
                 CategoryGroup = categoryGroup
@@ -205,6 +199,7 @@ public class CategoryService(
         try
         {
             category.Name = categoryDto.CategoryName;
+            category.Position = categoryDto.Position;
             category.CategoryGroupId = categoryDto.CategoryGroupId;
             context.Categories.Update(category);
             await context.SaveChangesAsync(cancellationToken);
@@ -233,22 +228,13 @@ public class CategoryService(
                 $"the category with id {category.Id}");
         }
 
-        try
+        string filePath = category.ImageFilePath;
+        OperationResult result = await AddImageToCategoryAsync(category, image, baseUrlPath, cancellationToken);
+        if (result.Succeeded && !string.IsNullOrEmpty(filePath))
         {
-            string filePath = category.ImageFilePath;
-            OperationResult result = await AddImageToCategoryAsync(category, image, baseUrlPath, cancellationToken);
-            if (result.Succeeded && !string.IsNullOrEmpty(filePath))
-            {
-                imageService.DeleteImage(filePath);
-            }
-            await context.SaveChangesAsync(cancellationToken);
-            return result;
+            imageService.DeleteImage(filePath);
         }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "An error occurred while adding categoryGroup image.");
-            return new OperationResult(false, "The image has not been updated.");
-        }
+        return result;
     }
 
     public async Task<OperationResult> DeleteCategoryAsync(int categoryGroupId, int categoryId, CancellationToken cancellationToken)

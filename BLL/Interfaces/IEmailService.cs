@@ -13,6 +13,7 @@ public interface IEmailService
         ResetPasswordTokenDto resetPassword, CancellationToken cancellationToken);
     Task<OperationResult> SendPasswordChangedEmail(string email,
         ResetPasswordTokenDto resetPassword, CancellationToken cancellationToken);
+    Task<OperationResult> SendEmailChangedEmailAsync(string email, CancellationToken cancellationToken);
     Task<OperationResult> SendOrderCreatedEmailAsync(OrderDto order, CancellationToken cancellationToken);
     Task<OperationResult> SendOrderStatusUpdatedEmailAsync(OrderDto order, CancellationToken cancellationToken);
     Task<OperationResult> SendNewsEmailAsync(IEnumerable<NewsSubscriptionDto> subscriptions,

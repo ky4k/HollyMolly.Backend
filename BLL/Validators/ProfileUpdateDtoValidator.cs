@@ -17,8 +17,8 @@ public class ProfileUpdateDtoValidator : AbstractValidator<ProfileUpdateDto>
             .Must(db => db == null || db < DateOnly.FromDateTime(DateTime.UtcNow))
             .WithMessage("Date of birth must be in the past");
         RuleFor(pud => pud.City)
-            .MinimumLength(1);
+            ;
         RuleFor(pud => pud.DeliveryAddress)
-            .MinimumLength(1);
+            ;
     }
 }
