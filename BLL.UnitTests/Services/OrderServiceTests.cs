@@ -381,8 +381,7 @@ public class OrderServiceTests
         const string newStatus = "Updated";
         OrderUpdateDto orderUpdateDto = new()
         {
-            Status = newStatus,
-            Notes = "New notes"
+            Status = newStatus
         };
 
         await _orderService.UpdateOrderAsync(1, orderUpdateDto, CancellationToken.None);

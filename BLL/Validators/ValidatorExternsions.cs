@@ -5,8 +5,10 @@ namespace HM.BLL.Validators;
 
 public static partial class ValidatorExtensions
 {
-    private const string NameRegex = @"^(?:[АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯ]){1}[абвгґдеєжзиіїйклмнопрстуфхцчшщьюя'`’]*(?:(?:-[АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯ]){1}[абвгґдеєжзиіїйклмнопрстуфхцчшщьюя'`’]*)*$";
-
+    [GeneratedRegex(@"^(?:[АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯ]){1}[абвгґдеєжзиіїйклмнопрстуфхцчшщьюя'`’]*(?:(?:-[АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯ]){1}[абвгґдеєжзиіїйклмнопрстуфхцчшщьюя'`’]*)*$")]
+    private static partial Regex NamePattern();
+    [GeneratedRegex(@"^\+[0-9]{12}$|^[0-9]{10}$")]
+    private static partial Regex PhoneNumberPattern();
     [GeneratedRegex("[-'`’]{2}")]
     private static partial Regex InvalidCombinationSymbolsInName();
 
@@ -72,16 +74,16 @@ public static partial class ValidatorExtensions
         return name
             .MaximumLength(50)
                 .WithMessage("First or last name may not be longer than 50 characters.")
-            .Matches(NameRegex)
+            .Must(n => string.IsNullOrEmpty(n) || NamePattern().IsMatch(n))
                 .WithMessage(InvalidNameMessage)
-            .Must(n => n == null || !InvalidCombinationSymbolsInName().IsMatch(n))
+            .Must(n => string.IsNullOrEmpty(n) || !InvalidCombinationSymbolsInName().IsMatch(n))
                 .WithMessage("Firs or last name may not contain two non-letter in a row.");
     }
 
     public static IRuleBuilderOptions<T, string?> ApplyPhoneNumberValidationRules<T>(this IRuleBuilder<T, string?> phoneNumber)
     {
         return phoneNumber
-            .Matches(@"^\+[0-9]{12}$|^[0-9]{10}$")
+            .Must(ph => string.IsNullOrEmpty(ph) || PhoneNumberPattern().IsMatch(ph))
                 .WithMessage("Phone number may be either exactly 10 digits long or start with the plus (+) sign followed by 12 digits");
     }
 

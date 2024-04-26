@@ -6,7 +6,7 @@ namespace HM.BLL.Interfaces;
 
 public interface ICategoryService
 {
-    Task<IEnumerable<CategoryGroupDto>> GetAllCategoryGroups(CancellationToken cancellationToken);
+    Task<IEnumerable<CategoryGroupDto>> GetAllCategoryGroupsAsync(CancellationToken cancellationToken);
     Task<CategoryGroupDto?> GetCategoryGroupByIdAsync(int categoryGroupId, CancellationToken cancellationToken);
     Task<OperationResult<CategoryGroupDto>> CreateCategoryGroupAsync(
         CategoryGroupCreateDto categoryGroupDto, CancellationToken cancellationToken);

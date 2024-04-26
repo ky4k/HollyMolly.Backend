@@ -120,7 +120,7 @@ public class OrderService(
             return new OperationResult<OrderDto>(false, "Order with such an id does not exist.");
         }
         order.Status = updateDto.Status;
-        order.Notes = updateDto.Notes;
+        order.Notes = updateDto.Notes ?? string.Empty;
         try
         {
             context.Orders.Update(order);
