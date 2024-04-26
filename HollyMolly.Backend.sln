@@ -3,11 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.9.34701.34
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebAPI", "WebAPI\WebAPI.csproj", "{1EF100B5-83A9-4D72-B41C-0DC7B6C62381}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAPI", "WebAPI\WebAPI.csproj", "{1EF100B5-83A9-4D72-B41C-0DC7B6C62381}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL", "BLL\BLL.csproj", "{7B7A74F3-B055-4969-8059-E1FAC67F8FED}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BLL", "BLL\BLL.csproj", "{7B7A74F3-B055-4969-8059-E1FAC67F8FED}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "DAL\DAL.csproj", "{451917F8-94C1-49BF-9CA3-93D26CAAFC5C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DAL", "DAL\DAL.csproj", "{451917F8-94C1-49BF-9CA3-93D26CAAFC5C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BLL.UnitTests", "BLL.UnitTests\BLL.UnitTests.csproj", "{E1B21CAD-E09B-4651-ABC1-6DA5E086CB4B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,6 +29,10 @@ Global
 		{451917F8-94C1-49BF-9CA3-93D26CAAFC5C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{451917F8-94C1-49BF-9CA3-93D26CAAFC5C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{451917F8-94C1-49BF-9CA3-93D26CAAFC5C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E1B21CAD-E09B-4651-ABC1-6DA5E086CB4B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E1B21CAD-E09B-4651-ABC1-6DA5E086CB4B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E1B21CAD-E09B-4651-ABC1-6DA5E086CB4B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E1B21CAD-E09B-4651-ABC1-6DA5E086CB4B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

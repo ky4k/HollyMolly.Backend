@@ -12,7 +12,7 @@ public interface IProductService
     Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateDto productDto, CancellationToken cancellationToken);
     Task<OperationResult<ProductDto>> UpdateProductAsync(
         int productId, ProductUpdateDto productDto, CancellationToken cancellationToken);
-    Task<OperationResult<ProductInstanceDto>> AddProductInstanceToProduct(
+    Task<OperationResult<ProductInstanceDto>> AddProductInstanceToProductAsync(
         int productId, ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken);
     Task<OperationResult<ProductInstanceDto>> UpdateProductInstanceAsync(
         int productId, int productInstanceId, ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken);

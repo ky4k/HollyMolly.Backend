@@ -336,7 +336,7 @@ public class StatisticsService(
             {
                 NumberOfOrders = ordersList.Select(o => o.Id).Count(),
                 TotalDiscount = ordersList.SelectMany(o => o.OrderRecords.Select(or => or.Discount)).Sum(),
-                TotalCost = ordersList .SelectMany(o => o.OrderRecords
+                TotalCost = ordersList.SelectMany(o => o.OrderRecords
                     .Select(or => or.Price * or.Quantity - or.Discount).DefaultIfEmpty()).Sum(),
             });
         }
