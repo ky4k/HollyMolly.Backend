@@ -21,7 +21,6 @@ public static partial class ValidatorExtensions
         $" the recipient name is between {MinEmailRecipientNameLength} and {MaxEmailRecipientNameLength} characters long" +
         $" and the domain name is between {MinEmailDomainNameLength} and {MaxEmailDomainNameLength} characters long.";
 
-
     private const string InvalidNameMessage = "Name may contain only letters " +
         "АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯабвгґдеєжзиіїйклмнопрстуфхцчшщьюя, -, or apostrophe. " +
         "Every part of the name must start with a capital letter but no additional capital letters are allowed.";
