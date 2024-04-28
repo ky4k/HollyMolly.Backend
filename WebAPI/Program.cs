@@ -1,4 +1,5 @@
 using FluentValidation;
+using HM.BLL.Helpers;
 using HM.BLL.Interfaces;
 using HM.BLL.Services;
 using HM.BLL.Validators;
@@ -62,6 +63,7 @@ builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 builder.Services.AddScoped<IImageService, ImageService>();
+builder.Services.AddScoped<ISmtpClientFactory, SmtpClientFactory>();
 builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INewsSubscriptionService, NewsSubscriptionService>();

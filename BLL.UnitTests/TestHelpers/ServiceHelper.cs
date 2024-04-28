@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 
-namespace HM.BLL.UnitTests.Helpers;
+namespace HM.BLL.UnitTests.TestHelpers;
 
 public static class ServiceHelper
 {

@@ -43,7 +43,7 @@ public class CheckoutService(
             List<string> images = [];
             foreach (ProductImage image in productInstance?.Images ?? [])
             {
-                string link = Uri.EscapeDataString(image.Link ?? string.Empty);
+                string link = Uri.EscapeDataString(image.Link);
                 if (!string.IsNullOrEmpty(link))
                 {
                     images.Add(link);
@@ -95,7 +95,7 @@ public class CheckoutService(
         try
         {
             Session session = await sessionService.CreateAsync(options, cancellationToken: cancellationToken);
-            return new OperationResult<string>(true, "", $"{session.Url}");
+            return new OperationResult<string>(true, "", session.Url);
         }
         catch (Exception ex)
         {

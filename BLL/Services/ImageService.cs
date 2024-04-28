@@ -16,28 +16,27 @@ public class ImageService(
         IFormFile[] images = [image];
         OperationResult<List<ImageDto>> result = await UploadImagesAsync(
             images, baseUrlPath, savePath, cancellationToken);
-        return result.Succeeded && result.Payload?.Count > 0
+        return result.Succeeded && result.Payload!.Count > 0
             ? new OperationResult<ImageDto>(true, result.Payload[0])
-            : new OperationResult<ImageDto>(false, result.Message ?? "");
+            : new OperationResult<ImageDto>(false, result.Message!);
     }
     public async Task<OperationResult<List<ImageDto>>> UploadImagesAsync(IFormFile[] images,
         string baseUrlPath, string savePath, CancellationToken cancellationToken)
     {
-        savePath = $"wwwroot/{savePath}";
-        Directory.CreateDirectory(savePath);
-        List<ImageDto> imagesDto = [];
-        StringBuilder errorMessage = new();
-        foreach (IFormFile image in images)
+        try
         {
-            OperationResult validationResult = ValidateImage(image);
-            if (!validationResult.Succeeded)
+            savePath = $"wwwroot/{savePath}";
+            Directory.CreateDirectory(savePath);
+            List<ImageDto> imagesDto = [];
+            StringBuilder errorMessage = new();
+            foreach (IFormFile image in images)
             {
-                errorMessage.Append(validationResult.Message);
-                continue;
-            }
-
-            try
-            {
+                OperationResult validationResult = ValidateImage(image);
+                if (!validationResult.Succeeded)
+                {
+                    errorMessage.Append(validationResult.Message);
+                    continue;
+                }
                 string filePath = $"{savePath}/{GetUniqueFileName(image.FileName)}";
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
@@ -50,13 +49,14 @@ public class ImageService(
                     Link = imageUrl
                 });
             }
-            catch (Exception ex)
-            {
-                logger.LogError(ex, "Image was not created.");
-                errorMessage.Append("Image was not created.");
-            }
+            return new OperationResult<List<ImageDto>>(true, errorMessage.ToString(), imagesDto);
         }
-        return new OperationResult<List<ImageDto>>(true, errorMessage.ToString(), imagesDto);
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Image was not created.");
+            return new OperationResult<List<ImageDto>>(false, "An error occurred while saving image.");
+        }
+
     }
 
     public OperationResult DeleteImage(string filePath)

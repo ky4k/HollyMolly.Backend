@@ -2,7 +2,7 @@
 using HM.BLL.Models.Categories;
 using HM.BLL.Models.Common;
 using HM.BLL.Services;
-using HM.BLL.UnitTests.Helpers;
+using HM.BLL.UnitTests.TestHelpers;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Http;

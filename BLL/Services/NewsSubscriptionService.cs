@@ -23,15 +23,17 @@ public class NewsSubscriptionService(
             }).ToListAsync(cancellationToken);
     }
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1862:Use the 'StringComparison' method overloads to perform case-insensitive string comparisons",
+        Justification = "https://github.com/dotnet/efcore/issues/20995#issuecomment-631358780 EF Core does not translate the overload that accepts StringComparison.InvariantCultureIgnoreCase (or any other StringComparison).")]
     public async Task<OperationResult> AddSubscriptionAsync(NewsSubscriptionCreateDto subscriptionDto, CancellationToken cancellationToken)
     {
-        if (await context.NewsSubscriptions.AnyAsync(s => s.Email == subscriptionDto.Email, cancellationToken))
+        if (await context.NewsSubscriptions.AnyAsync(s => s.Email.ToLower() == subscriptionDto.Email.ToLower(), cancellationToken))
         {
             return new OperationResult(true, "Subscription has already existed.");
         }
         NewsSubscription newsSubscription = new()
         {
-            Email = subscriptionDto.Email,
+            Email = subscriptionDto.Email.ToLower(),
             RemoveToken = Guid.NewGuid().ToString()
         };
         try

@@ -85,7 +85,7 @@ namespace HM.WebAPI.Controllers
                 return Unauthorized();
             }
             var result = await wishListService.AddProductToWishListAsync(userId, productId, cancellationToken);
-            if (!result.Succeeded)
+            if (result.Payload == null)
             {
                 return BadRequest(result.Message);
             }
@@ -115,7 +115,7 @@ namespace HM.WebAPI.Controllers
                 return Unauthorized();
             }
             var result = await wishListService.RemoveProductFromWishListAsync(userId, productId, cancellationToken);
-            if (!result.Succeeded)
+            if (result.Payload == null)
             {
                 return BadRequest(result.Message);
             }

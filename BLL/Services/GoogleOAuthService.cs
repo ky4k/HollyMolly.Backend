@@ -23,12 +23,12 @@ public class GoogleOAuthService : IGoogleOAuthService
     private readonly string _tokenUri;
     public GoogleOAuthService(
         IConfiguration configuration,
-        HttpClient httpClient,
+        IHttpClientFactory httpClientFactory,
         ILogger<GoogleOAuthService> logger
         )
     {
         _configuration = configuration;
-        _httpClient = httpClient;
+        _httpClient = httpClientFactory.CreateClient();
         _logger = logger;
 
         _clientId = GetCredential("GoogleOAuth:client_id");
@@ -98,7 +98,7 @@ public class GoogleOAuthService : IGoogleOAuthService
     private string GetCredential(string key)
     {
         string? value = Environment.GetEnvironmentVariable(key);
-        value ??= _configuration.GetValue<string>(key);
+        value ??= _configuration[key];
         if (value == null)
         {
             _logger.LogError("Cannot get the value of the {key} from the environment or " +
