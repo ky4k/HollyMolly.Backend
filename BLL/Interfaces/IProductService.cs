@@ -8,6 +8,7 @@ public interface IProductService
 {
     Task<IEnumerable<ProductDto>> GetProductsAsync(int? categoryGroupId, int? categoryId, string? name,
         bool onlyNewCollection, bool sortByPrice, bool sortByRating, bool sortAsc, CancellationToken cancellationToken);
+    Task<IEnumerable<ProductDto>> GetRecommendedProductsAsync(int number, CancellationToken cancellationToken);
     Task<ProductDto?> GetProductByIdAsync(int productId, CancellationToken cancellationToken);
     Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateDto productDto, CancellationToken cancellationToken);
     Task<OperationResult<ProductDto>> UpdateProductAsync(

@@ -3,17 +3,17 @@ using HM.BLL.Models.Common;
 using HM.BLL.Models.Users;
 using HM.DAL.Data;
 using HM.DAL.Entities;
-using MailKit.Net.Smtp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using MimeKit.Text;
 
-namespace HM.BLL.Services;
+namespace HM.BLL.Helpers;
 
 public class EmailSender : IEmailSender
 {
+    private readonly ISmtpClientFactory _smtpClientFactory;
     private readonly HmDbContext _context;
     private readonly ILogger<EmailSender> _logger;
     private readonly IConfiguration _configuration;
@@ -25,11 +25,13 @@ public class EmailSender : IEmailSender
     private readonly string _sender;
 
     public EmailSender(
+        ISmtpClientFactory smtpClientFactory,
         HmDbContext context,
         IConfiguration configuration,
         ILogger<EmailSender> logger
         )
     {
+        _smtpClientFactory = smtpClientFactory;
         _context = context;
         _configuration = configuration;
         _logger = logger;
@@ -65,7 +67,7 @@ public class EmailSender : IEmailSender
 
         try
         {
-            using var smtp = new SmtpClient();
+            using var smtp = _smtpClientFactory.CreateClient();
             await smtp.ConnectAsync(_smtpHost, _smtpPort, _useSsl, cancellationToken);
             await smtp.AuthenticateAsync(_userName, _userPassword, cancellationToken);
 
@@ -94,12 +96,12 @@ public class EmailSender : IEmailSender
     {
         string? value = Environment.GetEnvironmentVariable(key);
         value ??= _configuration.GetValue<string>(key);
-        if (value == null)
+        if (string.IsNullOrEmpty(value))
         {
             _logger.LogError("Cannot get the value of the {key} from the environment or " +
                 "the configuration. Mail sending may not work correctly.", key);
         }
-        return value ?? "";
+        return value!;
     }
 
     private async Task<bool> ExceededTodayEmailLimitAsync(CancellationToken cancellationToken)

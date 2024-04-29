@@ -22,31 +22,20 @@ public class AccountService(
 {
     public async Task<OperationResult<RegistrationResponse>> RegisterUserAsync(RegistrationRequest request)
     {
-        User? user = await userManager.FindByEmailAsync(request.Email.ToLower());
-        if (user != null && !user.IsOidcUser)
+        if (await userManager.FindByEmailAsync(request.Email.ToLower()) != null)
         {
             return new OperationResult<RegistrationResponse>(false, "A user with such an email already exist.");
         }
-        user ??= new User()
+        User user = new()
         {
             UserName = request.Email.ToLower(),
             Email = request.Email.ToLower()
         };
         try
         {
-            if (user.IsOidcUser)
-            {
-                await userManager.RemovePasswordAsync(user);
-                await userManager.AddPasswordAsync(user, request.Password);
-                user.IsOidcUser = false;
-                await userManager.UpdateAsync(user);
-            }
-            else
-            {
-                await userManager.CreateAsync(user);
-                await userManager.AddPasswordAsync(user, request.Password);
-                await userManager.AddToRoleAsync(user, DefaultRoles.User);
-            }
+            await userManager.CreateAsync(user);
+            await userManager.AddPasswordAsync(user, request.Password);
+            await userManager.AddToRoleAsync(user, DefaultRoles.User);
             var response = new RegistrationResponse()
             {
                 Id = user.Id,

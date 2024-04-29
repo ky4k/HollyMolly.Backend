@@ -135,6 +135,6 @@ public class EmailService(
         }
         string fails = failed > 0 ? $"{failed} were not sent. Errors: " : "";
         sb.Insert(0, $"{succeeded} emails were sent {fails}");
-        return new OperationResult(true, sb.ToString());
+        return new OperationResult(succeeded >= failed, sb.ToString());
     }
 }

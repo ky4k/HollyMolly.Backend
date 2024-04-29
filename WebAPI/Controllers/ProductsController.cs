@@ -41,6 +41,19 @@ public class ProductsController(
     }
 
     /// <summary>
+    /// Allows to get products with the most views.
+    /// </summary>
+    /// <param name="number">Number of product to get. Default is 10.</param>
+    /// <response code = "200" > Returns a list of the recommended products.</response>
+    [Route("recommended")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<ActionResult<IEnumerable<ProductDto>>> GetRecommendedProducts(int number = 10)
+    {
+        return Ok(await productService.GetRecommendedProductsAsync(number, Request.HttpContext.RequestAborted));
+    }
+
+    /// <summary>
     /// Allows to retrieve product information by its ID.
     /// </summary>
     /// <param name="productId">The ID of the product to retrieve.</param>

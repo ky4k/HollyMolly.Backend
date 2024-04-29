@@ -84,6 +84,51 @@ public class ProductService(
     {
         return (productInstance.Price - productInstance.AbsoluteDiscount) * (100 - productInstance.PercentageDiscount);
     }
+    public async Task<IEnumerable<ProductDto>> GetRecommendedProductsAsync(int number, CancellationToken cancellationToken)
+    {
+        List<int> productIds = await context.ProductStatistics
+            .GroupBy(p => p.ProductId)
+            .OrderByDescending(g => g.Sum(p => p.NumberViews))
+            .Take(number)
+            .Select(g => g.Key)
+            .ToListAsync(cancellationToken);
+
+        List<Product> products = await context.Products
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Images)
+            .Where(p => productIds.Any(i => i == p.Id))
+            .AsSplitQuery()
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        if (products.Count < number)
+        {
+            await AddProductsWithoutViewsAsync(productIds, products, number, cancellationToken);
+        }
+
+        ProductDto[] productDtos = new ProductDto[productIds.Count];
+        foreach (Product product in products)
+        {
+            int index = productIds.IndexOf(product.Id);
+            productDtos[index] = product.ToProductDto();
+        }
+        return productDtos;
+    }
+
+    private async Task AddProductsWithoutViewsAsync(List<int> productIds, List<Product> products,
+        int number, CancellationToken cancellationToken)
+    {
+        List<Product> notViewedProducts = await context.Products
+            .Include(p => p.ProductInstances)
+                .ThenInclude(pi => pi.Images)
+            .Where(p => !productIds.Any(i => i == p.Id))
+            .Take(number - productIds.Count)
+            .AsSplitQuery()
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
+        products.AddRange(notViewedProducts);
+        productIds.AddRange(notViewedProducts.Select(p => p.Id));
+    }
+
     public async Task<ProductDto?> GetProductByIdAsync(int productId, CancellationToken cancellationToken)
     {
         Product? product = await context.Products

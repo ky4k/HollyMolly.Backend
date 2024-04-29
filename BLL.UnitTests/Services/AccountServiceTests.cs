@@ -1,7 +1,7 @@
 ﻿using HM.BLL.Models.Common;
 using HM.BLL.Models.Users;
 using HM.BLL.Services;
-using HM.BLL.UnitTests.Helpers;
+using HM.BLL.UnitTests.TestHelpers;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -63,7 +63,7 @@ public class AccountServiceTests
         Assert.False(result.Succeeded);
     }
     [Fact]
-    public async Task RegisterUserAsync_ShouldRegisterOidcUser()
+    public async Task RegisterUserAsync_ShouldReturnFalseResult_WhenEmailUsedByOidcUser()
     {
         await SeedDbContextAsync();
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
@@ -76,7 +76,7 @@ public class AccountServiceTests
         OperationResult<RegistrationResponse> result = await _accountService.RegisterUserAsync(request);
 
         Assert.NotNull(result);
-        Assert.True(result.Succeeded);
+        Assert.False(result.Succeeded);
     }
     [Fact]
     public async Task RegisterUserAsync_ShouldReturnFalseResult_IfUserManagerThrowsError()

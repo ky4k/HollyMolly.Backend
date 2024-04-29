@@ -2,7 +2,7 @@
 using HM.BLL.Models.Common;
 using HM.BLL.Models.Products;
 using HM.BLL.Services;
-using HM.BLL.UnitTests.Helpers;
+using HM.BLL.UnitTests.TestHelpers;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Http;
@@ -128,6 +128,47 @@ public class ProductServiceTests
 
         Assert.NotNull(products);
         Assert.Equal(0.8m, products.First().Rating);
+    }
+    [Fact]
+    public async Task GetRecommendedProductsAsync_ShouldReturnTheCorrectNumberOfProducts()
+    {
+        await SeedDbContextAsync();
+
+        IEnumerable<ProductDto> products = await _productService
+            .GetRecommendedProductsAsync(3, CancellationToken.None);
+
+        Assert.Equal(3, products.Count());
+    }
+    [Fact]
+    public async Task GetRecommendedProductsAsync_ShouldSortProductsByNumberOfViews()
+    {
+        await SeedDbContextAsync();
+
+        List<ProductDto> products = (await _productService
+            .GetRecommendedProductsAsync(3, CancellationToken.None)).ToList();
+
+        Assert.Equal(3, products.Count);
+        Assert.Equal(4, products[0].Id);
+        Assert.Equal(5, products[1].Id);
+        Assert.Equal(6, products[2].Id);
+    }
+    [Fact]
+    public async Task GetRecommendedProductsAsync_ShouldReturnAllProducts_WhenNumberIsGreaterThanAllExistedProducts()
+    {
+        await SeedDbContextAsync();
+
+        IEnumerable<ProductDto> products = await _productService
+            .GetRecommendedProductsAsync(100, CancellationToken.None);
+
+        Assert.Equal(8, products.Count());
+    }
+    [Fact]
+    public async Task GetRecommendedProductsAsync_ShouldReturnEmptyList_WhenNoProductExist()
+    {
+        IEnumerable<ProductDto> products = await _productService
+            .GetRecommendedProductsAsync(3, CancellationToken.None);
+
+        Assert.Empty(products);
     }
     [Fact]
     public async Task GetProductByIdAsync_ShouldReturnTheCorrectProduct()
@@ -1354,7 +1395,17 @@ public class ProductServiceTests
             ],
             Feedbacks = [],
             WishLists = [],
-            ProductStatistics = []
+            ProductStatistics =
+            [
+                new()
+                {
+                    Id = 4,
+                    Year = 2024,
+                    Month = 4,
+                    Day = 1,
+                    NumberViews = 25
+                }
+            ]
         },
         new()
         {
@@ -1417,7 +1468,17 @@ public class ProductServiceTests
                 }
             ],
             WishLists = [],
-            ProductStatistics = []
+            ProductStatistics =
+            [
+                new()
+                {
+                    Id = 5,
+                    Year = 2024,
+                    Month = 4,
+                    Day = 1,
+                    NumberViews = 20
+                }
+            ]
         },
         new()
         {
@@ -1447,7 +1508,17 @@ public class ProductServiceTests
             ],
             Feedbacks = [],
             WishLists = [],
-            ProductStatistics = []
+            ProductStatistics =
+            [
+                new()
+                {
+                    Id = 6,
+                    Year = 2024,
+                    Month = 4,
+                    Day = 1,
+                    NumberViews = 15
+                }
+            ]
         },
         new()
         {

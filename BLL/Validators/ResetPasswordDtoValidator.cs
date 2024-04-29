@@ -3,7 +3,7 @@ using HM.BLL.Models.Users;
 
 namespace HM.BLL.Validators;
 
-internal class ResetPasswordDtoValidator : AbstractValidator<ResetPasswordDto>
+public class ResetPasswordDtoValidator : AbstractValidator<ResetPasswordDto>
 {
     public ResetPasswordDtoValidator()
     {

@@ -14,8 +14,8 @@ public class ProfileUpdateDtoValidator : AbstractValidator<ProfileUpdateDto>
         RuleFor(pud => pud.PhoneNumber)
             .ApplyPhoneNumberValidationRules();
         RuleFor(pud => pud.DateOfBirth)
-            .Must(db => db == null || db < DateOnly.FromDateTime(DateTime.UtcNow))
-            .WithMessage("Date of birth must be in the past");
+            .Must(db => db == null || db.Value < DateOnly.FromDateTime(DateTime.UtcNow))
+                .WithMessage("Date of birth must be in the past");
         RuleFor(pud => pud.City)
             ;
         RuleFor(pud => pud.DeliveryAddress)
