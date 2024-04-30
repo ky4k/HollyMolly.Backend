@@ -8,13 +8,18 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace HM.BLL.UnitTests.Services;
 
 public class AccountServiceTests
 {
+    private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
     private readonly HmDbContext _context;
     private readonly UserManager<User> _userManager;
     private readonly IConfiguration _configuration;
@@ -22,11 +27,13 @@ public class AccountServiceTests
     private readonly AccountService _accountService;
     public AccountServiceTests()
     {
+        _jwtSecurityTokenHandler = Substitute.ForPartsOf<JwtSecurityTokenHandler>();
         _context = ServiceHelper.GetTestDbContext();
         _userManager = ServiceHelper.GetUserManager(_context);
         _configuration = Substitute.For<IConfiguration>();
         _logger = Substitute.For<ILogger<AccountService>>();
-        _accountService = new AccountService(_userManager, _configuration, _logger);
+        _accountService = new AccountService(_context, _userManager, _jwtSecurityTokenHandler,
+            _configuration, _logger);
     }
 
     [Fact]
@@ -253,7 +260,7 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(true);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        var service = new AccountService(_userManager, null!, _logger);
+        var service = new AccountService(_context, _userManager, _jwtSecurityTokenHandler, null!, _logger);
         LoginRequest request = new()
         {
             Email = "user1@example.com",
@@ -318,6 +325,7 @@ public class AccountServiceTests
         _configuration["JwtSettings:Issuer"] = "TestIssuer";
         _configuration["JwtSettings:Audience"] = "localhost";
         _configuration["JwtSettings:SecurityKey"] = "LongEnoughTestSecurityKeyForTheApplication";
+        _configuration["JwtSettings:RefreshTokenValidForMinutes"] = "60";
         LoginRequest request = new()
         {
             Email = "user1@example.com",
@@ -421,6 +429,102 @@ public class AccountServiceTests
         Assert.NotNull(result);
         Assert.False(result.Succeeded);
         Assert.Null(result.Payload);
+    }
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldRefreshAccessToken_WhenProvidedCorrectTokensToExchange()
+    {
+        await _context.Tokens.AddRangeAsync(Tokens);
+        await SeedDbContextAsync();
+        _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
+        _configuration["JwtSettings:SecurityKey"] = null;
+        TokensDto tokensDto = new()
+        {
+            AccessToken = Tokens[0].AccessToken,
+            RefreshToken = Tokens[0].RefreshToken
+        };
+
+        OperationResult<LoginResponse> result = await _accountService.RefreshTokenAsync(tokensDto);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+    }
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFalseResult_WhenTokensToExchangeAreNotAValidPair()
+    {
+        await _context.Tokens.AddRangeAsync(Tokens);
+        await SeedDbContextAsync();
+        _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
+        _configuration["JwtSettings:SecurityKey"] = null;
+        TokensDto tokensDto = new()
+        {
+            AccessToken = Tokens[1].AccessToken,
+            RefreshToken = Tokens[0].RefreshToken
+        };
+
+        OperationResult<LoginResponse> result = await _accountService.RefreshTokenAsync(tokensDto);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFalseResult_WhenRefreshTokenHasExpired()
+    {
+        await _context.Tokens.AddRangeAsync(Tokens);
+        await SeedDbContextAsync();
+        _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
+        _configuration["JwtSettings:SecurityKey"] = null;
+        TokensDto tokensDto = new()
+        {
+            AccessToken = Tokens[2].AccessToken,
+            RefreshToken = Tokens[2].RefreshToken
+        };
+
+        OperationResult<LoginResponse> result = await _accountService.RefreshTokenAsync(tokensDto);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldReturnFalseResult_WhenUserDoesNotExist()
+    {
+        await _context.Tokens.AddRangeAsync(Tokens);
+        await SeedDbContextAsync();
+        _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
+        _configuration["JwtSettings:SecurityKey"] = null;
+        TokensDto tokensDto = new()
+        {
+            AccessToken = Tokens[1].AccessToken,
+            RefreshToken = Tokens[1].RefreshToken
+        };
+
+        OperationResult<LoginResponse> result = await _accountService.RefreshTokenAsync(tokensDto);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
+    public async Task RefreshTokenAsync_ShouldHandleDatabaseErrors()
+    {
+        var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
+        await dbContextMock.Tokens.AddRangeAsync(Tokens);
+        await SeedDbContextAsync(dbContextMock);
+        UserManager<User> userManager = ServiceHelper.GetUserManager(dbContextMock);
+        userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
+        _configuration["JwtSettings:SecurityKey"] = null;
+        TokensDto tokensDto = new()
+        {
+            AccessToken = Tokens[0].AccessToken,
+            RefreshToken = Tokens[0].RefreshToken
+        };
+        dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync<InvalidOperationException>();
+        var service = new AccountService(dbContextMock, userManager, _jwtSecurityTokenHandler,
+            _configuration, _logger);
+
+        OperationResult<LoginResponse> result = await service.RefreshTokenAsync(tokensDto);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
     }
     [Fact]
     public async Task InvalidateAllPreviousTokensAsync_ShouldSetInvalidateTokenBeforeColumnForTheUser()
@@ -810,4 +914,48 @@ public class AccountServiceTests
             UserId = "3"
         }
     ];
+
+    private List<TokenRecord> Tokens =>
+    [
+        new()
+        {
+            Id = 1,
+            UserName = "user1@example.com",
+            AccessToken = "accessToken1",
+            RefreshToken = GetRefreshToken("user1@example.com", new DateTime(2032, 12, 31, 12, 0, 0, DateTimeKind.Utc))
+        },
+        new()
+        {
+            Id = 2,
+            UserName = "user99@example.com",
+            AccessToken = "accessToken2",
+            RefreshToken = GetRefreshToken("user99@example.com", new DateTime(2032, 12, 31, 12, 0, 0, DateTimeKind.Utc))
+        },
+        new()
+        {
+            Id = 3,
+            UserName = "user1@example.com",
+            AccessToken = "accessToken3",
+            RefreshToken = GetRefreshToken("user1@example.com", new DateTime(2000, 12, 31, 12, 0, 0, DateTimeKind.Utc))
+        },
+    ];
+
+    private string GetRefreshToken(string userName, DateTime expirationDate)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, "TokenId"),
+            new(ClaimTypes.Name, userName)
+        };
+
+        byte[] key = Encoding.UTF8.GetBytes("defaultKey_that_is_32_characters");
+        var secret = new SymmetricSecurityKey(key);
+        JwtSecurityToken refreshToken = new(
+            issuer: "HollyMolly",
+            audience: "*",
+            claims: claims,
+            expires: expirationDate,
+            signingCredentials: new SigningCredentials(secret, SecurityAlgorithms.HmacSha256));
+        return _jwtSecurityTokenHandler.WriteToken(refreshToken);
+    }
 }

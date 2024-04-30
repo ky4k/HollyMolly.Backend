@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,7 @@ builder.Services.AddHttpClient();
 builder.Services.AddScoped<ReplaceAuthorizationHeaderMiddleware>();
 builder.Services.AddScoped<TokenRevocationMiddleware>();
 builder.Services.AddScoped<HmDbContextInitializer>();
+builder.Services.AddScoped<JwtSecurityTokenHandler>();
 builder.Services.AddScoped<IGoogleOAuthService, GoogleOAuthService>();
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IUserService, UserService>();

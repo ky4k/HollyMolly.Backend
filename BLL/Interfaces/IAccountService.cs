@@ -12,6 +12,7 @@ public interface IAccountService
     Task<OperationResult<ConfirmationEmailDto>> GetConfirmationEmailKeyAsync(string userId);
     Task<OperationResult> ConfirmEmailAsync(string userId, string confirmationEmailKey);
     Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest);
+    Task<OperationResult<LoginResponse>> RefreshTokenAsync(TokensDto tokens);
     Task<OperationResult> InvalidateAllPreviousTokensAsync(string userId);
     Task<OperationResult<UserDto>> UpdateUserProfileAsync(string userId, ProfileUpdateDto profile);
     Task<OperationResult> UpdateEmailAsync(string userId, string newEmail);

@@ -73,7 +73,7 @@ public class AccountController(
     /// </summary>
     /// <param name="request">User name/email and password</param>
     /// <response code="200">Indicates that the login was successful and returns 
-    ///     an access token and user information.</response>
+    ///     access token, refresh token and user information.</response>
     /// <response code="400">Indicates that the login has failed and returns the error message.</response>
     [Route("login")]
     [HttpPost]
@@ -139,16 +139,32 @@ public class AccountController(
     /// Allows the user to login to the site using provided by the application token.
     /// </summary>
     /// <param name="loginRequest">The user token provided by the application.</param>
-    /// <response code="200">Indicates that the login was successful and returns an access token and user information.</response>
+    /// <response code="200">Indicates that the login was successful and returns access token, refresh token and user information.</response>
     /// <response code="400">Indicates that the login has failed and returns the error message.</response>
     [Route("login/google")]
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult> LoginViaToken(LoginOidcRequest loginRequest)
+    public async Task<ActionResult<LoginResponse>> LoginViaToken(LoginOidcRequest loginRequest)
     {
         OperationResult<LoginResponse> result = await accountService
             .LoginOidcUserAsync(loginRequest.Token);
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
+
+    /// <summary>
+    /// Allows to exchange expired access token and valid refresh token on the new pair of access and refresh tokens.
+    /// </summary>
+    /// <param name="tokens">Access and refresh tokens to exchange</param>
+    /// <response code="200">Indicates that the operation was successful and returns access token, refresh token and user information.</response>
+    /// <response code="400">Indicates that operation has failed and returns the error message.</response>
+    [Route("refresh")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<LoginResponse>> RefreshToken(TokensDto tokens)
+    {
+        OperationResult<LoginResponse> result = await accountService.RefreshTokenAsync(tokens);
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
 

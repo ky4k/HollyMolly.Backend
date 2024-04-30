@@ -16,6 +16,7 @@ public class HmDbContext(DbContextOptions<HmDbContext> options)
     public DbSet<NewsSubscription> NewsSubscriptions => Set<NewsSubscription>();
     public DbSet<EmailLog> EmailLogs => Set<EmailLog>();
     public DbSet<ProductStatistics> ProductStatistics => Set<ProductStatistics>();
+    public DbSet<TokenRecord> Tokens => Set<TokenRecord>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
