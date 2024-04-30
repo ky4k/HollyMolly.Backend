@@ -1,6 +1,8 @@
-﻿using HM.BLL.Models.Categories;
+﻿using HM.BLL.Enums;
+using HM.BLL.Models.Categories;
 using HM.BLL.Models.Orders;
 using HM.BLL.Models.Products;
+using HM.BLL.Models.Supports;
 using HM.BLL.Models.Users;
 using HM.BLL.Models.WishLists;
 using HM.DAL.Entities;
@@ -203,4 +205,18 @@ public static class MappingExtensions
             Products = wishList.Products.Select(p => p.ToProductDto()).ToList()
         };
     }
+    public static SupportDto ToSupportDto(this Support support)
+    {
+        return new SupportDto
+        {
+            Id = support.Id,
+            Name = support.Name,
+            Email = support.Email,
+            Topic = (SupportTopicDto)Enum.Parse(typeof(SupportTopicDto), support.Topic.ToString()), 
+            Description = support.Description,
+            OrderNumber = support.OrderNumber,
+            Order = support.Order?.ToOrderDto() 
+        };
+    }
+
 }
