@@ -3,8 +3,10 @@ using HM.BLL.Interfaces;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.Users;
 using HM.DAL.Constants;
+using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -15,7 +17,9 @@ using System.Text;
 namespace HM.BLL.Services;
 
 public class AccountService(
+    HmDbContext context,
     UserManager<User> userManager,
+    JwtSecurityTokenHandler jwtSecurityTokenHandler,
     IConfiguration configuration,
     ILogger<AccountService> logger
     ) : IAccountService
@@ -171,10 +175,19 @@ public class AccountService(
     {
         IEnumerable<string> roles = await userManager.GetRolesAsync(user);
 
-        string? token;
+        string? accessToken;
+        string? refreshToken;
         try
         {
-            token = new JwtSecurityTokenHandler().WriteToken(GetToken(user, roles));
+            accessToken = jwtSecurityTokenHandler.WriteToken(GetAccessToken(user, roles));
+            refreshToken = jwtSecurityTokenHandler.WriteToken(GetRefreshToken(user.UserName!));
+            await context.Tokens.AddAsync(new TokenRecord()
+            {
+                UserName = user.UserName,
+                AccessToken = accessToken,
+                RefreshToken = refreshToken
+            });
+            await context.SaveChangesAsync();
         }
         catch (Exception ex)
         {
@@ -186,14 +199,15 @@ public class AccountService(
         {
             UserId = user.Id,
             UserEmail = user.Email,
-            AccessToken = token,
-            Roles = roles
+            AccessToken = accessToken,
+            RefreshToken = refreshToken,
+            Roles = roles.ToList()
         };
 
         return new OperationResult<LoginResponse>(true, response);
     }
 
-    private JwtSecurityToken GetToken(User user, IEnumerable<string> roles)
+    private JwtSecurityToken GetAccessToken(User user, IEnumerable<string> roles)
     {
         var claims = new List<Claim>
         {
@@ -220,8 +234,68 @@ public class AccountService(
             issuer: configuration?["JwtSettings:Issuer"] ?? "HollyMolly",
             audience: configuration?["JwtSettings:Audience"] ?? "*",
             claims: claims,
-            expires: DateTime.Now.AddMinutes(expiresIn),
+            expires: DateTime.UtcNow.AddMinutes(expiresIn),
             signingCredentials: new SigningCredentials(secret, SecurityAlgorithms.HmacSha256));
+    }
+    private JwtSecurityToken GetRefreshToken(string userName)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
+            new(ClaimTypes.Name, userName)
+        };
+
+        double expiresIn = double.TryParse(
+            configuration?["JwtSettings:RefreshTokenValidForMinutes"], out double exp) ? exp : 120.0;
+
+        byte[] key = Encoding.UTF8.GetBytes(
+            Environment.GetEnvironmentVariable("JwtSettings:SecurityKey")
+            ?? configuration?["JwtSettings:SecurityKey"]
+            ?? "defaultKey_that_is_32_characters");
+        var secret = new SymmetricSecurityKey(key);
+
+        return new JwtSecurityToken(
+            issuer: configuration?["JwtSettings:Issuer"] ?? "HollyMolly",
+            audience: configuration?["JwtSettings:Audience"] ?? "*",
+            claims: claims,
+            expires: DateTime.UtcNow.AddMinutes(expiresIn),
+            signingCredentials: new SigningCredentials(secret, SecurityAlgorithms.HmacSha256));
+    }
+
+    public async Task<OperationResult<LoginResponse>> RefreshTokenAsync(TokensDto tokens)
+    {
+        TokenRecord? oldToken = await context.Tokens
+            .FirstOrDefaultAsync(t => t.AccessToken == tokens.AccessToken
+                && t.RefreshToken == tokens.RefreshToken);
+        if (oldToken == null)
+        {
+            return new OperationResult<LoginResponse>(false, "Invalid refresh token");
+        }
+        try
+        {
+            JwtSecurityToken oldRefreshToken = jwtSecurityTokenHandler.ReadJwtToken(tokens.RefreshToken);
+            if (oldRefreshToken.ValidTo < DateTimeOffset.UtcNow)
+            {
+                context.Tokens.Remove(oldToken);
+                await context.SaveChangesAsync();
+                return new OperationResult<LoginResponse>(false, "Refresh token has expired");
+            }
+            string? userName = oldRefreshToken.Claims
+                .FirstOrDefault(c => c.Type == ClaimTypes.Name)!.Value;
+            User? user = await userManager.FindByNameAsync(userName!);
+            if (user == null)
+            {
+                return new OperationResult<LoginResponse>(false, "User does not exist");
+            }
+            context.Tokens.Remove(oldToken);
+            await context.SaveChangesAsync();
+            return await GetLoginResultAsync(user);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "An error occurred while refreshing token.");
+            return new OperationResult<LoginResponse>(false, "Token was not refreshed.");
+        }
     }
 
     public async Task<OperationResult> InvalidateAllPreviousTokensAsync(string userId)

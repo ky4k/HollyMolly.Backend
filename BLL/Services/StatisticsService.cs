@@ -26,7 +26,7 @@ public class StatisticsService(
         productStatistics = await FilterProductStatisticsAsync(productStatistics, productId, categoryId,
             categoryGroupId, fromDate, toDate, cancellationToken);
 
-        IQueryable<IGrouping<GroupKey, ProductStatistics>> groupedResult = GroupProductStatistic(
+        IQueryable<IGrouping<GroupProductKey, ProductStatistics>> groupedResult = GroupProductStatistic(
             productStatistics, yearly, monthly, daily);
 
         List<ProductStatisticDto> productStatisticDtos = await GetProductStatisticDto(groupedResult)
@@ -78,13 +78,13 @@ public class StatisticsService(
         return productStatistics;
     }
 
-    private static IQueryable<IGrouping<GroupKey, ProductStatistics>> GroupProductStatistic(
+    private static IQueryable<IGrouping<GroupProductKey, ProductStatistics>> GroupProductStatistic(
         IQueryable<ProductStatistics> productStatistics, bool yearly, bool monthly, bool daily)
     {
-        IQueryable<IGrouping<GroupKey, ProductStatistics>> groupedResult;
+        IQueryable<IGrouping<GroupProductKey, ProductStatistics>> groupedResult;
         if (daily)
         {
-            groupedResult = productStatistics.GroupBy(s => new GroupKey
+            groupedResult = productStatistics.GroupBy(s => new GroupProductKey
             {
                 ProductId = s.ProductId,
                 Year = s.Year,
@@ -94,21 +94,21 @@ public class StatisticsService(
         }
         else if (monthly)
         {
-            groupedResult = productStatistics.GroupBy(s => new GroupKey { ProductId = s.ProductId, Year = s.Year, Month = s.Month });
+            groupedResult = productStatistics.GroupBy(s => new GroupProductKey { ProductId = s.ProductId, Year = s.Year, Month = s.Month });
         }
         else if (yearly)
         {
-            groupedResult = productStatistics.GroupBy(s => new GroupKey() { ProductId = s.ProductId, Year = s.Year });
+            groupedResult = productStatistics.GroupBy(s => new GroupProductKey() { ProductId = s.ProductId, Year = s.Year });
         }
         else
         {
-            groupedResult = productStatistics.GroupBy(s => new GroupKey { ProductId = s.ProductId });
+            groupedResult = productStatistics.GroupBy(s => new GroupProductKey { ProductId = s.ProductId });
         }
         return groupedResult;
     }
 
     private static IQueryable<ProductStatisticDto> GetProductStatisticDto(
-        IQueryable<IGrouping<GroupKey, ProductStatistics>> groupedResult)
+        IQueryable<IGrouping<GroupProductKey, ProductStatistics>> groupedResult)
     {
         return groupedResult.Select(g => new ProductStatisticDto()
         {
@@ -491,11 +491,51 @@ public class StatisticsService(
         return productInstanceStatistics;
     }
 
-    private sealed class GroupKey
+    private class GroupKey
     {
-        public int? ProductId { get; set; }
         public int? Year { get; set; }
         public int? Month { get; set; }
         public int? Day { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is GroupKey other)
+            {
+                return this.Year == other.Year
+                    && this.Month == other.Month
+                    && this.Day == other.Day;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Year, Month, Day);
+        }
+    }
+    private sealed class GroupProductKey : GroupKey
+    {
+        public int? ProductId { get; set; }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is GroupProductKey other)
+            {
+                return this.ProductId == other.ProductId
+                    && this.Year == other.Year
+                    && this.Month == other.Month
+                    && this.Day == other.Day;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(ProductId, Year, Month, Day);
+        }
     }
 }

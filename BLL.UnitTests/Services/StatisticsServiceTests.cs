@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
+using System.Reflection;
 
 namespace HM.BLL.UnitTests.Services;
 
@@ -461,7 +462,7 @@ public class StatisticsServiceTests
         IEnumerable<CategoryStatisticDto> statisticDtos = await _statisticsService.GetCategoryStatisticsAsync(
             1, null, null, null, true, false, false, CancellationToken.None);
 
-        Assert.Equal(6, statisticDtos.Count());
+        Assert.Equal(2, statisticDtos.Count());
     }
     [Fact]
     public async Task GetCategoryStatisticsAsync_ShouldShouldReturnStatisticForEachMonth_WhenMonthlyIsTrue()
@@ -471,7 +472,7 @@ public class StatisticsServiceTests
         IEnumerable<CategoryStatisticDto> statisticDtos = await _statisticsService.GetCategoryStatisticsAsync(
             1, null, null, null, true, true, false, CancellationToken.None);
 
-        Assert.Equal(9, statisticDtos.Count());
+        Assert.Equal(4, statisticDtos.Count());
     }
     [Fact]
     public async Task GetCategoryStatisticsAsync_ShouldShouldReturnStatisticForEachDay_WhenDailyIsTrue()
@@ -481,7 +482,7 @@ public class StatisticsServiceTests
         IEnumerable<CategoryStatisticDto> statisticDtos = await _statisticsService.GetCategoryStatisticsAsync(
             1, null, null, null, true, true, true, CancellationToken.None);
 
-        Assert.Equal(15, statisticDtos.Count());
+        Assert.Equal(7, statisticDtos.Count());
     }
     [Fact]
     public async Task GetOrderStatisticsAsync_ShouldReturnAllTimeGeneralizedStatistic_WhenNoParametersWereSpecified()
@@ -975,6 +976,178 @@ public class StatisticsServiceTests
             async () => await service.AddToProductNumberWishlistAdditionsAsync(1));
 
         Assert.Null(exception);
+    }
+    [Theory]
+    [InlineData(null, null, null)]
+    [InlineData(2024, null, null)]
+    [InlineData(null, 4, null)]
+    [InlineData(null, null, 1)]
+    [InlineData(2024, 4, 1)]
+    [InlineData(null, 4, 1)]
+    public void GroupKeyEquals_ShouldReturnTrue_WhenKeysAreEqual(int? year, int? month, int? day)
+    {
+        Type statisticServiceType = typeof(StatisticsService);
+        Type? groupKeyType = statisticServiceType.GetNestedType("GroupKey", BindingFlags.NonPublic)!;
+        dynamic current = Activator.CreateInstance(groupKeyType)!;
+        dynamic other = Activator.CreateInstance(groupKeyType)!;
+        PropertyInfo yearPropertyInfo = groupKeyType.GetProperty("Year")!;
+        yearPropertyInfo.SetValue(current, year);
+        yearPropertyInfo.SetValue(other, year);
+        PropertyInfo monthPropertyInfo = groupKeyType.GetProperty("Month")!;
+        monthPropertyInfo.SetValue(current, month);
+        monthPropertyInfo.SetValue(other, month);
+        PropertyInfo dayPropertyInfo = groupKeyType.GetProperty("Day")!;
+        dayPropertyInfo.SetValue(current, day);
+        dayPropertyInfo.SetValue(other, day);
+
+        bool equal = current.Equals(other);
+        int currentHashCode = current.GetHashCode();
+        int otherHashCode = other.GetHashCode();
+
+        Assert.True(equal);
+        Assert.Equal(currentHashCode, otherHashCode);
+    }
+    [Theory]
+    [InlineData(2024, 4, 1, 2024, 4, 2)]
+    [InlineData(2024, 4, 1, 2024, 4, null)]
+    [InlineData(2024, 4, null, 2024, 4, 1)]
+    [InlineData(2024, 4, 1, 2024, 3, 1)]
+    [InlineData(2024, 4, 1, 2023, 4, 1)]
+    [InlineData(2023, 3, 2, 2024, 4, 1)]
+    [InlineData(null, null, 1, null, null, 2)]
+    [InlineData(null, null, 1, null, null, null)]
+    [InlineData(2024, null, null, null, null, null)]
+    public void GroupKeyEquals_ShouldReturnFalse_WhenKeysAreNotEqual(int? year1, int? month1, int? day1, int? year2, int? month2, int? day2)
+    {
+        Type statisticServiceType = typeof(StatisticsService);
+        Type? groupKeyType = statisticServiceType.GetNestedType("GroupKey", BindingFlags.NonPublic)!;
+        dynamic current = Activator.CreateInstance(groupKeyType)!;
+        dynamic other = Activator.CreateInstance(groupKeyType)!;
+        PropertyInfo yearPropertyInfo = groupKeyType.GetProperty("Year")!;
+        yearPropertyInfo.SetValue(current, year1);
+        yearPropertyInfo.SetValue(other, year2);
+        PropertyInfo monthPropertyInfo = groupKeyType.GetProperty("Month")!;
+        monthPropertyInfo.SetValue(current, month1);
+        monthPropertyInfo.SetValue(other, month2);
+        PropertyInfo dayPropertyInfo = groupKeyType.GetProperty("Day")!;
+        dayPropertyInfo.SetValue(current, day1);
+        dayPropertyInfo.SetValue(other, day2);
+
+        bool equal = current.Equals(other);
+        int currentHashCode = current.GetHashCode();
+        int otherHashCode = other.GetHashCode();
+
+        Assert.False(equal);
+        Assert.NotEqual(currentHashCode, otherHashCode);
+    }
+    [Fact]
+    public void GroupKeyEquals_ShouldReturnFalse_WhenComparedToOherType()
+    {
+        Type statisticServiceType = typeof(StatisticsService);
+        Type? groupKeyType = statisticServiceType.GetNestedType("GroupKey", BindingFlags.NonPublic)!;
+        dynamic current = Activator.CreateInstance(groupKeyType)!;
+        object other = new();
+
+        bool equal = current.Equals(other);
+        int currentHashCode = current.GetHashCode();
+        int otherHashCode = other.GetHashCode();
+
+        Assert.False(equal);
+        Assert.NotEqual(currentHashCode, otherHashCode);
+    }
+    [Theory]
+    [InlineData(null, null, null, null)]
+    [InlineData(10, null, null, null)]
+    [InlineData(null, 2024, null, null)]
+    [InlineData(null, null, 4, null)]
+    [InlineData(null, null, null, 1)]
+    [InlineData(null, 2024, 4, 1)]
+    [InlineData(10, null, 4, 1)]
+    [InlineData(10, 2024, null, null)]
+    [InlineData(null, null, 4, 1)]
+    [InlineData(10, null, null, 1)]
+    public void GroupProductKeyEquals_ShouldReturnTrue_WhenKeysAreEqual(
+        int? productId, int? year, int? month, int? day)
+    {
+        Type statisticServiceType = typeof(StatisticsService);
+        Type? groupKeyType = statisticServiceType.GetNestedType("GroupProductKey", BindingFlags.NonPublic)!;
+        dynamic current = Activator.CreateInstance(groupKeyType)!;
+        dynamic other = Activator.CreateInstance(groupKeyType)!;
+        PropertyInfo productIdPropertyInfo = groupKeyType.GetProperty("ProductId")!;
+        productIdPropertyInfo.SetValue(current, productId);
+        productIdPropertyInfo.SetValue(other, productId);
+        PropertyInfo yearPropertyInfo = groupKeyType.GetProperty("Year")!;
+        yearPropertyInfo.SetValue(current, year);
+        yearPropertyInfo.SetValue(other, year);
+        PropertyInfo monthPropertyInfo = groupKeyType.GetProperty("Month")!;
+        monthPropertyInfo.SetValue(current, month);
+        monthPropertyInfo.SetValue(other, month);
+        PropertyInfo dayPropertyInfo = groupKeyType.GetProperty("Day")!;
+        dayPropertyInfo.SetValue(current, day);
+        dayPropertyInfo.SetValue(other, day);
+
+        bool equal = current.Equals(other);
+        int currentHashCode = current.GetHashCode();
+        int otherHashCode = other.GetHashCode();
+
+        Assert.True(equal);
+        Assert.Equal(currentHashCode, otherHashCode);
+    }
+    [Theory]
+    [InlineData(10, 2024, 4, 1, 10, 2024, 4, 2)]
+    [InlineData(10, 2024, 4, 1, 10, 2024, 4, null)]
+    [InlineData(10, 2024, 4, 1, null, 2024, 4, 1)]
+    [InlineData(10, 2024, 4, null, 10, 2024, 4, 1)]
+    [InlineData(10, 2024, 4, 1, 11, 2024, 4, 1)]
+    [InlineData(10, 2024, 4, 1, 10, 2024, 3, 1)]
+    [InlineData(10, 2024, 4, 1, 10, 2023, 4, 1)]
+    [InlineData(10, 2023, 3, 2, 10, 2024, 4, 1)]
+    [InlineData(null, null, null, 1, null, null, null, 2)]
+    [InlineData(10, null, null, null, 11, null, null, null)]
+    [InlineData(null, null, null, null, 11, null, null, null)]
+    [InlineData(null, null, null, 1, null, null, null, null)]
+    [InlineData(null, 2024, null, null, null, null, null, null)]
+    public void GroupProductKeysEqual_ShouldReturnFalse_WhenKeysAreNotEqual(
+        int? productId1, int? year1, int? month1, int? day1, int? productId2, int? year2, int? month2, int? day2)
+    {
+        Type statisticServiceType = typeof(StatisticsService);
+        Type? groupKeyType = statisticServiceType.GetNestedType("GroupProductKey", BindingFlags.NonPublic)!;
+        dynamic current = Activator.CreateInstance(groupKeyType)!;
+        dynamic other = Activator.CreateInstance(groupKeyType)!;
+        PropertyInfo productIdPropertyInfo = groupKeyType.GetProperty("ProductId")!;
+        productIdPropertyInfo.SetValue(current, productId1);
+        productIdPropertyInfo.SetValue(other, productId2);
+        PropertyInfo yearPropertyInfo = groupKeyType.GetProperty("Year")!;
+        yearPropertyInfo.SetValue(current, year1);
+        yearPropertyInfo.SetValue(other, year2);
+        PropertyInfo monthPropertyInfo = groupKeyType.GetProperty("Month")!;
+        monthPropertyInfo.SetValue(current, month1);
+        monthPropertyInfo.SetValue(other, month2);
+        PropertyInfo dayPropertyInfo = groupKeyType.GetProperty("Day")!;
+        dayPropertyInfo.SetValue(current, day1);
+        dayPropertyInfo.SetValue(other, day2);
+
+        bool equal = current.Equals(other);
+        int currentHashCode = current.GetHashCode();
+        int otherHashCode = other.GetHashCode();
+
+        Assert.False(equal);
+        Assert.NotEqual(currentHashCode, otherHashCode);
+    }
+    [Fact]
+    public void GroupProductKeyEquals_ShouldReturnFalse_WhenComparedToOherType()
+    {
+        Type statisticServiceType = typeof(StatisticsService);
+        Type? groupKeyType = statisticServiceType.GetNestedType("GroupProductKey", BindingFlags.NonPublic)!;
+        dynamic current = Activator.CreateInstance(groupKeyType)!;
+        object other = new();
+
+        bool equal = current.Equals(other);
+        int currentHashCode = current.GetHashCode();
+        int otherHashCode = other.GetHashCode();
+
+        Assert.False(equal);
+        Assert.NotEqual(currentHashCode, otherHashCode);
     }
 
     private async Task SeedDbContextAsync()

@@ -31,12 +31,8 @@ public static class ServiceHelper
         var passwordValidators = new List<IPasswordValidator<User>>() { new PasswordValidator<User>() };
         var lookupNormalizer = new UpperInvariantLookupNormalizer();
         var logger = new Logger<UserManager<User>>(new LoggerFactory());
-
-
-        var x = new UserManager<User>(userStore,
-            options, passwordHasher, userValidators, passwordValidators, lookupNormalizer, null!, null!, logger);
-        return Substitute.ForPartsOf<UserManager<User>>(userStore,
-            options, passwordHasher, userValidators, passwordValidators, lookupNormalizer, null!, null!, logger);
+        return Substitute.ForPartsOf<UserManager<User>>(userStore, options, passwordHasher,
+            userValidators, passwordValidators, lookupNormalizer, null!, null!, logger);
     }
 
     public static RoleManager<Role> GetRoleManager(HmDbContext context)

@@ -9,10 +9,10 @@ namespace HM.DAL.Data;
 
 public class HmDbContextInitializer(
     IConfiguration configuration,
-    ILogger<HmDbContextInitializer> logger,
     HmDbContext context,
     UserManager<User> userManager,
-    RoleManager<Role> roleManager
+    RoleManager<Role> roleManager,
+    ILogger<HmDbContextInitializer> logger
     )
 {
     public async Task ApplyMigrationsAsync()
@@ -65,13 +65,16 @@ public class HmDbContextInitializer(
             .Where(r => r.Name != null)
             .Select(r => r.Name!)
             .ToListAsync();
-
-        foreach (string role in roles.Except(existing))
+        IEnumerable<string> rolesToAdd = roles.Except(existing);
+        if (rolesToAdd.Any())
         {
-            await roleManager.CreateAsync(new Role(role));
-            logger.LogInformation("Seeding the role {role}", role);
+            foreach (string role in rolesToAdd)
+            {
+                await roleManager.CreateAsync(new Role(role));
+                logger.LogInformation("Seeding the role {role}", role);
+            }
+            await context.SaveChangesAsync();
         }
-        await context.SaveChangesAsync();
     }
 
     private async Task SeedDefaultAdminAsync()
@@ -94,7 +97,6 @@ public class HmDbContextInitializer(
         var administrator = new User { UserName = adminEmail, Email = adminEmail };
         await userManager.CreateAsync(administrator, adminPassword);
         await userManager.AddToRoleAsync(administrator, DefaultRoles.Administrator);
-        await context.SaveChangesAsync();
         logger.LogInformation("Default admin '{adminEmail}' has been seeded.", adminEmail);
     }
 
