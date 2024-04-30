@@ -5,9 +5,12 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
 
 namespace HM.BLL.UnitTests.Data;
 
@@ -26,8 +29,10 @@ public class HmDbContextInitializerTests
         _userManager = ServiceHelper.GetUserManager(_context);
         _roleManager = ServiceHelper.GetRoleManager(_context);
         _logger = Substitute.For<ILogger<HmDbContextInitializer>>();
-        _initializer = new HmDbContextInitializer(_configuration, _context, _userManager, _roleManager, _logger);
+        _initializer = new HmDbContextInitializer(_configuration, _context,
+            _userManager, _roleManager, _logger);
     }
+
     [Fact]
     public async Task ApplyMigrationsAsync_ShouldApplyMigrations()
     {
@@ -35,7 +40,8 @@ public class HmDbContextInitializerTests
         connection.Open();
         var options = new DbContextOptionsBuilder<HmDbContext>().UseSqlite(connection).Options;
         var context = new HmDbContext(options);
-        var initializer = new HmDbContextInitializer(_configuration, context, _userManager, _roleManager, _logger);
+        var initializer = new HmDbContextInitializer(_configuration, context,
+            _userManager, _roleManager, _logger);
 
         Exception? exception = await Record.ExceptionAsync(initializer.ApplyMigrationsAsync);
 
@@ -51,7 +57,8 @@ public class HmDbContextInitializerTests
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(options);
         var dbFacade = Substitute.ForPartsOf<DatabaseFacade>(dbContextMock);
         dbContextMock.Database.Returns(dbFacade);
-        var initializer = new HmDbContextInitializer(_configuration, dbContextMock, _userManager, _roleManager, _logger);
+        var initializer = new HmDbContextInitializer(_configuration, dbContextMock,
+            _userManager, _roleManager, _logger);
 
         Exception? exception = await Record.ExceptionAsync(initializer.ApplyMigrationsAsync);
 
