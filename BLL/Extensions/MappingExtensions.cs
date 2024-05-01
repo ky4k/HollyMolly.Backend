@@ -1,5 +1,4 @@
-﻿using HM.BLL.Enums;
-using HM.BLL.Models.Categories;
+﻿using HM.BLL.Models.Categories;
 using HM.BLL.Models.Orders;
 using HM.BLL.Models.Products;
 using HM.BLL.Models.Supports;
@@ -212,10 +211,9 @@ public static class MappingExtensions
             Id = support.Id,
             Name = support.Name,
             Email = support.Email,
-            Topic = (SupportTopicDto)Enum.Parse(typeof(SupportTopicDto), support.Topic.ToString()), 
+            Topic = support.Topic,
             Description = support.Description,
-            OrderNumber = support.OrderNumber,
-            Order = support.Order?.ToOrderDto() 
+            Order = support.Order?.ToOrderDto()
         };
     }
 
