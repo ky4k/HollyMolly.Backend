@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Models.Categories;
 using HM.BLL.Models.Orders;
 using HM.BLL.Models.Products;
+using HM.BLL.Models.Supports;
 using HM.BLL.Models.Users;
 using HM.BLL.Models.WishLists;
 using HM.DAL.Entities;
@@ -203,4 +204,17 @@ public static class MappingExtensions
             Products = wishList.Products.Select(p => p.ToProductDto()).ToList()
         };
     }
+    public static SupportDto ToSupportDto(this Support support)
+    {
+        return new SupportDto
+        {
+            Id = support.Id,
+            Name = support.Name,
+            Email = support.Email,
+            Topic = support.Topic,
+            Description = support.Description,
+            Order = support.Order?.ToOrderDto()
+        };
+    }
+
 }
