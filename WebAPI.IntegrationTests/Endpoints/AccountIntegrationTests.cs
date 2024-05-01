@@ -1,30 +1,35 @@
-﻿using System.Text.Json;
+﻿using HM.BLL.Models.Users;
 using System.Text;
-using HM.BLL.Models.Users;
+using System.Text.Json;
 using WebAPI.IntegrationTests.TestHelpers;
+using WebAPI.IntegrationTests.WebApplicationFactory;
 
 namespace WebAPI.IntegrationTests.Endpoints;
 
-public class AccountIntegrationTests
+public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 {
-    private static JsonSerializerOptions jsonSerializerOptions =
-        new JsonSerializerOptions() { PropertyNameCaseInsensitive = true };
-    private readonly CustomWebApplicationFactory _factory;
+    private static readonly JsonSerializerOptions jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly HttpClient _httpClient;
-    public AccountIntegrationTests()
+    public AccountIntegrationTests(SharedWebAppFactory factory)
     {
-        _factory = new CustomWebApplicationFactory();
-        _httpClient = _factory.CreateClient();
+        factory.FactoryHelper = new WebAppFactoryHelper()
+        {
+            FakePolicyEvaluatorOptions = FakePolicyEvaluatorOptions.AllowAll
+        };
+        factory.Initialize();
+        factory.SeedContextAsync(SeedDefaultEntities.SeedAsync).WaitAsync(CancellationToken.None);
+        _httpClient = factory.CreateClient();
     }
     [Fact]
     public async Task Registration_ShouldWork()
     {
         const string RequestURI = "api/account/registration";
-        var loginRequest = new RegistrationRequest()
+        var registrationRequest = new RegistrationRequest()
         {
             Email = "user1@example.com",
-            Password = "password" };
-        var content = new StringContent(JsonSerializer.Serialize(loginRequest),
+            Password = "password"
+        };
+        var content = new StringContent(JsonSerializer.Serialize(registrationRequest),
             Encoding.UTF8, "application/json");
 
         var httpResponse = await _httpClient.PostAsync(RequestURI, content);
@@ -36,9 +41,30 @@ public class AccountIntegrationTests
         Assert.NotNull(result.Email);
     }
     [Fact]
-    public async Task GetProfile_ShouldWorkForAuthenticatedUser()
+    public async Task Login_ShouldWork()
     {
-        _httpClient.DefaultRequestHeaders.Add(TestAuthHandler.UserId, "1");
+        const string RequestURI = "api/account/login";
+        var loginRequest = new LoginRequest()
+        {
+            Email = "user1@example.com",
+            Password = "password"
+        };
+        var content = new StringContent(JsonSerializer.Serialize(loginRequest),
+            Encoding.UTF8, "application/json");
+
+        var httpResponse = await _httpClient.PostAsync(RequestURI, content);
+        httpResponse.EnsureSuccessStatusCode();
+        var result = JsonSerializer.Deserialize<LoginResponse>(
+            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+
+        Assert.NotNull(result);
+        Assert.NotNull(result.UserEmail);
+        Assert.NotNull(result.AccessToken);
+        Assert.NotEmpty(result.Roles);
+    }
+    [Fact]
+    public async Task GetProfile_ShouldWork()
+    {
         const string RequestURI = "api/Account/profile";
 
         var httpResponse = await _httpClient.GetAsync(RequestURI);

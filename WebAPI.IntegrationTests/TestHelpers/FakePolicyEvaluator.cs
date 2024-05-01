@@ -12,23 +12,39 @@ internal class FakePolicyEvaluator(
 {
     public async Task<AuthenticateResult> AuthenticateAsync(AuthorizationPolicy policy, HttpContext context)
     {
-        var principal = new ClaimsPrincipal();
-
-        principal.AddIdentity(new ClaimsIdentity(new[]
+        if (!options.IsAuthenticated)
         {
-            new Claim(ClaimTypes.NameIdentifier, "1"),
-            new Claim(ClaimTypes.Name, "admin@example.com"),
-            new Claim("IssuedAt", DateTime.UtcNow.Ticks.ToString()),
-            new Claim(ClaimTypes.Role, "Administrator"),
-            
-        }, "FakeScheme"));
+            return await Task.FromResult(AuthenticateResult.Fail("Failed"));
+        }
+        ClaimsIdentity claimsIdentity = new("FakeScheme");
+        if (options.UserId != null)
+        {
+            claimsIdentity.AddClaim(new Claim(ClaimTypes.NameIdentifier, options.UserId));
+        }
+        if (options.UserEmail != null)
+        {
+            claimsIdentity.AddClaim(new Claim(ClaimTypes.Name, options.UserEmail));
+        }
+        if (options.IssuedAt != null)
+        {
+            claimsIdentity.AddClaim(new Claim("IssuedAt", options.IssuedAt.Value.Ticks.ToString()));
+        }
+        foreach (string role in options.Roles)
+        {
+            claimsIdentity.AddClaim(new Claim(ClaimTypes.Role, role));
+        }
 
-        return await Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal,
-         new AuthenticationProperties(), "FakeScheme")));
+        var principal = new ClaimsPrincipal();
+        principal.AddIdentity(claimsIdentity);
+
+        return await Task.FromResult(AuthenticateResult.Success(
+            new AuthenticationTicket(principal, new AuthenticationProperties(), "FakeScheme")));
     }
 
     public async Task<PolicyAuthorizationResult> AuthorizeAsync(AuthorizationPolicy policy, AuthenticateResult authenticationResult, HttpContext context, object? resource)
     {
-        return await Task.FromResult(PolicyAuthorizationResult.Success());
+        return options.IsAuthorized
+            ? await Task.FromResult(PolicyAuthorizationResult.Success())
+            : await Task.FromResult(PolicyAuthorizationResult.Forbid());
     }
 }
