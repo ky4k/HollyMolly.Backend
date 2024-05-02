@@ -1,4 +1,6 @@
 ﻿using HM.DAL.Data;
+using HM.DAL.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -36,15 +38,17 @@ public class SharedWebAppFactory : IClassFixture<SharedWebAppFactory>
         _factory?.Dispose();
     }
 
-    public async Task SeedContextAsync(Func<HmDbContext, Task> seedFunction)
+    public async Task SeedContextAsync(Func<HmDbContext?, UserManager<User>?, RoleManager<Role>?, Task> seedFunction)
     {
         if (_factory == null)
         {
             Initialize();
         }
-        using var test = _factory!.Services.CreateScope();
-        var context = test.ServiceProvider.GetService<HmDbContext>();
-        await seedFunction(context!);
+        using var scope = _factory!.Services.CreateScope();
+        var context = scope.ServiceProvider.GetService<HmDbContext>();
+        var userManager = scope.ServiceProvider.GetService<UserManager<User>>();
+        var roleManager = scope.ServiceProvider.GetService<RoleManager<Role>>();
+        await seedFunction(context, userManager, roleManager);
         await context!.SaveChangesAsync();
     }
 }

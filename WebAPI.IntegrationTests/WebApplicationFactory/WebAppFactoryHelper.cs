@@ -34,7 +34,7 @@ public class WebAppFactoryHelper
                     options.UseInternalServiceProvider(serviceProvider);
                 });
 
-                AddPolicyEvaluator(services);
+                //AddPolicyEvaluator(services);
             })
         );
         return factory;

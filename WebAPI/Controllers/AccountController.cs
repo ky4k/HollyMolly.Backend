@@ -253,7 +253,7 @@ public class AccountController(
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<UserDto>> UpdateEmail(EmailUpdateDto updatedEmail,
+    public async Task<ActionResult> UpdateEmail(EmailUpdateDto updatedEmail,
         CancellationToken cancellationToken, bool sendEmail = false)
     {
         string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
