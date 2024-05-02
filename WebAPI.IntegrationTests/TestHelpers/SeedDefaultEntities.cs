@@ -11,10 +11,9 @@ public static class SeedDefaultEntities
     {
         if (roleManager != null)
         {
-            foreach(var role in Roles)
-            {
-                await roleManager.CreateAsync(role);
-            }
+            await roleManager.CreateAsync(new Role(DefaultRoles.Administrator));
+            await roleManager.CreateAsync(new Role(DefaultRoles.Manager));
+            await roleManager.CreateAsync(new Role(DefaultRoles.User));
         }
         if (userManager != null)
         {
@@ -24,31 +23,19 @@ public static class SeedDefaultEntities
                 await userManager.AddPasswordAsync(user, "password");
                 await userManager.AddToRoleAsync(user, DefaultRoles.User);
             }
+            foreach (User admin in Admins)
+            {
+                await userManager.CreateAsync(admin);
+                await userManager.AddPasswordAsync(admin, "password");
+                await userManager.AddToRoleAsync(admin, DefaultRoles.User);
+                await userManager.AddToRoleAsync(admin, DefaultRoles.Administrator);
+            }
         }
         if (context != null)
         {
             await context.SaveChangesAsync();
         }
     }
-
-    private static List<Role> Roles =>
-    [
-        new()
-        {
-            Id = "1",
-            Name = "Administrator",
-        },
-        new()
-        {
-            Id = "2",
-            Name = "Manager",
-        },
-        new()
-        {
-            Id = "3",
-            Name = "Registered user"
-        }
-    ];
     private static List<User> Users =>
     [
         new()
@@ -75,6 +62,25 @@ public static class SeedDefaultEntities
             FirstName = "Third",
             LastName = "User"
         },
+        new()
+        {
+            Id = "4",
+            UserName = "user4@example.com",
+            Email = "user4@example.com",
+            FirstName = "Fourth",
+            LastName = "User"
+        },
+        new()
+        {
+            Id = "5",
+            UserName = "user5@example.com",
+            Email = "user5@example.com",
+            FirstName = "Fifth",
+            LastName = "User"
+        },
+    ];
+    private static List<User> Admins =>
+    [
         new()
         {
             Id = "51",

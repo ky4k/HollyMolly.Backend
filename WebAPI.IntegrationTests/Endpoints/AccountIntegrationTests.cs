@@ -1,6 +1,5 @@
 ﻿using HM.BLL.Models.Users;
 using System.Net;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using WebAPI.IntegrationTests.TestHelpers;
@@ -12,31 +11,29 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 {
     private static readonly JsonSerializerOptions jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
     private readonly HttpClient _httpClient;
+    private readonly AuthorizationHelper _authorizationHelper;
     public AccountIntegrationTests(SharedWebAppFactory factory)
     {
-        factory.FactoryHelper = new WebAppFactoryHelper()
-        {
-            FakePolicyEvaluatorOptions = FakePolicyEvaluatorOptions.AllowAll
-        };
         factory.Initialize();
         factory.SeedContextAsync(SeedDefaultEntities.SeedAsync).WaitAsync(CancellationToken.None);
         _httpClient = factory.CreateClient();
+        _authorizationHelper = new AuthorizationHelper(_httpClient);
     }
     [Fact]
     public async Task Registration_ShouldWork()
     {
-        const string RequestURI = "api/account/registration";
-        var registrationRequest = new RegistrationRequest()
+        HttpRequestMessage requestMessage = new(HttpMethod.Post, "api/Account/registration");
+        RegistrationRequest registrationRequest = new()
         {
             Email = "user101@example.com",
             Password = "password"
         };
-        var content = new StringContent(JsonSerializer.Serialize(registrationRequest),
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(registrationRequest),
             Encoding.UTF8, "application/json");
 
-        var httpResponse = await _httpClient.PostAsync(RequestURI, content);
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        var result = JsonSerializer.Deserialize<RegistrationResponse>(
+        RegistrationResponse? result = JsonSerializer.Deserialize<RegistrationResponse>(
             httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
 
         Assert.NotNull(result);
@@ -45,18 +42,18 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
     [Fact]
     public async Task Login_ShouldWork()
     {
-        const string RequestURI = "api/account/login";
-        var loginRequest = new LoginRequest()
+        HttpRequestMessage requestMessage = new(HttpMethod.Post, "api/Account/login");
+        LoginRequest loginRequest = new()
         {
-            Email = "user2@example.com",
+            Email = "user1@example.com",
             Password = "password"
         };
-        var content = new StringContent(JsonSerializer.Serialize(loginRequest),
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(loginRequest),
             Encoding.UTF8, "application/json");
 
-        var httpResponse = await _httpClient.PostAsync(RequestURI, content);
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        var result = JsonSerializer.Deserialize<LoginResponse>(
+        LoginResponse? result = JsonSerializer.Deserialize<LoginResponse>(
             httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
 
         Assert.NotNull(result);
@@ -67,31 +64,43 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
     [Fact]
     public async Task GetProfile_ShouldWork()
     {
-        const string RequestURI = "api/Account/profile";
-
-        var httpResponse = await _httpClient.GetAsync(RequestURI);
-        httpResponse.EnsureSuccessStatusCode();
-        var result = JsonSerializer.Deserialize<UserDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
-
-        Assert.NotNull(result);
-        Assert.NotNull(result.Email);
-    }
-    [Fact]
-    public async Task UpdateProfile_ShouldWork()
-    {
-        const string RequestURI = "api/Account/profile";
+        string email = "user2@example.com";
+        HttpRequestMessage requestMessage = new(HttpMethod.Get, "api/Account/profile");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync(email, "password");
         ProfileUpdateDto profileUpdate = new()
         {
             FirstName = "Правильне",
             LastName = "Ім'я"
         };
-        var content = new StringContent(JsonSerializer.Serialize(profileUpdate),
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(profileUpdate),
             Encoding.UTF8, "application/json");
 
-        var httpResponse = await _httpClient.PutAsync(RequestURI, content);
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        var result = JsonSerializer.Deserialize<UserDto>(
+        UserDto? result = JsonSerializer.Deserialize<UserDto>(
+            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+
+        Assert.NotNull(result);
+        Assert.Equal(email, result.Email);
+    }
+    [Fact]
+    public async Task UpdateProfile_ShouldWork()
+    {
+        HttpRequestMessage requestMessage = new(HttpMethod.Put, "api/Account/profile");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync("user2@example.com", "password");
+        ProfileUpdateDto profileUpdate = new()
+        {
+            FirstName = "Правильне",
+            LastName = "Ім'я"
+        };
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(profileUpdate),
+            Encoding.UTF8, "application/json");
+
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
+        httpResponse.EnsureSuccessStatusCode();
+        UserDto? result = JsonSerializer.Deserialize<UserDto>(
             httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
 
         Assert.NotNull(result);
@@ -102,16 +111,17 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
     [Fact]
     public async Task UpdateEmail_ShouldWork()
     {
-        EmailUpdateDto emailUpdateDto = new()
+        HttpRequestMessage requestMessage = new(HttpMethod.Put, "api/Account/profile/email");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync("user3@example.com", "password");
+        EmailDto emailUpdateDto = new()
         {
-            NewEmail = "user102@example.com"
+            Email = "user102@example.com"
         };
-        var requestMessage = new HttpRequestMessage(HttpMethod.Put, "api/Account/profile/email");
-        requestMessage.Headers.Authorization = await GetAuthorizationHeaderAsync("user3@example.com", "password");
         requestMessage.Content = new StringContent(JsonSerializer.Serialize(emailUpdateDto),
             Encoding.UTF8, "application/json");
 
-        var httpResponse = await _httpClient.SendAsync(requestMessage);
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
 
         httpResponse.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.NoContent, httpResponse.StatusCode);
@@ -119,16 +129,18 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
     [Fact]
     public async Task ChangeUserPassword_ShouldWork()
     {
-        const string RequestURI = "api/Account/profile/password";
+        HttpRequestMessage requestMessage = new(HttpMethod.Put, "api/Account/profile/password");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync("user4@example.com", "password");
         ChangePasswordDto changePassword = new()
         {
             OldPassword = "password",
-            NewPassword = "password"
+            NewPassword = "newPassword"
         };
-        var content = new StringContent(JsonSerializer.Serialize(changePassword),
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(changePassword),
             Encoding.UTF8, "application/json");
 
-        var httpResponse = await _httpClient.PutAsync(RequestURI, content);
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
 
         httpResponse.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.NoContent, httpResponse.StatusCode);
@@ -137,28 +149,16 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
     [Fact]
     public async Task SendForgetPasswordEmail_ShouldWork()
     {
-        const string RequestURI = "api/Account/forgetPassword";
-
-        var httpResponse = await _httpClient.PutAsync(RequestURI, null);
+        HttpRequestMessage requestMessage = new(HttpMethod.Put, "api/Account/forgetPassword");
+        EmailDto emailDto = new()
+        {
+            Email = "user5@example.com"
+        };
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(emailDto),
+            Encoding.UTF8, "application/json");
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
 
         httpResponse.EnsureSuccessStatusCode();
         Assert.Equal(HttpStatusCode.NoContent, httpResponse.StatusCode);
-    }
-
-    private async Task<AuthenticationHeaderValue> GetAuthorizationHeaderAsync(string email, string password)
-    {
-        const string RequestURI = "api/account/login";
-        var loginRequest = new LoginRequest()
-        {
-            Email = email,
-            Password = password
-        };
-        var content = new StringContent(JsonSerializer.Serialize(loginRequest),
-            Encoding.UTF8, "application/json");
-
-        var httpResponse = await _httpClient.PostAsync(RequestURI, content);
-        var result = JsonSerializer.Deserialize<LoginResponse>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
-        return new AuthenticationHeaderValue("Bearer", result?.AccessToken);
     }
 }

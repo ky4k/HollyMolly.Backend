@@ -5,27 +5,27 @@ using HM.BLL.Validators;
 
 namespace HM.BLL.UnitTests.Validators;
 
-public class EmailUpdateDtoValidatorTests
+public class EmailDtoValidatorTests
 {
-    private readonly EmailUpdateDtoValidator _validator;
-    public EmailUpdateDtoValidatorTests()
+    private readonly EmailDtoValidator _validator;
+    public EmailDtoValidatorTests()
     {
-        _validator = new EmailUpdateDtoValidator();
+        _validator = new EmailDtoValidator();
     }
     [Theory]
     [MemberData(nameof(ValidationData.ValidEmailUpdates), MemberType = typeof(ValidationData))]
-    public void Validation_ShouldSucceed_WhenAllFieldsAreValid(EmailUpdateDto emailUpdateDto)
+    public void Validation_ShouldSucceed_WhenAllFieldsAreValid(EmailDto emailUpdateDto)
     {
-        TestValidationResult<EmailUpdateDto> result = _validator.TestValidate(emailUpdateDto);
+        TestValidationResult<EmailDto> result = _validator.TestValidate(emailUpdateDto);
 
         Assert.NotNull(result);
         Assert.True(result.IsValid);
     }
     [Theory]
     [MemberData(nameof(ValidationData.InvalidEmailUpdates), MemberType = typeof(ValidationData))]
-    public void Validation_ShouldFail_WhenAnyFieldIsInvalid(EmailUpdateDto emailUpdateDto)
+    public void Validation_ShouldFail_WhenAnyFieldIsInvalid(EmailDto emailUpdateDto)
     {
-        TestValidationResult<EmailUpdateDto> result = _validator.TestValidate(emailUpdateDto);
+        TestValidationResult<EmailDto> result = _validator.TestValidate(emailUpdateDto);
 
         Assert.NotNull(result);
         Assert.False(result.IsValid);

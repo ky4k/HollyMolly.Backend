@@ -235,10 +235,10 @@ public static class ValidationData
         => new(GetValidProfileUpdateDtos());
     public static TheoryData<ProfileUpdateDto> InvalidProfileUpdates
         => new(GetInvalidProfileUpdateDtos());
-    public static TheoryData<EmailUpdateDto> ValidEmailUpdates
-        => new(_validEmails.Select(e => new EmailUpdateDto() { NewEmail = e }));
-    public static TheoryData<EmailUpdateDto> InvalidEmailUpdates
-        => new(_invalidEmails.Select(e => new EmailUpdateDto() { NewEmail = e }));
+    public static TheoryData<EmailDto> ValidEmailUpdates
+        => new(_validEmails.Select(e => new EmailDto() { Email = e }));
+    public static TheoryData<EmailDto> InvalidEmailUpdates
+        => new(_invalidEmails.Select(e => new EmailDto() { Email = e }));
     public static TheoryData<ChangePasswordDto> ValidChangePasswordModels
         => new(_validPasswords.Select(p => new ChangePasswordDto() { OldPassword = "old", NewPassword = p }));
     public static TheoryData<ChangePasswordDto> InvalidChangePasswordModels
