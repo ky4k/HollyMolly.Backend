@@ -216,5 +216,16 @@ public static class MappingExtensions
             Order = support.Order?.ToOrderDto()
         };
     }
-
+    public static Support ToSupport(this SupportDto supportDto)
+    {
+        return new Support
+        {
+            Id = supportDto.Id,
+            Name = supportDto.Name,
+            Email = supportDto.Email,
+            Topic = supportDto.Topic,
+            Description = supportDto.Description,
+            OrderId = supportDto.OrderId
+        };
+    }
 }

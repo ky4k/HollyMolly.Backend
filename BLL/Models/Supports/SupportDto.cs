@@ -10,5 +10,6 @@ public class SupportDto
     public string Email { get; set; } = null!;
     public SupportTopic Topic { get; set; }
     public string Description { get; set; } = null!;
+    public int? OrderId { get; set; }
     public OrderDto? Order { get; set; }
 }
