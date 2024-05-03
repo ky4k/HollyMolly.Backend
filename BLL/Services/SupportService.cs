@@ -3,13 +3,10 @@ using HM.BLL.Interfaces;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.Supports;
 using HM.DAL.Data;
+using HM.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace HM.BLL.Services
 {
@@ -22,7 +19,8 @@ namespace HM.BLL.Services
         {
             try
             {
-                var support = supportDto.ToSupport();  
+                await EnsureCorrectOrderIdAsync(supportDto, cancellationToken);
+                var support = supportDto.ToSupport();
 
                 await context.Supports.AddAsync(support, cancellationToken);
                 await context.SaveChangesAsync(cancellationToken);
@@ -33,6 +31,18 @@ namespace HM.BLL.Services
             {
                 logger.LogError(ex, "An error occurred while saving the support request");
                 return new OperationResult(false, "Failed to save support request.");
+            }
+        }
+
+        private async Task EnsureCorrectOrderIdAsync(SupportDto supportDto, CancellationToken cancellationToken)
+        {
+            if (supportDto.OrderId != null)
+            {
+                Order? order = await context.Orders.FirstOrDefaultAsync(o => o.Id == supportDto.OrderId, cancellationToken);
+                if (order == null)
+                {
+                    supportDto.OrderId = null;
+                }
             }
         }
     }

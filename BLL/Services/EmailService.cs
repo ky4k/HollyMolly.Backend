@@ -9,20 +9,11 @@ using System.Text;
 
 namespace HM.BLL.Services;
 
-public class EmailService: IEmailService
+public class EmailService(
+    IEmailSender emailSender,
+    IConfiguration configuration
+    ) : IEmailService
 {
-    private readonly IEmailSender emailSender;
-    private readonly string supportEmail;
-
-    public EmailService(
-        IEmailSender emailSender,
-        IConfiguration configuration
-    )
-    {
-        this.emailSender = emailSender;
-        this.supportEmail = configuration["Support:Email"] ?? "default-support-email@example.com";
-    }
-
     private const string RegistrationSubject = "Реєстрація успішна";
     private const string RegistrationTemplate = "<p>Ласкаво просимо до Holly-Molly!</p><br /><p>Вітаємо, Ви успішно зареєструвалися в HollyMolly. Для підтвердження вашої електронної пошти перейдіть за посиланням: <a title=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\" href=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\">https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string ForgetPasswordSubject = "Відновити пароль";
@@ -37,17 +28,19 @@ public class EmailService: IEmailService
     private const string OrderStatusUpdatedTemplate = "<p>Статус вашого замовлення з ідентифікатором №{{orderId}} було змінено на {{newStatus}}. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"https://holly-molly.vercel.app/\" href=\"https://holly-molly.vercel.app/\">https://holly-molly.vercel.app/</a></p></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string NewsTemplate = "{{news}}<p>____<br />Відписатися від новин можна за посиланням: <a title=\"https://holly-molly.vercel.app/?token={{token}}\" href=\"https://holly-molly.vercel.app/?token={{token}}\">https://holly-molly.vercel.app/?token={{token}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
 
-    public async Task<OperationResult> SendSupportEmailAsync(SupportDto supportRequest, CancellationToken cancellationToken)
+    private readonly IEmailSender emailSender = emailSender;
+    private readonly string supportEmail = Environment.GetEnvironmentVariable("Support:Email") ??
+        configuration["Support:Email"] ?? "";
+    public async Task<OperationResult> SendSupportEmailAsync(SupportDto supportDto, CancellationToken cancellationToken)
     {
-        // Формуємо тему та зміст листа
-        string subject = $"Новий запит підтримки від {supportRequest.Name}";
+        string subject = $"Новий запит підтримки від {supportDto.Name}";
         string emailBody = $@"
-                <h2>Новий запит підтримки</h2>
-                <p><strong>Ім'я:</strong> {supportRequest.Name}</p>
-                <p><strong>Email:</strong> {supportRequest.Email}</p>
-                <p><strong>Тема:</strong> {supportRequest.Topic}</p>
-                <p><strong>Опис:</strong> {supportRequest.Description}</p>
-            ";
+<h2>Новий запит підтримки</h2>
+<p><strong>Ім'я:</strong> {supportDto.Name}</p>
+<p><strong>Email:</strong> <a href=""mailto:{supportDto.Email}?subject=Re:{supportDto.Topic}"">{supportDto.Email}</a></p>
+<p><strong>Номер замовлення:</strong> {supportDto.OrderId}</p>
+<p><strong>Тема:</strong> {supportDto.Topic}</p>
+<p><strong>Опис:</strong> {supportDto.Description}</p>";
 
         UserMailInfo userMailInfo = new()
         {
@@ -82,7 +75,7 @@ public class EmailService: IEmailService
 
         string emailBody = ForgetPasswordTemplate
             .Replace("{{userId}}", resetPassword.UserId)
-            .Replace("{{token}}", resetPassword.Token);
+            .Replace("{{token}}", Uri.EscapeDataString(resetPassword.Token));
 
         return await emailSender.SendEmailAsync(userMailInfo, ForgetPasswordSubject,
             emailBody, cancellationToken);

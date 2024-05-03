@@ -208,12 +208,12 @@ public static class MappingExtensions
     {
         return new Support
         {
-            //Id = supportDto.Id,
             Name = supportDto.Name,
             Email = supportDto.Email,
             Topic = supportDto.Topic,
             Description = supportDto.Description,
-            OrderId = supportDto.OrderId
+            OrderId = supportDto.OrderId,
+            ReceivedAt = DateTimeOffset.UtcNow
         };
     }
 }
