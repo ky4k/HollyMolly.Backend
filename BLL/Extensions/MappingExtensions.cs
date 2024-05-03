@@ -204,23 +204,11 @@ public static class MappingExtensions
             Products = wishList.Products.Select(p => p.ToProductDto()).ToList()
         };
     }
-    public static SupportDto ToSupportDto(this Support support)
-    {
-        return new SupportDto
-        {
-            Id = support.Id,
-            Name = support.Name,
-            Email = support.Email,
-            Topic = support.Topic,
-            Description = support.Description,
-            Order = support.Order?.ToOrderDto()
-        };
-    }
     public static Support ToSupport(this SupportDto supportDto)
     {
         return new Support
         {
-            Id = supportDto.Id,
+            //Id = supportDto.Id,
             Name = supportDto.Name,
             Email = supportDto.Email,
             Topic = supportDto.Topic,
