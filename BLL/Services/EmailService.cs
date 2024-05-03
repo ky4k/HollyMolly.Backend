@@ -1,4 +1,5 @@
-﻿using HM.BLL.Interfaces;
+﻿using HM.BLL.Extensions;
+using HM.BLL.Interfaces;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewsSubscriptions;
 using HM.BLL.Models.Orders;
@@ -38,9 +39,9 @@ public class EmailService(
 <h2>Новий запит підтримки</h2>
 <p><strong>Ім'я:</strong> {supportDto.Name}</p>
 <p><strong>Email:</strong> <a href=""mailto:{supportDto.Email}?subject=Re:{supportDto.Topic}"">{supportDto.Email}</a></p>
-<p><strong>Номер замовлення:</strong> {supportDto.OrderId}</p>
-<p><strong>Тема:</strong> {supportDto.Topic}</p>
-<p><strong>Опис:</strong> {supportDto.Description}</p>";
+<p><strong>Тема:</strong> {supportDto.Topic.GetTopicName()}</p>
+<p><strong>Опис:</strong> {supportDto.Description}</p>
+<p><strong>Номер замовлення:</strong> {supportDto.OrderId}</p>";
 
         UserMailInfo userMailInfo = new()
         {
