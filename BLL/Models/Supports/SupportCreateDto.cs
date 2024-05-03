@@ -2,7 +2,7 @@
 
 namespace HM.BLL.Models.Supports;
 
-public class SupportDto
+public class SupportCreateDto
 {
     public string Name { get; set; } = null!;
     public string Email { get; set; } = null!;

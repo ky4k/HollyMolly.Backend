@@ -2,7 +2,7 @@
 
 namespace HM.BLL.Extensions;
 
-static class SupportTopicExtensions
+public static class SupportTopicExtensions
 {
     public static string GetTopicName(this SupportTopic topic)
     {

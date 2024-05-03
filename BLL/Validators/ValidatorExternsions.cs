@@ -7,19 +7,10 @@ public static partial class ValidatorExtensions
 {
     [GeneratedRegex(@"^(?:[АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯ]){1}[абвгґдеєжзиіїйклмнопрстуфхцчшщьюя'`’]*(?:(?:-[АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯ]){1}[абвгґдеєжзиіїйклмнопрстуфхцчшщьюя'`’]*)*$")]
     private static partial Regex NamePattern();
-    [GeneratedRegex(@"^\+[0-9]{12}$|^[0-9]{10}$")]
-    private static partial Regex PhoneNumberPattern();
     [GeneratedRegex("[-'`’]{2}")]
     private static partial Regex InvalidCombinationSymbolsInName();
-
-    private const int MinEmailRecipientNameLength = 1;
-    private const int MaxEmailRecipientNameLength = 50;
-    private const int MinEmailDomainNameLength = 4;
-    private const int MaxEmailDomainNameLength = 50;
-
-    private static readonly string incorrectEmailLengthMessage = "Incorrect length of the email part(s): ensure that" +
-        $" the recipient name is between {MinEmailRecipientNameLength} and {MaxEmailRecipientNameLength} characters long" +
-        $" and the domain name is between {MinEmailDomainNameLength} and {MaxEmailDomainNameLength} characters long.";
+    [GeneratedRegex(@"^\+[0-9]{12}$|^[0-9]{10}$")]
+    private static partial Regex PhoneNumberPattern();
 
     private const string InvalidNameMessage = "Name may contain only letters " +
         "АБВГҐДЕЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЮЯабвгґдеєжзиіїйклмнопрстуфхцчшщьюя, -, or apostrophe. " +
@@ -30,27 +21,8 @@ public static partial class ValidatorExtensions
         return email.
             NotEmpty()
                 .WithMessage("Email is required.")
-            .Matches(@"^[A-Za-z0-9-_.+]*@[A-Za-z0-9]{1}[A-Za-z0-9-.]*\.[A-Za-z0-9]{2,}$")
-                .WithMessage("Email is in an invalid format.")
-            .Must(ValidateEmailPartsLength)
-                .WithMessage(incorrectEmailLengthMessage);
-    }
-
-    private static bool ValidateEmailPartsLength(string email)
-    {
-        var parts = email.Split('@');
-        if (parts.Length == 2)
-        {
-            bool isRecipientNameOfValidLength = parts[0].Length >= MinEmailRecipientNameLength
-                && parts[0].Length <= MaxEmailRecipientNameLength;
-            bool isDomainNameOfValidLength = parts[1].Length >= MinEmailDomainNameLength
-                && parts[1].Length <= MaxEmailDomainNameLength;
-            return isDomainNameOfValidLength && isRecipientNameOfValidLength;
-        }
-        else
-        {
-            return false;
-        }
+            .Matches(@"^[A-Za-z0-9-_.+]{1,50}@(?=.{4,50}$)[A-Za-z0-9][A-Za-z0-9-.]*\.[A-Za-z0-9]{2,}$")
+                .WithMessage("Email is in an invalid format.");
     }
 
     public static IRuleBuilderOptions<T, string> ApplyPasswordValidationRules<T>(this IRuleBuilder<T, string> password)

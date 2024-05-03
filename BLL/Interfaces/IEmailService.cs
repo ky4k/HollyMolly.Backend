@@ -19,5 +19,5 @@ public interface IEmailService
     Task<OperationResult> SendOrderStatusUpdatedEmailAsync(OrderDto order, CancellationToken cancellationToken);
     Task<OperationResult> SendNewsEmailAsync(IEnumerable<NewsSubscriptionDto> subscriptions,
         string subject, string textHtml, CancellationToken cancellationToken);
-    Task<OperationResult> SendSupportEmailAsync(SupportDto supportDto, CancellationToken cancellationToken);
+    Task<OperationResult> SendSupportEmailAsync(SupportCreateDto supportDto, CancellationToken cancellationToken);
 }

@@ -5,6 +5,6 @@ namespace HM.BLL.Interfaces
 {
     public interface ISupportService
     {
-        Task<OperationResult> SaveSupportRequestAsync(SupportDto supportDto, CancellationToken cancellationToken);
+        Task<OperationResult> SaveSupportRequestAsync(SupportCreateDto supportDto, CancellationToken cancellationToken);
     }
 }

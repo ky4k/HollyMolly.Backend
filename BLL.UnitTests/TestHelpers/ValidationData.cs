@@ -2,7 +2,9 @@
 using HM.BLL.Models.NewsSubscriptions;
 using HM.BLL.Models.Orders;
 using HM.BLL.Models.Products;
+using HM.BLL.Models.Supports;
 using HM.BLL.Models.Users;
+using HM.DAL.Enums;
 
 namespace HM.BLL.UnitTests.TestHelpers;
 
@@ -39,6 +41,7 @@ public static class ValidationData
         "~`!@#$%^&*()_-+=",
         "{[}]|:;'<,>.?/",
         "~0-,>.?/",
+        "1234567a",
         "1_Test78",
         "986757ab",
         "Lamb432ttq",
@@ -225,7 +228,24 @@ public static class ValidationData
         "@ is not in the allowed characters",
         new string('a', 501)
     ];
-
+    private static IEnumerable<int> _validSupportTopics = [0, 1, 2, 3];
+    private static IEnumerable<int> _invalidSupportTopics = [-10, 99];
+    private static IEnumerable<string> _validSupportDescriptions =
+    [
+        "English letters",
+        "Українські букви",
+        "Special symbols: !#$%&\"/?.,-_();:'",
+        "abcd",
+        new string('a', 500)
+    ];
+    private static IEnumerable<string> _invalidSupportDescriptions =
+    [
+        "",
+        "abc",
+        new string('a', 501),
+        "Invalid symbol: @",
+        "Invalid symbols: <>"
+    ];
 
     public static TheoryData<RegistrationRequest> ValidRegistrationRequests
         => new(GetValidRegistrationRequests());
@@ -285,7 +305,8 @@ public static class ValidationData
         new(_validEmails.Select(e => new NewsSubscriptionCreateDto() { Email = e }));
     public static TheoryData<NewsSubscriptionCreateDto> InvalidNewsSubscriptions =>
         new(_invalidEmails.Select(e => new NewsSubscriptionCreateDto() { Email = e }));
-
+    public static TheoryData<SupportCreateDto> ValidSupportCreateDtos => new(GetValidSupportCreateDtos());
+    public static TheoryData<SupportCreateDto> InvalidSupportCreateDtos => new(GetInvalidSupportCreateDtos());
 
     private static List<RegistrationRequest> GetValidRegistrationRequests()
     {
@@ -834,6 +855,74 @@ public static class ValidationData
             PhoneNumber = "0123456789",
             City = "Місто",
             DeliveryAddress = "Адреса"
+        };
+    }
+    private static List<SupportCreateDto> GetValidSupportCreateDtos()
+    {
+        List<SupportCreateDto> supportCreateDtos = [];
+        foreach (string name in _validNames)
+        {
+            SupportCreateDto supportCreateDto = GetSupportCreateDtoPrototype();
+            supportCreateDto.Name = name;
+            supportCreateDtos.Add(supportCreateDto);
+        }
+        foreach (string email in _validEmails)
+        {
+            SupportCreateDto supportCreateDto = GetSupportCreateDtoPrototype();
+            supportCreateDto.Email = email;
+            supportCreateDtos.Add(supportCreateDto);
+        }
+        foreach (int topic in _validSupportTopics)
+        {
+            SupportCreateDto supportCreateDto = GetSupportCreateDtoPrototype();
+            supportCreateDto.Topic = (SupportTopic)topic;
+            supportCreateDtos.Add(supportCreateDto);
+        }
+        foreach (string description in _validSupportDescriptions)
+        {
+            SupportCreateDto supportCreateDto = GetSupportCreateDtoPrototype();
+            supportCreateDto.Description = description;
+            supportCreateDtos.Add(supportCreateDto);
+        }
+        return supportCreateDtos;
+    }
+    private static List<SupportCreateDto> GetInvalidSupportCreateDtos()
+    {
+        List<SupportCreateDto> supportCreateDtos = [];
+        foreach (string name in _invalidNames)
+        {
+            SupportCreateDto supportCreateDto = GetSupportCreateDtoPrototype();
+            supportCreateDto.Name = name;
+            supportCreateDtos.Add(supportCreateDto);
+        }
+        foreach (string email in _invalidEmails)
+        {
+            SupportCreateDto supportCreateDto = GetSupportCreateDtoPrototype();
+            supportCreateDto.Email = email;
+            supportCreateDtos.Add(supportCreateDto);
+        }
+        foreach (int topic in _invalidSupportTopics)
+        {
+            SupportCreateDto supportCreateDto = GetSupportCreateDtoPrototype();
+            supportCreateDto.Topic = (SupportTopic)topic;
+            supportCreateDtos.Add(supportCreateDto);
+        }
+        foreach (string description in _invalidSupportDescriptions)
+        {
+            SupportCreateDto supportCreateDto = GetSupportCreateDtoPrototype();
+            supportCreateDto.Description = description;
+            supportCreateDtos.Add(supportCreateDto);
+        }
+        return supportCreateDtos;
+    }
+    private static SupportCreateDto GetSupportCreateDtoPrototype()
+    {
+        return new SupportCreateDto()
+        {
+            Email = "test@example.com",
+            Name = "Правильне",
+            Description = "Моя проблема",
+            Topic = 0
         };
     }
 }

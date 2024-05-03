@@ -25,7 +25,7 @@ namespace HM.WebAPI.Controllers
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult> CreateSupportRequest(SupportDto supportRequest, CancellationToken cancellationToken)
+        public async Task<ActionResult> CreateSupportRequest(SupportCreateDto supportRequest, CancellationToken cancellationToken)
         {
             var result = await supportService.SaveSupportRequestAsync(supportRequest, cancellationToken);
 

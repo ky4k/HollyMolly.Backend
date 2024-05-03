@@ -7,7 +7,7 @@ namespace HM.BLL.UnitTests.Validators;
 
 public class NewsSubscriptionCreateDtoValidatorTests
 {
-    public NewsSubscriptionCreateDtoValidator _validator;
+    private readonly NewsSubscriptionCreateDtoValidator _validator;
     public NewsSubscriptionCreateDtoValidatorTests()
     {
         _validator = new NewsSubscriptionCreateDtoValidator();

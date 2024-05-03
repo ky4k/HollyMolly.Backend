@@ -3,9 +3,9 @@ using HM.BLL.Models.Supports;
 
 namespace HM.BLL.Validators;
 
-public class SupportDtoValidator : AbstractValidator<SupportDto>
+public class SupportCreateDtoValidator : AbstractValidator<SupportCreateDto>
 {
-    public SupportDtoValidator()
+    public SupportCreateDtoValidator()
     {
         RuleFor(x => x.Name)
             .ApplyNameValidationRules();
@@ -18,7 +18,7 @@ public class SupportDtoValidator : AbstractValidator<SupportDto>
             .NotNull().WithMessage("Description cannot be null")
             .NotEmpty().WithMessage("Description cannot be empty")
             .Length(4, 500).WithMessage("Description must be between 4 and 500 characters")
-            .Matches("^[a-zA-Z0-9а-яА-ЯіІїЇєЄ !#$%&\"/?.,-_();:']+$")
+            .Matches("^[a-zA-Z0-9а-яА-ЯіІїЇєЄґҐ !#$%&\"/?.,\\-_();:']+$")
                 .WithMessage("Description contains invalid characters");
     }
 }

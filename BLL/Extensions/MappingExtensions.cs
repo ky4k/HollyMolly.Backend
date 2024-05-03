@@ -204,7 +204,7 @@ public static class MappingExtensions
             Products = wishList.Products.Select(p => p.ToProductDto()).ToList()
         };
     }
-    public static Support ToSupport(this SupportDto supportDto)
+    public static Support ToSupport(this SupportCreateDto supportDto)
     {
         return new Support
         {

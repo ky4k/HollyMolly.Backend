@@ -32,8 +32,12 @@ public class EmailService(
     private readonly IEmailSender emailSender = emailSender;
     private readonly string supportEmail = Environment.GetEnvironmentVariable("Support:Email") ??
         configuration["Support:Email"] ?? "";
-    public async Task<OperationResult> SendSupportEmailAsync(SupportDto supportDto, CancellationToken cancellationToken)
+    public async Task<OperationResult> SendSupportEmailAsync(SupportCreateDto supportDto, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(supportEmail))
+        {
+            return new OperationResult(false, "Support email has not been set.");
+        }
         string subject = $"Новий запит підтримки від {supportDto.Name}";
         string emailBody = $@"
 <h2>Новий запит підтримки</h2>
