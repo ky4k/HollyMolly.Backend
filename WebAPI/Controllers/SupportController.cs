@@ -7,7 +7,7 @@ namespace HM.WebAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class SupportController(ISupportService supportService) : ControllerBase
+    public class SupportController(ISupportService supportService, IEmailService emailService) : ControllerBase
     {
         /// <summary>
         /// Create new request in support.
@@ -26,6 +26,12 @@ namespace HM.WebAPI.Controllers
             if (!result.Succeeded)
             {
                 return BadRequest(result.Message);
+            }
+            var emailResult = await emailService.SendSupportEmailAsync(supportRequest, cancellationToken);
+
+            if (!emailResult.Succeeded)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, "Support request was saved, but the email could not be sent.");
             }
 
             return Ok("Запит у службу підтримки створено успішно.");
