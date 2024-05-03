@@ -6,7 +6,6 @@ using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System.Threading;
 
 namespace HM.BLL.Services
 {

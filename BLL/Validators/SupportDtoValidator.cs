@@ -1,6 +1,5 @@
 ﻿using FluentValidation;
 using HM.BLL.Models.Supports;
-using HM.DAL.Enums;
 
 namespace HM.BLL.Validators;
 

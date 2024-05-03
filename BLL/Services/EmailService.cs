@@ -16,18 +16,18 @@ public class EmailService(
     ) : IEmailService
 {
     private const string RegistrationSubject = "Реєстрація успішна";
-    private const string RegistrationTemplate = "<p>Ласкаво просимо до Holly-Molly!</p><br /><p>Вітаємо, Ви успішно зареєструвалися в HollyMolly. Для підтвердження вашої електронної пошти перейдіть за посиланням: <a title=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\" href=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\">https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
+    private const string RegistrationTemplate = "<p>Ласкаво просимо до Holly-Molly!</p><br /><p>Вітаємо, Ви успішно зареєструвалися в HollyMolly. Для підтвердження вашої електронної пошти перейдіть за посиланням: <a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string ForgetPasswordSubject = "Відновити пароль";
-    private const string ForgetPasswordTemplate = "<p>Ви надіслали запит на оновлення паролю до HollyMolly.<br />Щоб скинути поточний пароль перейдіть за посиланням:<br /><a title=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\" href=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\">https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}</a></p><p>Якщо це були не Ви, просто ігноруйте цей лист.</p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
+    private const string ForgetPasswordTemplate = "<p>Ви надіслали запит на оновлення паролю до HollyMolly.<br />Щоб скинути поточний пароль перейдіть за посиланням:<br /><a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p><p>Якщо це були не Ви, просто ігноруйте цей лист.</p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string PasswordChangedSubject = "Пароль було змінено";
-    private const string PasswordChangedTemplate = "<p>Ваш пароль до HollyMolly було змінено. Якщо ці зміни були зроблені не Вами, перейдіть, будь ласка, за посиланням нижче та встановіть новий пароль:<br /><a title=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\" href=\"https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}\">https://holly-molly.vercel.app/?userId={{userId}}&token={{token}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
+    private const string PasswordChangedTemplate = "<p>Ваш пароль до HollyMolly було змінено. Якщо ці зміни були зроблені не Вами, перейдіть, будь ласка, за посиланням нижче та встановіть новий пароль:<br /><a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string EmailChangedSubject = "Адресу електронної пошти було змінено";
     private const string EmailChangedTemplate = "<p>Вашу адресу електронної пошти для входу до HollyMolly було змінено. Якщо ці зміни були зроблені не Вами, будь ласка, зверніться до технічної підтримки сайту.</p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string OrderCreatedSubject = "Замовлення створено";
-    private const string OrderCreatedTemplate = "<p>Ваше замовлення з ідентифікатором {{orderId}} було успішно створено. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"https://holly-molly.vercel.app/\" href=\"https://holly-molly.vercel.app/\">https://holly-molly.vercel.app/</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
+    private const string OrderCreatedTemplate = "<p>Ваше замовлення з ідентифікатором {{orderId}} було успішно створено. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string OrderStatusUpdatedSubject = "Статус замовлення оновлено";
-    private const string OrderStatusUpdatedTemplate = "<p>Статус вашого замовлення з ідентифікатором №{{orderId}} було змінено на {{newStatus}}. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"https://holly-molly.vercel.app/\" href=\"https://holly-molly.vercel.app/\">https://holly-molly.vercel.app/</a></p></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
-    private const string NewsTemplate = "{{news}}<p>____<br />Відписатися від новин можна за посиланням: <a title=\"https://holly-molly.vercel.app/?token={{token}}\" href=\"https://holly-molly.vercel.app/?token={{token}}\">https://holly-molly.vercel.app/?token={{token}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
+    private const string OrderStatusUpdatedTemplate = "<p>Статус вашого замовлення з ідентифікатором №{{orderId}} було змінено на {{newStatus}}. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
+    private const string NewsTemplate = "{{news}}<p>____<br />Відписатися від новин можна за посиланням: <a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
 
     private readonly IEmailSender emailSender = emailSender;
     private readonly string supportEmail = Environment.GetEnvironmentVariable("Support:Email") ??
@@ -57,10 +57,9 @@ public class EmailService(
         {
             Email = email,
         };
-
-        string emailBody = RegistrationTemplate
-            .Replace("{{userId}}", confirmationEmail.UserId)
-            .Replace("{{token}}", confirmationEmail.Token);
+        string link = $"https://holly-molly.vercel.app/" +
+            $"?userId={Uri.EscapeDataString(confirmationEmail.UserId)}&token={Uri.EscapeDataString(confirmationEmail.Token)}";
+        string emailBody = RegistrationTemplate.Replace("{{link}}", link);
 
         return await emailSender.SendEmailAsync(userMailInfo,
             RegistrationSubject, emailBody, cancellationToken);
@@ -73,10 +72,9 @@ public class EmailService(
         {
             Email = email,
         };
-
-        string emailBody = ForgetPasswordTemplate
-            .Replace("{{userId}}", resetPassword.UserId)
-            .Replace("{{token}}", Uri.EscapeDataString(resetPassword.Token));
+        string link = $"https://holly-molly.vercel.app/reset-password/" +
+            $"?userId={Uri.EscapeDataString(resetPassword.UserId)}&token={Uri.EscapeDataString(resetPassword.Token)}";
+        string emailBody = ForgetPasswordTemplate.Replace("{{link}}", link);
 
         return await emailSender.SendEmailAsync(userMailInfo, ForgetPasswordSubject,
             emailBody, cancellationToken);
@@ -89,9 +87,9 @@ public class EmailService(
         {
             Email = email,
         };
-        string emailBody = PasswordChangedTemplate
-            .Replace("{{userId}}", resetPassword.UserId)
-            .Replace("{{token}}", resetPassword.Token);
+        string link = $"https://holly-molly.vercel.app/" +
+            $"?userId={Uri.EscapeDataString(resetPassword.UserId)}&token={Uri.EscapeDataString(resetPassword.Token)}";
+        string emailBody = PasswordChangedTemplate.Replace("{{link}}", link);
 
         return await emailSender.SendEmailAsync(userMailInfo, PasswordChangedSubject, emailBody, cancellationToken);
     }
@@ -114,7 +112,9 @@ public class EmailService(
             FirstName = order.Customer.FirstName,
             LastName = order.Customer.LastName,
         };
+        string link = $"https://holly-molly.vercel.app/";
         string emailBody = OrderCreatedTemplate
+            .Replace("{{link}}", link)
             .Replace("{{orderId}}", order.Id.ToString());
 
         return await emailSender.SendEmailAsync(userMailInfo, OrderCreatedSubject, emailBody, cancellationToken);
@@ -128,7 +128,9 @@ public class EmailService(
             FirstName = order.Customer.FirstName,
             LastName = order.Customer.LastName,
         };
+        string link = $"https://holly-molly.vercel.app/";
         string emailBody = OrderStatusUpdatedTemplate
+            .Replace("{{link}}", link)
             .Replace("{{orderId}}", order.Id.ToString())
             .Replace("{{newStatus}}", order.Status);
 
@@ -144,9 +146,10 @@ public class EmailService(
         foreach (NewsSubscriptionDto subscription in subscriptions)
         {
             UserMailInfo userMailInfo = new() { Email = subscription.Email };
+            string link = $"https://holly-molly.vercel.app/?token={Uri.EscapeDataString(subscription.RemoveToken)}";
             string emailBody = NewsTemplate
-                .Replace("{{news}}", textHtml)
-                .Replace("{{token}}", subscription.RemoveToken);
+                .Replace("{{link}}", link)
+                .Replace("{{news}}", textHtml);
             OperationResult result = await emailSender.SendEmailAsync(userMailInfo, subject, emailBody, cancellationToken);
             if (result.Succeeded)
             {
