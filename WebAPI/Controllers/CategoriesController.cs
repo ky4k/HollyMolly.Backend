@@ -67,14 +67,14 @@ public class CategoriesController(
     /// </summary>
     /// <param name="categoryGroupDto">Category group to create.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <response code="204">Indicates that the category group was successfully created.</response>
+    /// <response code="201">Indicates that the category group was successfully created and return the created result.</response>
     /// <response code="400">Indicates that the request was invalid.</response>
     /// <response code="401">Indicates that the endpoint was called by an unauthenticated user.</response>
     /// <response code="403">Indicates that the user is not authorized to create a category.</response>
     [Authorize(Roles = DefaultRoles.Administrator)]
     [Route("")]
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]

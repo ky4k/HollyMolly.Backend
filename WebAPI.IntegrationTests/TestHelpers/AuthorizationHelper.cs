@@ -1,7 +1,7 @@
 ﻿using HM.BLL.Models.Users;
 using System.Net.Http.Headers;
-using System.Text.Json;
 using System.Text;
+using System.Text.Json;
 
 namespace WebAPI.IntegrationTests.TestHelpers;
 

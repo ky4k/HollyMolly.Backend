@@ -51,4 +51,9 @@ public class SharedWebAppFactory : IClassFixture<SharedWebAppFactory>
         await seedFunction(context, userManager, roleManager);
         await context!.SaveChangesAsync();
     }
+
+    public IServiceScope CreateScope()
+    {
+        return _factory!.Services.CreateScope();
+    }
 }

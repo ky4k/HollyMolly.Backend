@@ -10,13 +10,15 @@ namespace WebAPI.IntegrationTests.Endpoints;
 public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 {
     private static readonly JsonSerializerOptions jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
+    private readonly SharedWebAppFactory _factory;
     private readonly HttpClient _httpClient;
     private readonly AuthorizationHelper _authorizationHelper;
     public AccountIntegrationTests(SharedWebAppFactory factory)
     {
-        factory.Initialize();
-        factory.SeedContextAsync(SeedDefaultEntities.SeedAsync).WaitAsync(CancellationToken.None);
-        _httpClient = factory.CreateClient();
+        _factory = factory;
+        _factory.Initialize();
+        _factory.SeedContextAsync(SeedDefaultEntities.SeedAsync).WaitAsync(CancellationToken.None);
+        _httpClient = _factory.CreateClient();
         _authorizationHelper = new AuthorizationHelper(_httpClient);
     }
     [Fact]

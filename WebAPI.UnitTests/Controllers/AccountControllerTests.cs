@@ -4,6 +4,7 @@ using HM.BLL.Models.Users;
 using HM.WebAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
+using WebAPI.UnitTests.TestHelpers;
 
 namespace WebAPI.UnitTests.Controllers;
 
@@ -145,5 +146,57 @@ public class AccountControllerTests
 
         await _emailService.DidNotReceive().SendRegistrationResultEmailAsync(Arg.Any<string>(),
             Arg.Any<ConfirmationEmailDto>(), Arg.Any<CancellationToken>());
+    }
+
+
+    [Fact]
+    public async Task GetProfile_ShouldReturnProfile_WhenUserIsAuthorized()
+    {
+        UserDto userDto = new()
+        {
+            Id = "1",
+            Email = "user1@example.com",
+            FirstName = "First name",
+            LastName = "Last name"
+        };
+        _userService.GetUserByIdAsync(Arg.Any<string>()).Returns(userDto);
+        ControllerHelper.MockUserIdentity(userDto, _accountController);
+
+        ActionResult<UserDto> response = await _accountController.GetProfile();
+        var result = response.Result as OkObjectResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(200, result.StatusCode);
+        Assert.IsType<UserDto>(result.Value);
+        Assert.Equal(userDto.Email, (result.Value as UserDto)?.Email);
+    }
+    [Fact]
+    public async Task GetProfile_ShouldReturn401Unauthorized_WhenUserIsUnauthorized()
+    {
+        ControllerHelper.MockUserIdentity(new UserDto(), _accountController);
+        ActionResult<UserDto> response = await _accountController.GetProfile();
+        var result = response.Result as UnauthorizedResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(401, result.StatusCode);
+    }
+    [Fact]
+    public async Task GetProfile_ShouldReturn404NotFound_WhenUserDoesNotExist()
+    {
+        UserDto userDto = new()
+        {
+            Id = "1",
+            Email = "user1@example.com",
+            FirstName = "First name",
+            LastName = "Last name"
+        };
+        _userService.GetUserByIdAsync(Arg.Any<string>()).Returns((UserDto?)null);
+        ControllerHelper.MockUserIdentity(userDto, _accountController);
+
+        ActionResult<UserDto> response = await _accountController.GetProfile();
+        var result = response.Result as NotFoundResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(404, result.StatusCode);
     }
 }
