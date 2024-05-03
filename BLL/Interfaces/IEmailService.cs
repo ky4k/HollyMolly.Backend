@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Models.Common;
 using HM.BLL.Models.NewsSubscriptions;
 using HM.BLL.Models.Orders;
+using HM.BLL.Models.Supports;
 using HM.BLL.Models.Users;
 
 namespace HM.BLL.Interfaces;
@@ -18,4 +19,5 @@ public interface IEmailService
     Task<OperationResult> SendOrderStatusUpdatedEmailAsync(OrderDto order, CancellationToken cancellationToken);
     Task<OperationResult> SendNewsEmailAsync(IEnumerable<NewsSubscriptionDto> subscriptions,
         string subject, string textHtml, CancellationToken cancellationToken);
+    Task<OperationResult> SendSupportEmailAsync(SupportDto supportDto, CancellationToken cancellationToken);
 }

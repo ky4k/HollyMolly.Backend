@@ -73,6 +73,7 @@ builder.Services.AddScoped<IStatisticsService, StatisticsService>();
 builder.Services.AddScoped<IWishListService, WishListService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<Stripe.Checkout.SessionService>();
+builder.Services.AddScoped<ISupportService, SupportService>();
 
 var app = builder.Build();
 

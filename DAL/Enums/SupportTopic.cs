@@ -2,9 +2,9 @@
 {
     public enum SupportTopic
     {
+        Other,
         AccountIssues,
         ProductQuestions,
         PaymentQuestions,
-        Other
     }
 }
