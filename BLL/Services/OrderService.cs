@@ -103,7 +103,7 @@ public class OrderService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while creating order {order}", order);
+            logger.LogError(ex, "An error occurred while creating order {@Order}", order);
             return new OperationResult<OrderDto>(false, "The order has not been created.");
         }
     }
@@ -129,7 +129,7 @@ public class OrderService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while updating order {order}", order);
+            logger.LogError(ex, "An error occurred while updating order {@Order}", order);
             return new OperationResult<OrderDto>(false, "The order has not been updated.");
         }
     }

@@ -71,7 +71,7 @@ public class ImageService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Image {image} was not deleted.", filePath);
+            logger.LogError(ex, "Image {Image} was not deleted.", filePath);
             return new OperationResult(false, ex.Message);
         }
     }

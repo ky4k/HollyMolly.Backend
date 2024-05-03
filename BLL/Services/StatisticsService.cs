@@ -394,7 +394,7 @@ public class StatisticsService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding number of views to the statistic of the product with id {productId}", productId);
+            logger.LogError(ex, "An error occurred while adding number of views to the statistic of the product with id {ProductId}", productId);
         }
     }
 
@@ -421,7 +421,7 @@ public class StatisticsService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding adding statistics for the order {@order}", order);
+            logger.LogError(ex, "An error occurred while adding adding statistics for the order {@Order}", order);
         }
     }
 
@@ -435,7 +435,7 @@ public class StatisticsService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding number of feedbacks to the statistic of the product with id {productId}", productId);
+            logger.LogError(ex, "An error occurred while adding number of feedbacks to the statistic of the product with id {ProductId}", productId);
         }
     }
 
@@ -449,7 +449,7 @@ public class StatisticsService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding number of wish list addition to the statistic of the product with id {productId}", productId);
+            logger.LogError(ex, "An error occurred while adding number of wish list addition to the statistic of the product with id {ProductId}", productId);
         }
     }
 

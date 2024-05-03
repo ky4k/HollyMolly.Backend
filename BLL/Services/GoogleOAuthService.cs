@@ -101,7 +101,7 @@ public class GoogleOAuthService : IGoogleOAuthService
         value ??= _configuration[key];
         if (value == null)
         {
-            _logger.LogError("Cannot get the value of the {key} from the environment or " +
+            _logger.LogError("Cannot get the value of the {Key} from the environment or " +
                 "the configuration. Google API may not work correctly.", key);
         }
         return value ?? "";
