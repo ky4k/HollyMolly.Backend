@@ -4,18 +4,21 @@ using HM.BLL.Models.NewsSubscriptions;
 using HM.BLL.Models.Orders;
 using HM.BLL.Models.Users;
 using HM.BLL.Services;
+using Microsoft.Extensions.Configuration;
 using NSubstitute;
 
 namespace HM.BLL.UnitTests.Services;
 
 public class EmailServiceTests
 {
+    private readonly IConfiguration _configuration;
     private readonly IEmailSender _emailSender;
     private readonly EmailService _emailService;
     public EmailServiceTests()
     {
+        _configuration = Substitute.For<IConfiguration>();
         _emailSender = Substitute.For<IEmailSender>();
-        _emailService = new EmailService(_emailSender);
+        _emailService = new EmailService(_emailSender, _configuration);
     }
 
     [Fact]

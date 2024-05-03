@@ -331,7 +331,7 @@ public class AccountController(
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="204">Indicates that the email has been sent.</response>
     /// <response code="400">Indicates that the reset password email cannot be sent and returns the error message.</response>
-    [Route("/forgetPassword")]
+    [Route("forgetPassword")]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

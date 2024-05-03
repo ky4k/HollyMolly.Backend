@@ -1,14 +1,18 @@
-﻿using HM.BLL.Interfaces;
+﻿using HM.BLL.Extensions;
+using HM.BLL.Interfaces;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewsSubscriptions;
 using HM.BLL.Models.Orders;
+using HM.BLL.Models.Supports;
 using HM.BLL.Models.Users;
+using Microsoft.Extensions.Configuration;
 using System.Text;
 
 namespace HM.BLL.Services;
 
 public class EmailService(
-    IEmailSender emailSender
+    IEmailSender emailSender,
+    IConfiguration configuration
     ) : IEmailService
 {
     private const string RegistrationSubject = "Реєстрація успішна";
@@ -25,6 +29,27 @@ public class EmailService(
     private const string OrderStatusUpdatedTemplate = "<p>Статус вашого замовлення з ідентифікатором №{{orderId}} було змінено на {{newStatus}}. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"https://holly-molly.vercel.app/\" href=\"https://holly-molly.vercel.app/\">https://holly-molly.vercel.app/</a></p></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string NewsTemplate = "{{news}}<p>____<br />Відписатися від новин можна за посиланням: <a title=\"https://holly-molly.vercel.app/?token={{token}}\" href=\"https://holly-molly.vercel.app/?token={{token}}\">https://holly-molly.vercel.app/?token={{token}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
 
+    private readonly IEmailSender emailSender = emailSender;
+    private readonly string supportEmail = Environment.GetEnvironmentVariable("Support:Email") ??
+        configuration["Support:Email"] ?? "";
+    public async Task<OperationResult> SendSupportEmailAsync(SupportDto supportDto, CancellationToken cancellationToken)
+    {
+        string subject = $"Новий запит підтримки від {supportDto.Name}";
+        string emailBody = $@"
+<h2>Новий запит підтримки</h2>
+<p><strong>Ім'я:</strong> {supportDto.Name}</p>
+<p><strong>Email:</strong> <a href=""mailto:{supportDto.Email}?subject=Re:{supportDto.Topic}"">{supportDto.Email}</a></p>
+<p><strong>Тема:</strong> {supportDto.Topic.GetTopicName()}</p>
+<p><strong>Опис:</strong> {supportDto.Description}</p>
+<p><strong>Номер замовлення:</strong> {supportDto.OrderId}</p>";
+
+        UserMailInfo userMailInfo = new()
+        {
+            Email = supportEmail
+        };
+
+        return await emailSender.SendEmailAsync(userMailInfo, subject, emailBody, cancellationToken);
+    }
     public async Task<OperationResult> SendRegistrationResultEmailAsync(string email,
         ConfirmationEmailDto confirmationEmail, CancellationToken cancellationToken)
     {
@@ -51,7 +76,7 @@ public class EmailService(
 
         string emailBody = ForgetPasswordTemplate
             .Replace("{{userId}}", resetPassword.UserId)
-            .Replace("{{token}}", resetPassword.Token);
+            .Replace("{{token}}", Uri.EscapeDataString(resetPassword.Token));
 
         return await emailSender.SendEmailAsync(userMailInfo, ForgetPasswordSubject,
             emailBody, cancellationToken);
