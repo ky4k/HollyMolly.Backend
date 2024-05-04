@@ -1,6 +1,7 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models.Statistics;
 using HM.DAL.Constants;
+using HM.DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -144,7 +145,7 @@ public class StatisticsController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<OrderStatisticDto>>> GetEmailLogs(
+    public async Task<ActionResult<IEnumerable<EmailLog>>> GetEmailLogs(
         string? recipientEmail = null, string? subject = null,
         DateOnly? startDateTime = null, DateOnly? endDateTime = null)
     {

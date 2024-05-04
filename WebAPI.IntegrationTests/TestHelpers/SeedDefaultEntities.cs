@@ -36,6 +36,10 @@ public static class SeedDefaultEntities
             await context.CategoryGroups.AddRangeAsync(CategoryGroups);
             await context.Categories.AddRangeAsync(Categories);
             await context.Products.AddRangeAsync(Products);
+            await context.Orders.AddRangeAsync(Orders);
+            await context.WishLists.AddRangeAsync(WishLists);
+            await context.NewsSubscriptions.AddRangeAsync(NewsSubscriptions);
+            await context.EmailLogs.AddRangeAsync(EmailLogs);
             await context.SaveChangesAsync();
         }
     }
@@ -484,6 +488,136 @@ public static class SeedDefaultEntities
             Feedbacks = [],
             WishLists = [],
             ProductStatistics = []
+        }
+    ];
+
+    private static List<Order> Orders =>
+    [
+        new()
+        {
+            Id = 1,
+            Customer = new CustomerInfo()
+            {
+                Id = 1,
+                Email = "user1@example.com",
+                FirstName = "FirstName",
+                LastName = "LastName",
+                City = "City",
+                DeliveryAddress = "Address",
+                PhoneNumber = "1234567890"
+            },
+            UserId = "1",
+            Status = "Created",
+            OrderRecords =
+            [
+                new()
+                {
+                    Id = 1,
+                    ProductInstanceId = 1,
+                    Quantity = 1,
+                    Price = 100,
+                    ProductName = "Test product"
+                }
+            ]
+        },
+        new()
+        {
+            Id = 2,
+            Customer = new CustomerInfo()
+            {
+                Id = 2,
+                Email = "user2@example.com",
+                FirstName = "FirstName",
+                LastName = "LastName",
+                City = "City",
+                DeliveryAddress = "Address",
+                PhoneNumber = "1234567890"
+            },
+            UserId = "2",
+            Status = "Created",
+            OrderRecords =
+            [
+                new()
+                {
+                    Id = 2,
+                    ProductInstanceId = 1,
+                    Quantity = 1,
+                    Price = 100,
+                    ProductName = "Test product"
+                }
+            ]
+        },
+        new()
+        {
+            Id = 3,
+            Customer = new CustomerInfo()
+            {
+                Id = 3,
+                Email = "user3@example.com",
+                FirstName = "FirstName",
+                LastName = "LastName",
+                City = "City",
+                DeliveryAddress = "Address",
+                PhoneNumber = "1234567890"
+            },
+            UserId = "3",
+            Status = "Created",
+            OrderRecords =
+            [
+                new()
+                {
+                    Id = 3,
+                    ProductInstanceId = 1,
+                    Quantity = 1,
+                    Price = 100,
+                    ProductName = "Test product"
+                }
+            ]
+        },
+    ];
+    private static List<WishList> WishLists =>
+    [
+        new()
+        {
+            Id = 1,
+            UserId = "1"
+        },
+        new()
+        {
+            Id = 2,
+            UserId = "2"
+        }
+    ];
+    private static List<NewsSubscription> NewsSubscriptions =>
+    [
+        new()
+        {
+            Id = 1,
+            Email = "user1@example.com",
+            RemoveToken = "remove1"
+        },
+        new()
+        {
+            Id = 2,
+            Email = "user2@example.com",
+            RemoveToken = "remove2"
+        }
+    ];
+    private static List<EmailLog> EmailLogs =>
+    [
+        new()
+        {
+            Id = 1,
+            Subject = "Subject 1",
+            RecipientEmail = "user1@example.com",
+            SendAt = new DateTime(2024, 4, 1, 12, 0, 0, DateTimeKind.Utc)
+        },
+        new()
+        {
+            Id = 2,
+            Subject = "Subject 2",
+            RecipientEmail = "user2@example.com",
+            SendAt = new DateTime(2024, 4, 2, 12, 0, 0, DateTimeKind.Utc)
         }
     ];
 }

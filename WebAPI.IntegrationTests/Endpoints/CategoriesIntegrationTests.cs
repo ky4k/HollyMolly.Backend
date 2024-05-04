@@ -42,7 +42,7 @@ public class CategoriesIntegrationTests : IClassFixture<SharedWebAppFactory>
         Assert.Equal(2, categories.FirstOrDefault()?.Categories.Count);
     }
     [Fact]
-    public async Task GetCategoryGroup_ShouldReturnCategory()
+    public async Task GetCategoryGroup_ShouldReturnCategoryGroup()
     {
         int categoryGroupId = 1;
         HttpRequestMessage requestMessage = new(HttpMethod.Get, $"api/Categories/{categoryGroupId}");
@@ -141,4 +141,112 @@ public class CategoriesIntegrationTests : IClassFixture<SharedWebAppFactory>
         Assert.Equal(HttpStatusCode.NoContent, httpResponse.StatusCode);
         Assert.Null(categoryGroup);
     }
+    [Fact]
+    public async Task GetCategory_ShouldReturnCategory()
+    {
+        int categoryGroupId = 1;
+        int categoryId = 1;
+        HttpRequestMessage requestMessage = new(HttpMethod.Get, $"api/Categories/{categoryGroupId}/{categoryId}");
+
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
+        httpResponse.EnsureSuccessStatusCode();
+        CategoryDto? category = JsonSerializer.Deserialize<CategoryDto>(
+            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+
+        Assert.NotNull(category);
+        Assert.Equal("Category 1", category.Name);
+    }
+    [Fact]
+    public async Task GetCategoryProducts_ShouldReturnProducts()
+    {
+        int categoryGroupId = 1;
+        int categoryId = 1;
+        HttpRequestMessage requestMessage = new(HttpMethod.Get, $"api/Categories/{categoryGroupId}/{categoryId}/products");
+
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
+        httpResponse.EnsureSuccessStatusCode();
+        IEnumerable<ProductDto>? products = JsonSerializer.Deserialize<IEnumerable<ProductDto>>(
+            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+
+        Assert.NotNull(products);
+        Assert.NotEmpty(products);
+        Assert.Equal(2, products.Count());
+        Assert.Equal("Product 1", products.FirstOrDefault()?.Name);
+    }
+
+    [Fact]
+    public async Task CreateCategory_ShouldCreateCategory()
+    {
+        int categoryGroupId = 1;
+        HttpRequestMessage requestMessage = new(HttpMethod.Post, $"api/Categories/{categoryGroupId}");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync("admin1@example.com", "password");
+        CategoryCreateDto categoryDto = new()
+        {
+            CategoryName = "New category",
+            Position = 10
+        };
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(categoryDto),
+            Encoding.UTF8, "application/json");
+
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
+        CategoryDto? category = JsonSerializer.Deserialize<CategoryDto>(
+            await httpResponse.Content.ReadAsStringAsync(), jsonSerializerOptions);
+
+        httpResponse.EnsureSuccessStatusCode();
+        Assert.Equal(HttpStatusCode.Created, httpResponse.StatusCode);
+        Assert.NotNull(httpResponse.Headers.Location);
+        Assert.NotNull(category);
+        Assert.Equal(categoryDto.CategoryName, category.Name);
+    }
+    [Fact]
+    public async Task UpdateCategory_ShouldWork()
+    {
+        int categoryGroupId = 1;
+        int categoryId = 2;
+        HttpRequestMessage requestMessage = new(HttpMethod.Put, $"api/Categories/{categoryGroupId}/{categoryId}");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync("admin1@example.com", "password");
+        CategoryUpdateDto categoryDto = new()
+        {
+            CategoryName = "Updated group",
+            Position = 10,
+            CategoryGroupId = 2
+        };
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(categoryDto),
+            Encoding.UTF8, "application/json");
+
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
+        httpResponse.EnsureSuccessStatusCode();
+        using var scope = _factory.CreateScope();
+        var context = scope.ServiceProvider.GetService<HmDbContext>();
+        Category? category = await context!.Categories
+            .FirstOrDefaultAsync(cg => cg.Id == categoryId);
+
+        Assert.Equal(HttpStatusCode.NoContent, httpResponse.StatusCode);
+        Assert.NotNull(category);
+        Assert.Equal(categoryDto.CategoryName, category.Name);
+        Assert.Equal(categoryDto.Position, category.Position);
+        Assert.Equal(categoryDto.CategoryGroupId, category.CategoryGroupId);
+    }
+    [Fact]
+    public async Task DeleteCategory_ShouldWork()
+    {
+        int categoryGroupId = 2;
+        int categoryId = 5;
+        HttpRequestMessage requestMessage = new(HttpMethod.Delete, $"api/Categories/{categoryGroupId}/{categoryId}");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync("admin1@example.com", "password");
+
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
+        httpResponse.EnsureSuccessStatusCode();
+        using var scope = _factory.CreateScope();
+        var context = scope.ServiceProvider.GetService<HmDbContext>();
+        Category? category = await context!.Categories
+            .FirstOrDefaultAsync(c => c.Id == categoryId);
+
+        Assert.Equal(HttpStatusCode.NoContent, httpResponse.StatusCode);
+        Assert.Null(category);
+    }
+
 }

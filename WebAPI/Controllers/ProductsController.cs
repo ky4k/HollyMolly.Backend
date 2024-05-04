@@ -139,12 +139,12 @@ public class ProductsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> AddProductInstance(int productId, ProductInstanceCreateDto productInstance,
+    public async Task<ActionResult<ProductInstanceDto>> AddProductInstance(int productId, ProductInstanceCreateDto productInstance,
         CancellationToken cancellationToken)
     {
         OperationResult<ProductInstanceDto> result = await productService.AddProductInstanceToProductAsync(
             productId, productInstance, cancellationToken);
-        return result.Succeeded ? NoContent() : BadRequest(result.Message);
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
 
     /// <summary>
@@ -165,7 +165,7 @@ public class ProductsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<ProductDto>> UpdateProductInstance(int productId, int productInstanceId,
+    public async Task<ActionResult<ProductInstanceDto>> UpdateProductInstance(int productId, int productInstanceId,
         ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
     {
         OperationResult<ProductInstanceDto> result = await productService.UpdateProductInstanceAsync(
