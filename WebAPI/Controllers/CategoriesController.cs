@@ -81,8 +81,8 @@ public class CategoriesController(
     public async Task<ActionResult> CreateCategoryGroup(CategoryGroupCreateDto categoryGroupDto,
         CancellationToken cancellationToken)
     {
-        OperationResult<CategoryGroupDto> result = await categoryService.CreateCategoryGroupAsync(categoryGroupDto,
-            cancellationToken);
+        OperationResult<CategoryGroupDto> result = await categoryService
+            .CreateCategoryGroupAsync(categoryGroupDto, cancellationToken);
         return result.Succeeded && result.Payload != null
             ? CreatedAtAction(nameof(GetCategoryGroup), new { categoryGroupId = result.Payload.Id }, result.Payload)
             : BadRequest(result.Message);

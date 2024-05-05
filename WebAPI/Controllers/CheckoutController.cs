@@ -32,7 +32,7 @@ public class CheckoutController(
         string baseUrl = $"https://{Request.Host}{Request.PathBase}";
         OperationResult<string> result = await checkoutService
             .PayForOrderAsync(orderId, userId, baseUrl, cancellationToken);
-        if (!result.Succeeded || result.Payload == null)
+        if (!result.Succeeded)
         {
             return BadRequest(result.Message);
         }

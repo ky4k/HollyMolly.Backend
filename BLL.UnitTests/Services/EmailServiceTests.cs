@@ -186,7 +186,7 @@ public class EmailServiceTests
             Token = "TestToken"
         };
 
-        OperationResult result = await _emailService.SendPasswordChangedEmail(
+        OperationResult result = await _emailService.SendPasswordChangedEmailAsync(
             "test@example.com", resetPasswordTokenDto, CancellationToken.None);
 
         Assert.NotNull(result);
@@ -203,7 +203,7 @@ public class EmailServiceTests
             Token = "TestToken"
         };
 
-        OperationResult result = await _emailService.SendPasswordChangedEmail(
+        OperationResult result = await _emailService.SendPasswordChangedEmailAsync(
             "test@example.com", resetPasswordTokenDto, CancellationToken.None);
 
         Assert.NotNull(result);

@@ -62,7 +62,7 @@ public class AccountController(
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<RegistrationResponse>> ConfirmEmail(string userId, string confirmationEmailToken)
+    public async Task<ActionResult> ConfirmEmail(string userId, string confirmationEmailToken)
     {
         OperationResult result = await accountService.ConfirmEmailAsync(userId, confirmationEmailToken);
         return result.Succeeded ? NoContent() : BadRequest(result.Message);
@@ -275,7 +275,7 @@ public class AccountController(
             }
             OperationResult<ConfirmationEmailDto> confirmationEmailResult = await accountService
                 .GetConfirmationEmailKeyAsync(userId);
-            if (confirmationEmailResult.Succeeded && confirmationEmailResult.Payload != null)
+            if (confirmationEmailResult.Payload != null)
             {
                 await emailService.SendRegistrationResultEmailAsync(updatedEmail.Email,
                     confirmationEmailResult.Payload, cancellationToken);
@@ -308,7 +308,7 @@ public class AccountController(
             return Unauthorized();
         }
         OperationResult<ResetPasswordTokenDto> result = await accountService.ChangePasswordAsync(userId, passwords);
-        if (!result.Succeeded || result.Payload == null)
+        if (!result.Succeeded)
         {
             return BadRequest(result.Message);
         }
@@ -317,7 +317,7 @@ public class AccountController(
             string? email = User.FindFirst(ClaimTypes.Email)?.Value;
             if (email != null)
             {
-                await emailService.SendPasswordChangedEmail(email, result.Payload, cancellationToken);
+                await emailService.SendPasswordChangedEmailAsync(email, result.Payload!, cancellationToken);
             }
         }
         return NoContent();
@@ -340,13 +340,13 @@ public class AccountController(
     {
         OperationResult<ResetPasswordTokenDto> result =
             await accountService.CreatePasswordResetKeyAsync(sendTo.Email);
-        if (!result.Succeeded || result.Payload == null)
+        if (!result.Succeeded)
         {
             return BadRequest(result.Message);
         }
         if (sendEmail)
         {
-            await emailService.SendForgetPasswordEmailAsync(sendTo.Email, result.Payload, cancellationToken);
+            await emailService.SendForgetPasswordEmailAsync(sendTo.Email, result.Payload!, cancellationToken);
         }
         return NoContent();
     }
@@ -365,7 +365,7 @@ public class AccountController(
     public async Task<ActionResult> ResetPassword(string userId, ResetPasswordDto resetPassword)
     {
         OperationResult<UserDto> result = await accountService.ResetPasswordAsync(userId, resetPassword);
-        if (!result.Succeeded || result.Payload == null)
+        if (!result.Succeeded)
         {
             return BadRequest(result.Message);
         }

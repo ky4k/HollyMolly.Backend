@@ -84,7 +84,7 @@ public class EmailService(
             emailBody, cancellationToken);
     }
 
-    public async Task<OperationResult> SendPasswordChangedEmail(string email,
+    public async Task<OperationResult> SendPasswordChangedEmailAsync(string email,
         ResetPasswordTokenDto resetPassword, CancellationToken cancellationToken)
     {
         UserMailInfo userMailInfo = new()

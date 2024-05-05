@@ -42,4 +42,21 @@ public static class ControllerHelper
 
         controller.ControllerContext = new ControllerContext(controllerContext);
     }
+    public static void MockHost(ControllerBase controller)
+    {
+        HostString hostString = HostString.FromUriComponent(new Uri("https://localhost:30000/"));
+        var requestMock = Substitute.For<HttpRequest>();
+        requestMock.Host.Returns(hostString);
+        var httpContextMock = Substitute.For<HttpContext>();
+        httpContextMock.RequestAborted.Returns(CancellationToken.None);
+        httpContextMock.Request.Returns(requestMock);
+
+        var controllerContext = new ControllerContext
+        {
+            HttpContext = httpContextMock,
+            RouteData = new() { },
+            ActionDescriptor = new()
+        };
+        controller.ControllerContext = new ControllerContext(controllerContext);
+    }
 }

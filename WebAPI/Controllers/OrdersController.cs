@@ -125,17 +125,17 @@ public class OrdersController(
         CancellationToken cancellationToken, bool sendEmail = false)
     {
         OperationResult<OrderDto> result = await orderService.CreateOrderAsync(order, userId, cancellationToken);
-        if (!result.Succeeded || result.Payload == null)
+        if (!result.Succeeded)
         {
             return BadRequest(result.Message);
         }
         if (sendEmail)
         {
-            await emailService.SendOrderCreatedEmailAsync(result.Payload, cancellationToken);
+            await emailService.SendOrderCreatedEmailAsync(result.Payload!, cancellationToken);
         }
 
-        await statisticsService.AddToProductNumberPurchasesAsync(result.Payload);
-        return CreatedAtAction(nameof(GetOrderById), new { orderId = result.Payload.Id }, result.Payload);
+        await statisticsService.AddToProductNumberPurchasesAsync(result.Payload!);
+        return CreatedAtAction(nameof(GetOrderById), new { orderId = result.Payload!.Id }, result.Payload);
     }
 
     /// <summary>
