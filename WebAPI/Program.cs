@@ -51,7 +51,7 @@ builder.Services.ConfigureOptions<SwaggerGenConfigureOptions>();
 builder.Services.AddSerilog(new SerilogConfigureOptions(builder.Configuration).Configure);
 
 Stripe.StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
-    ?? builder.Configuration["Stripe:SecretKey"] ?? "";
+    ?? builder.Configuration["Stripe:SecretKey"];
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ReplaceAuthorizationHeaderMiddleware>();

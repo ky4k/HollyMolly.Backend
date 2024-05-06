@@ -329,7 +329,8 @@ public class StatisticsService(
         }
         else
         {
-            List<Order> ordersList = await orders.ToListAsync(cancellationToken);
+            List<Order> ordersList = await orders
+                .ToListAsync(cancellationToken);
             orderStatisticDtos.Add(new OrderStatisticDto()
             {
                 NumberOfOrders = ordersList.Select(o => o.Id).Count(),
@@ -381,7 +382,7 @@ public class StatisticsService(
         {
             emails = emails.Where(e => e.SendAt <= endDateTime.Value.ToDateTime(new TimeOnly(23, 59, 59)));
         }
-        return await emails.ToListAsync(cancellationToken);
+        return await emails.AsNoTracking().ToListAsync(cancellationToken);
     }
 
     public async Task AddToProductNumberViewsAsync(int productId)

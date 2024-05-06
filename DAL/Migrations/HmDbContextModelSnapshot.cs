@@ -52,7 +52,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("CategoryGroupId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.CategoryGroup", b =>
@@ -80,7 +80,7 @@ namespace HM.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("CategoryGroups");
+                    b.ToTable("CategoryGroups", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.CustomerInfo", b =>
@@ -123,7 +123,7 @@ namespace HM.DAL.Migrations
                     b.HasIndex("OrderId")
                         .IsUnique();
 
-                    b.ToTable("CustomerInfo");
+                    b.ToTable("CustomerInfo", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.EmailLog", b =>
@@ -147,7 +147,7 @@ namespace HM.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmailLogs");
+                    b.ToTable("EmailLogs", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.NewsSubscription", b =>
@@ -168,7 +168,7 @@ namespace HM.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("NewsSubscriptions");
+                    b.ToTable("NewsSubscriptions", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Order", b =>
@@ -201,7 +201,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Orders");
+                    b.ToTable("Orders", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.OrderRecord", b =>
@@ -239,7 +239,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("ProductInstanceId");
 
-                    b.ToTable("OrderRecord");
+                    b.ToTable("OrderRecord", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Product", b =>
@@ -271,7 +271,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Products");
+                    b.ToTable("Products", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductFeedback", b =>
@@ -305,7 +305,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductFeedback");
+                    b.ToTable("ProductFeedback", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductImage", b =>
@@ -334,7 +334,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("ProductInstanceId");
 
-                    b.ToTable("ProductImage");
+                    b.ToTable("ProductImage", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductInstance", b =>
@@ -385,7 +385,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductInstance");
+                    b.ToTable("ProductInstance", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductInstanceStatistics", b =>
@@ -415,7 +415,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("ProductStatisticsId");
 
-                    b.ToTable("ProductInstanceStatistics");
+                    b.ToTable("ProductInstanceStatistics", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.ProductStatistics", b =>
@@ -451,7 +451,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("ProductId");
 
-                    b.ToTable("ProductStatistics");
+                    b.ToTable("ProductStatistics", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Role", b =>
@@ -504,9 +504,6 @@ namespace HM.DAL.Migrations
                     b.Property<int?>("OrderId")
                         .HasColumnType("int");
 
-                    b.Property<DateTimeOffset>("ReceivedAt")
-                        .HasColumnType("datetimeoffset");
-
                     b.Property<int>("Topic")
                         .HasColumnType("int");
 
@@ -514,7 +511,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("OrderId");
 
-                    b.ToTable("Supports");
+                    b.ToTable("Supports", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.TokenRecord", b =>
@@ -536,7 +533,7 @@ namespace HM.DAL.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Tokens");
+                    b.ToTable("Tokens", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.User", b =>
@@ -644,7 +641,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("WishLists");
+                    b.ToTable("WishLists", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -765,7 +762,7 @@ namespace HM.DAL.Migrations
 
                     b.HasIndex("WishListsId");
 
-                    b.ToTable("ProductWishList");
+                    b.ToTable("ProductWishList", (string)null);
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Category", b =>

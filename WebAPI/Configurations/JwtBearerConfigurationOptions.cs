@@ -10,7 +10,7 @@ public class JwtBearerConfigurationOptions(IConfiguration configuration)
         string? key = Environment.GetEnvironmentVariable("JwtSettings:SecurityKey");
         if (string.IsNullOrEmpty(key))
         {
-            key = configuration?["JwtSettings:SecurityKey"];
+            key = configuration["JwtSettings:SecurityKey"];
         }
         options.TokenValidationParameters = new TokenValidationParameters()
         {
@@ -20,11 +20,11 @@ public class JwtBearerConfigurationOptions(IConfiguration configuration)
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = Environment.GetEnvironmentVariable("JwtSettings:Issuer")
-                ?? configuration?["JwtSettings:Issuer"] ?? "HollyMolly",
-            ValidAudience = Environment.GetEnvironmentVariable("JwtSettings:Issuer")
-                ?? configuration?["JwtSettings:Audience"] ?? "*",
+                ?? configuration["JwtSettings:Issuer"],
+            ValidAudience = Environment.GetEnvironmentVariable("JwtSettings:Audience")
+                ?? configuration["JwtSettings:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                System.Text.Encoding.UTF8.GetBytes(key ?? "defaultKey_that_is_32_characters"))
+                System.Text.Encoding.UTF8.GetBytes(key!))
         };
     }
 }
