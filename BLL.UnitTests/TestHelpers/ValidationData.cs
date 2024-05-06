@@ -122,8 +122,7 @@ public static class ValidationData
     ];
     private static readonly IEnumerable<string> _validCities =
     [
-        "City",
-        "Місто"
+
     ];
     private static readonly IEnumerable<string> _invalidCities =
     [
@@ -131,8 +130,7 @@ public static class ValidationData
     ];
     private static readonly IEnumerable<string> _validDeliveryAddress =
     [
-        "Address",
-        "Адреса"
+
     ];
     private static readonly IEnumerable<string> _invalidDeliveryAddress =
     [
@@ -431,8 +429,8 @@ public static class ValidationData
         LastName = "Прізвище",
         PhoneNumber = "0123456789",
         DateOfBirth = null,
-        City = "Місто",
-        DeliveryAddress = "Адреса"
+        City = "Київ (Київська область)",
+        DeliveryAddress = "Відділення №1: вул. Пирогівський шлях, 135"
     };
     private static List<ProductCreateDto> GetValidProductsCreateDto()
     {
@@ -853,8 +851,8 @@ public static class ValidationData
             FirstName = "Правильне",
             LastName = "Прізвище",
             PhoneNumber = "0123456789",
-            City = "Місто",
-            DeliveryAddress = "Адреса"
+            City = "Київ (Київська область)",
+            DeliveryAddress = "Відділення №1: вул. Пирогівський шлях, 135"
         };
     }
     private static List<SupportCreateDto> GetValidSupportCreateDtos()

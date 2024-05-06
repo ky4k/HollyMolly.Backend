@@ -99,7 +99,7 @@ public class CheckoutControllerTests
         Assert.Equal(400, result.StatusCode);
     }
     [Fact]
-    public async Task CheckoutFailed_ShouldReturnRedirectResult()
+    public void CheckoutFailed_ShouldReturnRedirectResult()
     {
         ActionResult response = _checkoutController.CheckoutFailed();
 

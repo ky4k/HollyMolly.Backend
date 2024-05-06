@@ -81,8 +81,8 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
                 FirstName = "Перше",
                 LastName = "Останнє",
                 PhoneNumber = "0123456789",
-                City = "Місто",
-                DeliveryAddress = "Адреса"
+                City = "Київ (Київська область)",
+                DeliveryAddress = "Відділення №1: вул. Пирогівський шлях, 135"
             },
             OrderRecords =
             [
@@ -122,8 +122,8 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
                 FirstName = "Перше",
                 LastName = "Останнє",
                 PhoneNumber = "0123456789",
-                City = "Місто",
-                DeliveryAddress = "Адреса"
+                City = "Київ (Київська область)",
+                DeliveryAddress = "Відділення №1: вул. Пирогівський шлях, 135"
             },
             OrderRecords =
             [

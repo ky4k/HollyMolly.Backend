@@ -1,11 +1,12 @@
 ﻿using FluentValidation;
+using HM.BLL.Interfaces;
 using HM.BLL.Models.Orders;
 
 namespace HM.BLL.Validators;
 
 public class CustomerDtoValidator : AbstractValidator<CustomerDto>
 {
-    public CustomerDtoValidator()
+    public CustomerDtoValidator(INewPostService newPostService)
     {
         RuleFor(c => c.Email)
             .NotEmpty()
@@ -28,6 +29,9 @@ public class CustomerDtoValidator : AbstractValidator<CustomerDto>
                 .WithMessage("City is required");
         RuleFor(c => c.DeliveryAddress)
             .NotEmpty()
-                .WithMessage("Delivery address is required");
+                .WithMessage("Delivery address is required")
+            .MustAsync(async (customer, address, cancellation) =>
+                await newPostService.CheckIfAddressIsValidAsync(customer.City, address, cancellation))
+                .WithMessage("New post office does not exist on the specified address in the city.");
     }
 }
