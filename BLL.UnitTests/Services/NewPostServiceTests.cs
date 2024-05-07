@@ -5,9 +5,7 @@ using HM.BLL.UnitTests.TestHelpers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using Stripe;
 using System.Net;
-using System.Threading;
 
 namespace HM.BLL.UnitTests.Services;
 
@@ -119,7 +117,7 @@ public class NewPostServiceTests
             Results = null
         };
 
-        OperationResult <IEnumerable<NewPostWarehouse>> result = await _newPostService
+        OperationResult<IEnumerable<NewPostWarehouse>> result = await _newPostService
             .GetWarehousesAsync(null, 1, CancellationToken.None);
 
         Assert.NotNull(result?.Payload);

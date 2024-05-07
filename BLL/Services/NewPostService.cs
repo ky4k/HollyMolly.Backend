@@ -23,7 +23,9 @@ public partial class NewPostService(
     public async Task<OperationResult<IEnumerable<NewPostCity>>> GetCitiesAsync(
         string? name, int page, CancellationToken cancellationToken)
     {
-        string uri = _baseUrl + $"/cities?q={Uri.EscapeDataString(name ?? "")}&page={page}";
+        name ??= "";
+        string city = RegionPattern().Replace(name, "").Trim();
+        string uri = _baseUrl + $"/cities?q={Uri.EscapeDataString(city)}&page={page}";
 
         try
         {
@@ -33,9 +35,10 @@ public partial class NewPostService(
             {
                 return new OperationResult<IEnumerable<NewPostCity>>(true, Array.Empty<NewPostCity>());
             }
-            NewPostResponse<NewPostCity>? cities = JsonSerializer
+            NewPostResponse<NewPostCity>? deserialized = JsonSerializer
                 .Deserialize<NewPostResponse<NewPostCity>>(content, _jsonSerializerOptions);
-            return new OperationResult<IEnumerable<NewPostCity>>(true, cities!.Results ?? []);
+            IEnumerable<NewPostCity> cities = deserialized?.Results?.Where(c => c.Id.Contains(name!)) ?? [];
+            return new OperationResult<IEnumerable<NewPostCity>>(true, cities);
         }
         catch (Exception ex)
         {
@@ -70,9 +73,7 @@ public partial class NewPostService(
 
     public async Task<bool> CheckIfAddressIsValidAsync(string city, string address, CancellationToken cancellationToken)
     {
-        string toSearch = city;
-        toSearch = RegionPattern().Replace(toSearch, "").Replace(" село", "").Replace(" селище", "").Trim();
-        OperationResult<IEnumerable<NewPostCity>> resultCity = await GetCitiesAsync(toSearch, 1, cancellationToken);
+        OperationResult<IEnumerable<NewPostCity>> resultCity = await GetCitiesAsync(city, 1, cancellationToken);
         if (!resultCity.Succeeded)
         {
             return false;
@@ -100,6 +101,6 @@ public partial class NewPostService(
         return found;
     }
 
-    [GeneratedRegex(@"\(.*\)")]
+    [GeneratedRegex(@"\(.*\)| село| селище| смт| місто")]
     private static partial Regex RegionPattern();
 }

@@ -34,7 +34,7 @@ public class WebAppFactoryHelper
 
                 var newPostDescriptor = services.FirstOrDefault(
                     d => d.ServiceType == typeof(INewPostService));
-                if(newPostDescriptor != null)
+                if (newPostDescriptor != null)
                 {
                     services.Remove(newPostDescriptor);
                 }

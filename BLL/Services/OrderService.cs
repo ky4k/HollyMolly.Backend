@@ -43,8 +43,8 @@ public class OrderService(
         {
             UserId = userId,
             Customer = orderDto.Customer.ToCustomerInfo(),
-            OrderDate = DateTimeOffset.UtcNow,
             Status = "Created",
+            OrderDate = DateTimeOffset.UtcNow,
             PaymentReceived = false,
             OrderRecords = []
         };

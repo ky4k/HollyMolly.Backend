@@ -70,6 +70,7 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INewsSubscriptionService, NewsSubscriptionService>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+builder.Services.AddScoped<IExcelHelper, ExcelHelper>();
 builder.Services.AddScoped<IWishListService, WishListService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<Stripe.Checkout.SessionService>();

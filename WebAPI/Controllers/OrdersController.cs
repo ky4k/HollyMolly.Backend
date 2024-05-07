@@ -149,6 +149,7 @@ public class OrdersController(
     /// <response code="400">Indicates that the request to update the order is invalid or incomplete.</response>
     /// <response code="401">Indicates that the user is not authorized to update the order.</response>
     /// <response code="403">Indicates that the user does not have permission to update the order.</response>
+    /// <remarks>Allowed order statuses: "Created", "Payment Received", "Processing", "Shipped", "Delivered", "Cancelled"</remarks>
     [Authorize(Roles = $"{DefaultRoles.Administrator},{DefaultRoles.Manager}")]
     [Route("{orderId}")]
     [HttpPut]

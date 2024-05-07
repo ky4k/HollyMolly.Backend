@@ -4,7 +4,6 @@ using HM.BLL.Models.NewPost;
 using HM.WebAPI.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using NSubstitute;
-using System.Collections.Generic;
 
 namespace WebAPI.UnitTests.Controllers;
 
