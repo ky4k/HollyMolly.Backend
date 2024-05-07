@@ -61,7 +61,7 @@ public class EmailService(
         {
             Email = email,
         };
-        string link = $"https://holly-molly.vercel.app/" +
+        string link = $"https://holly-molly.vercel.app/confirm-email" +
             $"?userId={Uri.EscapeDataString(confirmationEmail.UserId)}&token={Uri.EscapeDataString(confirmationEmail.Token)}";
         string emailBody = RegistrationTemplate.Replace("{{link}}", link);
 

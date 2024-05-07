@@ -20,6 +20,6 @@ public class ProfileUpdateDtoValidator : AbstractValidator<ProfileUpdateDto>
         RuleFor(pud => pud.DeliveryAddress)
             .MustAsync(async (customer, address, cancellation) => address == null
                 || customer.City != null && await newPostService.CheckIfAddressIsValidAsync(customer.City, address, cancellation))
-                .WithMessage("New post office does not exist on the specified address in the city.");
+                .WithMessage("There is no New Post office at the specified address in the city.");
     }
 }

@@ -33,9 +33,8 @@ public partial class NewPostService(
             {
                 return new OperationResult<IEnumerable<NewPostCity>>(true, Array.Empty<NewPostCity>());
             }
-            using var stream = response.Content.ReadAsStream(cancellationToken);
             NewPostResponse<NewPostCity>? cities = JsonSerializer
-                .Deserialize<NewPostResponse<NewPostCity>>(stream, _jsonSerializerOptions);
+                .Deserialize<NewPostResponse<NewPostCity>>(content, _jsonSerializerOptions);
             return new OperationResult<IEnumerable<NewPostCity>>(true, cities!.Results ?? []);
         }
         catch (Exception ex)
@@ -58,9 +57,8 @@ public partial class NewPostService(
             {
                 return new OperationResult<IEnumerable<NewPostWarehouse>>(true, Array.Empty<NewPostWarehouse>());
             }
-            using var stream = response.Content.ReadAsStream(cancellationToken);
             NewPostResponse<NewPostWarehouse>? cities = JsonSerializer
-                .Deserialize<NewPostResponse<NewPostWarehouse>>(stream, _jsonSerializerOptions);
+                .Deserialize<NewPostResponse<NewPostWarehouse>>(content, _jsonSerializerOptions);
             return new OperationResult<IEnumerable<NewPostWarehouse>>(true, cities!.Results ?? []);
         }
         catch (Exception ex)

@@ -32,6 +32,6 @@ public class CustomerDtoValidator : AbstractValidator<CustomerDto>
                 .WithMessage("Delivery address is required")
             .MustAsync(async (customer, address, cancellation) =>
                 await newPostService.CheckIfAddressIsValidAsync(customer.City, address, cancellation))
-                .WithMessage("New post office does not exist on the specified address in the city.");
+                .WithMessage("There is no New Post office at the specified address in the city.");
     }
 }
