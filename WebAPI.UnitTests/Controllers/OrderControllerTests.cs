@@ -26,10 +26,11 @@ public class OrderControllerTests
     [Fact]
     public async Task GetAllOrders_ShouldReturnOkResult()
     {
-        _orderService.GetOrdersAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns([]);
+        _orderService.GetOrdersAsync(Arg.Any<string>(), Arg.Any<IEnumerable<string>>(),
+            Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(), Arg.Any<CancellationToken>())
+            .Returns([]);
 
-        ActionResult<IEnumerable<OrderDto>> response = await _ordersController
-            .GetAllOrders(CancellationToken.None);
+        ActionResult<IEnumerable<OrderDto>> response = await _ordersController.GetAllOrders();
         var result = response.Result as OkObjectResult;
 
         Assert.NotNull(result);
@@ -46,7 +47,9 @@ public class OrderControllerTests
             Roles = [DefaultRoles.User]
         };
         ControllerHelper.MockUserIdentity(userDto, _ordersController);
-        _orderService.GetOrdersAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns([]);
+        _orderService.GetOrdersAsync(Arg.Any<string>(), Arg.Any<IEnumerable<string>>(),
+            Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(), Arg.Any<CancellationToken>())
+            .Returns([]);
 
         ActionResult<IEnumerable<OrderDto>> response = await _ordersController
             .GetUserOrders(CancellationToken.None);
@@ -65,7 +68,9 @@ public class OrderControllerTests
             Email = null!
         };
         ControllerHelper.MockUserIdentity(userDto, _ordersController);
-        _orderService.GetOrdersAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns([]);
+        _orderService.GetOrdersAsync(Arg.Any<string>(), Arg.Any<IEnumerable<string>>(),
+            Arg.Any<DateTimeOffset?>(), Arg.Any<DateTimeOffset?>(), Arg.Any<CancellationToken>())
+            .Returns([]);
 
         ActionResult<IEnumerable<OrderDto>> response = await _ordersController
             .GetUserOrders(CancellationToken.None);

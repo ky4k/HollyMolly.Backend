@@ -91,7 +91,7 @@ public partial class NewPostService(
         {
             OperationResult<IEnumerable<NewPostWarehouse>> resultWarehouse =
                 await GetWarehousesAsync(newPostCity.Koatuu, page, cancellationToken);
-            if (!resultWarehouse.Succeeded)
+            if (!resultWarehouse.Succeeded || !resultWarehouse.Payload!.Any())
             {
                 break;
             }

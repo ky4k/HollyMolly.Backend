@@ -19,6 +19,9 @@ public class OrdersController(
     /// <summary>
     /// Allows administrators and managers to retrieve all orders.
     /// </summary>
+    /// <param name="statuses">Optional. If set only orders with the specified statuses will be returned.</param>
+    /// <param name="fromDate">Optional. If set only orders after this date will be returned.</param>
+    /// <param name="toDate">Optional. If set only orders before this date will be returned.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Returns the list of all orders.</response>
     /// <response code="401">Indicates that the endpoint has been called by an unauthenticated user.</response>
@@ -29,9 +32,12 @@ public class OrdersController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllOrders(CancellationToken cancellationToken)
+    public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllOrders(
+        [FromQuery]IEnumerable<string>? statuses = null,
+        DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null,
+        CancellationToken cancellationToken = default)
     {
-        return Ok(await orderService.GetOrdersAsync(null, cancellationToken));
+        return Ok(await orderService.GetOrdersAsync(null, statuses, fromDate, toDate, cancellationToken));
     }
 
     /// <summary>
@@ -54,7 +60,7 @@ public class OrdersController(
         {
             return BadRequest("Token does not contain a userId");
         }
-        return Ok(await orderService.GetOrdersAsync(userId, cancellationToken));
+        return Ok(await orderService.GetOrdersAsync(userId, null, null, null, cancellationToken));
     }
 
     /// <summary>

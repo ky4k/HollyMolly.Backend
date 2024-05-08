@@ -28,7 +28,8 @@ public class OrderServiceTests
     {
         await SeedDbContextAsync();
 
-        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(null, CancellationToken.None);
+        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(
+            null, null, null, null, CancellationToken.None);
 
         Assert.Equal(2, orders.Count());
     }
@@ -39,17 +40,40 @@ public class OrderServiceTests
         await SeedDbContextAsync();
         string userId = "1234-5678-9012-3456";
 
-        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(userId, CancellationToken.None);
+        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(
+            userId, null, null, null, CancellationToken.None);
 
         Assert.Single(orders);
     }
+    [Fact]
+    public async Task GetOrdersAsync_ShouldFilterOrdersByDate()
+    {
+        await SeedDbContextAsync();
+        DateTimeOffset dateFrom = new(2024, 3, 1, 0, 0, 0, TimeSpan.Zero);
+        DateTimeOffset dateTo = new(2024, 3, 31, 0, 0, 0, TimeSpan.Zero);
 
+        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(
+            null, null, dateFrom, dateTo, CancellationToken.None);
+
+        Assert.Single(orders);
+    }
+    [Fact]
+    public async Task GetOrdersAsync_ShouldFilterOrdersByStatus()
+    {
+        await SeedDbContextAsync();
+        
+        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(
+            null, ["Delivered"], null, null, CancellationToken.None);
+
+        Assert.Single(orders);
+    }
     [Fact]
     public async Task GetOrdersAsync_ShouldReturnAllTheOrdersInformation()
     {
         await SeedDbContextAsync();
         string userId = "2234-5678-9012-3456";
-        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(userId, CancellationToken.None);
+        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(
+            userId, null, null, null, CancellationToken.None);
 
         Assert.NotNull(orders);
         Assert.Equal("FirstName", orders.First().Customer.FirstName);
@@ -61,7 +85,8 @@ public class OrderServiceTests
     {
         await SeedDbContextAsync();
         string userId = "no-user-with-such-id";
-        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(userId, CancellationToken.None);
+        IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(
+            userId, null, null, null, CancellationToken.None);
 
         Assert.Empty(orders);
     }
@@ -567,7 +592,8 @@ public class OrderServiceTests
             PhoneNumber = "1234567890"
         },
         UserId = "1234-5678-9012-3456",
-        Status = "Default",
+        OrderDate = new DateTimeOffset(2024, 3, 15, 0, 0, 0, TimeSpan.Zero),
+        Status = "Created",
         OrderRecords =
         [
             new()
@@ -593,7 +619,8 @@ public class OrderServiceTests
             PhoneNumber = "1234567890"
         },
         UserId = "2234-5678-9012-3456",
-        Status = "Default",
+        OrderDate = new DateTimeOffset(2024, 4, 15, 0, 0, 0, TimeSpan.Zero),
+        Status = "Delivered",
         OrderRecords =
         [
             new()

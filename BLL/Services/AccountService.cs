@@ -168,6 +168,7 @@ public class AccountService(
         else
         {
             user.OidcToken = null;
+            await userManager.UpdateAsync(user);
             return await GetLoginResultAsync(user);
         }
     }
