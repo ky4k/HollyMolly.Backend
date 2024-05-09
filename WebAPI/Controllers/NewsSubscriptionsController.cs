@@ -85,7 +85,7 @@ public class NewsSubscriptionsController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> SendNewsToAllSubscribers(string subject, string bodyTextHtml, CancellationToken cancellationToken)
+    public async Task<ActionResult<string>> SendNewsToAllSubscribers(string subject, string bodyTextHtml, CancellationToken cancellationToken)
     {
         IEnumerable<NewsSubscriptionDto> subscriptions = await subscriptionService.GetAllSubscriptionsAsync(cancellationToken);
         if (subscriptions.Count() > 3)

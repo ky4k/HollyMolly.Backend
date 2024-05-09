@@ -165,7 +165,7 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error has occurred while creating product {@product}", product);
+            logger.LogError(ex, "An error has occurred while creating product {@Product}", product);
             return new OperationResult<ProductDto>(false, "The product has not been created.");
         }
     }
@@ -201,7 +201,7 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while updating product {@product}", product);
+            logger.LogError(ex, "An error occurred while updating product {@Product}", product);
             return new OperationResult<ProductDto>(false, "The product has not been updated.");
         }
     }
@@ -225,8 +225,8 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding new product instance for the product with {id}: " +
-                "{@productInstance}", productId, productInstance);
+            logger.LogError(ex, "An error occurred while adding new product instance for the product with {Id}: " +
+                "{@ProductInstance}", productId, productInstance);
             return new OperationResult<ProductInstanceDto>(false, "Product instance was not added");
         }
     }
@@ -250,7 +250,7 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while updating produceInstance {@productInstance}", productInstance);
+            logger.LogError(ex, "An error occurred while updating produceInstance {@ProductInstance}", productInstance);
             return new OperationResult<ProductInstanceDto>(false, "The product instance has not been updated.");
         }
     }
@@ -293,7 +293,7 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while deleting product instance {@productInstance}", productInstance);
+            logger.LogError(ex, "An error occurred while deleting product instance {@ProductInstance}", productInstance);
             return new OperationResult(false, "Product instance was not deleted.");
         }
     }
@@ -336,7 +336,7 @@ public class ProductService(
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while uploading images" +
-                " for the productInstance {@productInstance}", productInstance);
+                " for the productInstance {@ProductInstance}", productInstance);
             return new OperationResult<ProductInstanceDto>(false, "Images was not added to the product.");
         }
     }
@@ -369,7 +369,7 @@ public class ProductService(
         catch (Exception ex)
         {
             logger.LogError(ex, "An error occurred while rearranging images for the productInstance " +
-                "{@productInstance}", productInstance);
+                "{@ProductInstance}", productInstance);
             return new OperationResult(false, "Images were not rearranged");
         }
     }
@@ -400,7 +400,7 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while removing image {@image}", image);
+            logger.LogError(ex, "An error occurred while removing image {@Image}", image);
             return new OperationResult(false, "The image was not removed.");
         }
     }
@@ -432,7 +432,7 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while deleting product {@product}", product);
+            logger.LogError(ex, "An error occurred while deleting product {@Product}", product);
             return new OperationResult(false, "The product has not been deleted.");
         }
     }
@@ -512,7 +512,7 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding feedback {@feedback} to the product {@product}",
+            logger.LogError(ex, "An error occurred while adding feedback {@Feedback} to the product {@Product}",
                 feedback, product);
             return new OperationResult(false, "The feedback has not been added.");
         }
@@ -542,7 +542,7 @@ public class ProductService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while deleting feedback {@feedback}", feedback);
+            logger.LogError(ex, "An error occurred while deleting feedback {@Feedback}", feedback);
             return new OperationResult(false, "Feedback has not been deleted.");
         }
     }

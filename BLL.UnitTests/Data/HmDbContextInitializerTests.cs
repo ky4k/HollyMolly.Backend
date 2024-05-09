@@ -26,21 +26,43 @@ public class HmDbContextInitializerTests
         _userManager = ServiceHelper.GetUserManager(_context);
         _roleManager = ServiceHelper.GetRoleManager(_context);
         _logger = Substitute.For<ILogger<HmDbContextInitializer>>();
-        _initializer = new HmDbContextInitializer(_configuration, _context, _userManager, _roleManager, _logger);
+        _initializer = new HmDbContextInitializer(_configuration, _context,
+            _userManager, _roleManager, _logger);
     }
+
     [Fact]
-    public async Task ApplyMigrationsAsync_ShouldApplyMigrations()
+    public async Task ApplyMigrationsAsync_ShouldApplyMigrationsCorrectly()
     {
-        var connection = new SqliteConnection("Data Source=InMemorySample;Mode=Memory;Cache=Shared");
-        connection.Open();
-        var options = new DbContextOptionsBuilder<HmDbContext>().UseSqlite(connection).Options;
+        // In order to reach the actual test you need to provide a connection string for your instance
+        // of the MS SQL Server. The test connection string MUST NOT be the same as the default connection
+        // because the test database will be deleted every test.
+        // To provide test connection string placed it in the following file:
+        // BLL.UnitTests\bin\Debug\net8.0\connection.json
+        // under section "ConnectionStrings":"TestConnection"
+        var configuration = new ConfigurationBuilder()
+            .AddJsonFile("connection.json", optional: true, reloadOnChange: true)
+            .Build();
+        var connection = configuration.GetConnectionString("TestConnection");
+        if (string.IsNullOrWhiteSpace(connection))
+        {
+            // Skip test if no test connection string was provided.
+            Assert.True(false);
+            return;
+        }
+
+        var options = new DbContextOptionsBuilder<HmDbContext>()
+            .UseSqlServer(connection)
+            .Options;
         var context = new HmDbContext(options);
-        var initializer = new HmDbContextInitializer(_configuration, context, _userManager, _roleManager, _logger);
+        context.Database.EnsureDeleted();
+
+        var initializer = new HmDbContextInitializer(_configuration, context,
+            _userManager, _roleManager, _logger);
 
         Exception? exception = await Record.ExceptionAsync(initializer.ApplyMigrationsAsync);
 
         Assert.Null(exception);
-        connection.Close();
+        context.Database.EnsureDeleted();
     }
     [Fact]
     public async Task ApplyMigrationsAsync_ShouldWork_WhenNoNewMigrations()
@@ -51,7 +73,8 @@ public class HmDbContextInitializerTests
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(options);
         var dbFacade = Substitute.ForPartsOf<DatabaseFacade>(dbContextMock);
         dbContextMock.Database.Returns(dbFacade);
-        var initializer = new HmDbContextInitializer(_configuration, dbContextMock, _userManager, _roleManager, _logger);
+        var initializer = new HmDbContextInitializer(_configuration, dbContextMock,
+            _userManager, _roleManager, _logger);
 
         Exception? exception = await Record.ExceptionAsync(initializer.ApplyMigrationsAsync);
 

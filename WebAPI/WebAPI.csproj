@@ -34,4 +34,8 @@
     <Folder Include="wwwroot\Images\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="WebAPI.IntegrationTests" />
+  </ItemGroup>
+    
 </Project>

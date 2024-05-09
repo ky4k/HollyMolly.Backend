@@ -99,7 +99,7 @@ public class CheckoutService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Cannot create Stripe session with options: {options}", options);
+            logger.LogError(ex, "Cannot create Stripe session with options: {Options}", options);
             return new OperationResult<string>(false, "Payment system was unable to process the payment.");
         }
     }
@@ -127,7 +127,7 @@ public class CheckoutService(
             }
             catch (Exception ex)
             {
-                logger.LogError(ex, "Order was not updated after receiving payment: {order}", order);
+                logger.LogError(ex, "Order was not updated after receiving payment: {@Order}", order);
                 return new OperationResult(false, "Payment was not processed correctly. "
                     + "Contact the support for the details.");
             }

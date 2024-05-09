@@ -51,7 +51,7 @@ builder.Services.ConfigureOptions<SwaggerGenConfigureOptions>();
 builder.Services.AddSerilog(new SerilogConfigureOptions(builder.Configuration).Configure);
 
 Stripe.StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
-    ?? builder.Configuration["Stripe:SecretKey"] ?? "";
+    ?? builder.Configuration["Stripe:SecretKey"];
 
 builder.Services.AddHttpClient();
 builder.Services.AddScoped<ReplaceAuthorizationHeaderMiddleware>();
@@ -70,10 +70,12 @@ builder.Services.AddScoped<IEmailSender, EmailSender>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INewsSubscriptionService, NewsSubscriptionService>();
 builder.Services.AddScoped<IStatisticsService, StatisticsService>();
+builder.Services.AddScoped<IExcelHelper, ExcelHelper>();
 builder.Services.AddScoped<IWishListService, WishListService>();
 builder.Services.AddScoped<ICheckoutService, CheckoutService>();
 builder.Services.AddScoped<Stripe.Checkout.SessionService>();
 builder.Services.AddScoped<ISupportService, SupportService>();
+builder.Services.AddScoped<INewPostService, NewPostService>();
 
 var app = builder.Build();
 

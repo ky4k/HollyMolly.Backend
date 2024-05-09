@@ -14,7 +14,8 @@ public class OrderService(
     ILogger<OrderService> logger
     ) : IOrderService
 {
-    public async Task<IEnumerable<OrderDto>> GetOrdersAsync(string? userId, CancellationToken cancellationToken)
+    public async Task<IEnumerable<OrderDto>> GetOrdersAsync(string? userId, IEnumerable<string>? statuses,
+        DateTimeOffset? fromDate, DateTimeOffset? toDate, CancellationToken cancellationToken)
     {
         IQueryable<Order> orders = context.Orders
             .Include(o => o.Customer)
@@ -23,6 +24,18 @@ public class OrderService(
         if (userId != null)
         {
             orders = orders.Where(o => o.UserId == userId);
+        }
+        if (statuses != null && statuses.Any())
+        {
+            orders = orders.Where(o => statuses.Contains(o.Status));
+        }
+        if (fromDate.HasValue)
+        {
+            orders = orders.Where(o => o.OrderDate > fromDate);
+        }
+        if (toDate.HasValue)
+        {
+            orders = orders.Where(o => o.OrderDate < toDate);
         }
         return await orders.Select(o => o.ToOrderDto()).ToListAsync(cancellationToken);
     }
@@ -43,8 +56,8 @@ public class OrderService(
         {
             UserId = userId,
             Customer = orderDto.Customer.ToCustomerInfo(),
-            OrderDate = DateTimeOffset.UtcNow,
             Status = "Created",
+            OrderDate = DateTimeOffset.UtcNow,
             PaymentReceived = false,
             OrderRecords = []
         };
@@ -103,7 +116,7 @@ public class OrderService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while creating order {order}", order);
+            logger.LogError(ex, "An error occurred while creating order {@Order}", order);
             return new OperationResult<OrderDto>(false, "The order has not been created.");
         }
     }
@@ -129,7 +142,7 @@ public class OrderService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while updating order {order}", order);
+            logger.LogError(ex, "An error occurred while updating order {@Order}", order);
             return new OperationResult<OrderDto>(false, "The order has not been updated.");
         }
     }

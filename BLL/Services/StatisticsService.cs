@@ -329,7 +329,8 @@ public class StatisticsService(
         }
         else
         {
-            List<Order> ordersList = await orders.ToListAsync(cancellationToken);
+            List<Order> ordersList = await orders
+                .ToListAsync(cancellationToken);
             orderStatisticDtos.Add(new OrderStatisticDto()
             {
                 NumberOfOrders = ordersList.Select(o => o.Id).Count(),
@@ -381,7 +382,7 @@ public class StatisticsService(
         {
             emails = emails.Where(e => e.SendAt <= endDateTime.Value.ToDateTime(new TimeOnly(23, 59, 59)));
         }
-        return await emails.ToListAsync(cancellationToken);
+        return await emails.AsNoTracking().ToListAsync(cancellationToken);
     }
 
     public async Task AddToProductNumberViewsAsync(int productId)
@@ -394,7 +395,7 @@ public class StatisticsService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding number of views to the statistic of the product with id {productId}", productId);
+            logger.LogError(ex, "An error occurred while adding number of views to the statistic of the product with id {ProductId}", productId);
         }
     }
 
@@ -421,7 +422,7 @@ public class StatisticsService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding adding statistics for the order {@order}", order);
+            logger.LogError(ex, "An error occurred while adding adding statistics for the order {@Order}", order);
         }
     }
 
@@ -435,7 +436,7 @@ public class StatisticsService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding number of feedbacks to the statistic of the product with id {productId}", productId);
+            logger.LogError(ex, "An error occurred while adding number of feedbacks to the statistic of the product with id {ProductId}", productId);
         }
     }
 
@@ -449,7 +450,7 @@ public class StatisticsService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while adding number of wish list addition to the statistic of the product with id {productId}", productId);
+            logger.LogError(ex, "An error occurred while adding number of wish list addition to the statistic of the product with id {ProductId}", productId);
         }
     }
 

@@ -69,7 +69,7 @@ public class UsersController(
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<ActionResult> ChangeUserRoles(string userId, string[] roles)
+    public async Task<ActionResult<UserDto>> ChangeUserRoles(string userId, string[] roles)
     {
         if (User.FindFirst(ClaimTypes.NameIdentifier)?.Value == userId
             && !roles.Contains(DefaultRoles.Administrator))

@@ -3,11 +3,11 @@ using HM.BLL.Models.Users;
 
 namespace HM.BLL.Validators;
 
-public class EmailUpdateDtoValidator : AbstractValidator<EmailUpdateDto>
+public class EmailDtoValidator : AbstractValidator<EmailDto>
 {
-    public EmailUpdateDtoValidator()
+    public EmailDtoValidator()
     {
-        RuleFor(e => e.NewEmail)
+        RuleFor(e => e.Email)
             .ApplyEmailValidationRules();
     }
 }

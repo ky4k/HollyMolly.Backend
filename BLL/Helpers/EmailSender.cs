@@ -82,7 +82,7 @@ public class EmailSender : IEmailSender
             await smtp.SendAsync(email, cancellationToken);
             await smtp.DisconnectAsync(true, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
-            _logger.LogInformation("Email has been sent: {@emailTo}, \n{emailSubject}, \n{emailBody}", email.To, email.Subject, email.HtmlBody);
+            _logger.LogInformation("Email has been sent: {@EmailTo}, \n{EmailSubject}, \n{EmailBody}", email.To, email.Subject, email.HtmlBody);
             return new OperationResult(true);
         }
         catch (Exception ex)
@@ -98,7 +98,7 @@ public class EmailSender : IEmailSender
         value ??= _configuration.GetValue<string>(key);
         if (string.IsNullOrEmpty(value))
         {
-            _logger.LogError("Cannot get the value of the {key} from the environment or " +
+            _logger.LogError("Cannot get the value of the {Key} from the environment or " +
                 "the configuration. Mail sending may not work correctly.", key);
         }
         return value!;

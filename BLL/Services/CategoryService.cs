@@ -50,7 +50,7 @@ public class CategoryService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while creating the category group {@category}", categoryGroupDto);
+            logger.LogError(ex, "An error occurred while creating the category group {@Category}", categoryGroupDto);
             return new OperationResult<CategoryGroupDto>(false, "The category group has not been created.");
         }
     }
@@ -75,7 +75,7 @@ public class CategoryService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while creating the category group {@category}", categoryGroupDto);
+            logger.LogError(ex, "An error occurred while creating the category group {@Category}", categoryGroupDto);
             return new OperationResult(false, "The category has not been created.");
         }
     }
@@ -123,7 +123,7 @@ public class CategoryService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while deleting category group {@categoryGroup}", categoryGroup);
+            logger.LogError(ex, "An error occurred while deleting category group {@CategoryGroup}", categoryGroup);
             return new OperationResult(false, "The category has not been deleted.");
         }
     }
@@ -170,7 +170,7 @@ public class CategoryService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while creating the category {@category}", categoryDto);
+            logger.LogError(ex, "An error occurred while creating the category {@Category}", categoryDto);
             return new OperationResult<CategoryDto>(false, "The category has not been created.");
         }
     }
@@ -207,7 +207,7 @@ public class CategoryService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while updating the category {oldName} to {newName}.",
+            logger.LogError(ex, "An error occurred while updating the category {OldName} to {NewName}.",
                 category.Name, categoryDto.CategoryName);
             return new OperationResult(false, "Category has not been updated.");
         }
@@ -264,7 +264,7 @@ public class CategoryService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while deleting category {@category}", category);
+            logger.LogError(ex, "An error occurred while deleting category {@Category}", category);
             return new OperationResult(false, "The category has not been deleted.");
         }
     }
@@ -289,7 +289,7 @@ public class CategoryService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while uploading images for the category {@category}", category);
+            logger.LogError(ex, "An error occurred while uploading images for the category {@Category}", category);
             return new OperationResult(false, "Image has not been added.");
         }
     }
@@ -313,7 +313,7 @@ public class CategoryService(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "An error occurred while uploading images for the category group {@categoryGroup}", categoryGroup);
+            logger.LogError(ex, "An error occurred while uploading images for the category group {@CategoryGroup}", categoryGroup);
             return new OperationResult(false, "Image has not been added.");
         }
     }

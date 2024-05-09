@@ -24,6 +24,7 @@ public class AccountService(
     ILogger<AccountService> logger
     ) : IAccountService
 {
+    private const string UserNotExist = "User with such an id does not exist.";
     public async Task<OperationResult<RegistrationResponse>> RegisterUserAsync(RegistrationRequest request)
     {
         if (await userManager.FindByEmailAsync(request.Email.ToLower()) != null)
@@ -91,7 +92,7 @@ public class AccountService(
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return new OperationResult<ConfirmationEmailDto>(false, "User with such an id does not exist.");
+            return new OperationResult<ConfirmationEmailDto>(false, UserNotExist);
         }
         try
         {
@@ -115,7 +116,7 @@ public class AccountService(
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return new OperationResult<ConfirmationEmailDto>(false, "User with such an id does not exist.");
+            return new OperationResult<ConfirmationEmailDto>(false, UserNotExist);
         }
         IdentityResult result = await userManager.ConfirmEmailAsync(user, confirmationEmailKey);
         return new OperationResult(result.Succeeded, string.Join(" ", result.Errors));
@@ -167,6 +168,7 @@ public class AccountService(
         else
         {
             user.OidcToken = null;
+            await userManager.UpdateAsync(user);
             return await GetLoginResultAsync(user);
         }
     }
@@ -285,7 +287,7 @@ public class AccountService(
             User? user = await userManager.FindByNameAsync(userName!);
             if (user == null)
             {
-                return new OperationResult<LoginResponse>(false, "User does not exist");
+                return new OperationResult<LoginResponse>(false, UserNotExist);
             }
             context.Tokens.Remove(oldToken);
             await context.SaveChangesAsync();
@@ -303,7 +305,7 @@ public class AccountService(
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return new OperationResult(false, "User with such an id does not exist.");
+            return new OperationResult(false, UserNotExist);
         }
         user.InvalidateTokenBefore = DateTimeOffset.UtcNow.Ticks;
         await userManager.UpdateAsync(user);
@@ -315,7 +317,7 @@ public class AccountService(
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return new OperationResult<UserDto>(false, "User with such an id does not exist.");
+            return new OperationResult<UserDto>(false, UserNotExist);
         }
 
         user.FirstName = profile.FirstName;
@@ -333,7 +335,7 @@ public class AccountService(
         }
         else
         {
-            logger.LogError("User has not been updated: {errors}",
+            logger.LogError("User has not been updated: {Errors}",
                 string.Join(' ', result.Errors.Select(e => e.Description)));
             return new OperationResult<UserDto>(false, "An error occurred while updating user");
         }
@@ -344,7 +346,7 @@ public class AccountService(
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return new OperationResult(false, "No user with such an id exist.");
+            return new OperationResult(false, UserNotExist);
         }
         if (user.IsOidcUser)
         {
@@ -367,7 +369,7 @@ public class AccountService(
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return new OperationResult<ResetPasswordTokenDto>(false, "User with such an id does not exist.");
+            return new OperationResult<ResetPasswordTokenDto>(false, UserNotExist);
         }
         IdentityResult result = await userManager.ChangePasswordAsync(
             user, passwords.OldPassword, passwords.NewPassword);
@@ -410,7 +412,7 @@ public class AccountService(
         catch (Exception ex)
         {
             logger.LogError(ex, "An exception occurred while creating password reset token for user " +
-                "with Id {userId}", user.Id);
+                "with Id {UserId}", user.Id);
             return new OperationResult<ResetPasswordTokenDto>(false, "Reset token was not created.");
         }
     }
@@ -420,7 +422,7 @@ public class AccountService(
         User? user = await userManager.FindByIdAsync(userId);
         if (user == null)
         {
-            return new OperationResult<UserDto>(false, "No user with such an id exist.");
+            return new OperationResult<UserDto>(false, UserNotExist);
         }
         if (!await userManager.VerifyUserTokenAsync(user, userManager.Options.Tokens.PasswordResetTokenProvider,
             UserManager<User>.ResetPasswordTokenPurpose, resetPassword.ResetToken))

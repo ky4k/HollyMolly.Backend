@@ -13,14 +13,12 @@ public class TokenRevocationMiddleware(HmDbContext dbContext) : IMiddleware
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         if (context.GetEndpoint()?.Metadata.GetMetadata<AuthorizeAttribute>() != null
-            && (context.User.Identity != null && context.User.Identity.IsAuthenticated))
+            && context.User.Identity!.IsAuthenticated)
         {
-            string? userId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            long? invalidBefore = (await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId))
-                ?.InvalidateTokenBefore;
-            if (userId == null
-                || !long.TryParse(context.User.FindFirst("IssuedAt")?.Value, out long issuedAt)
-                || (invalidBefore != null && issuedAt < invalidBefore))
+            string userId = context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            long? invalidBefore = (await dbContext.Users.FirstAsync(u => u.Id == userId)).InvalidateTokenBefore;
+            long issuedAt = long.Parse(context.User.FindFirst("IssuedAt")!.Value);
+            if (invalidBefore != null && issuedAt < invalidBefore)
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return;

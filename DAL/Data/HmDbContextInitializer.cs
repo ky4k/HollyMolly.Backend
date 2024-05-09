@@ -71,7 +71,7 @@ public class HmDbContextInitializer(
             foreach (string role in rolesToAdd)
             {
                 await roleManager.CreateAsync(new Role(role));
-                logger.LogInformation("Seeding the role {role}", role);
+                logger.LogInformation("Seeding the role {Role}", role);
             }
             await context.SaveChangesAsync();
         }
@@ -90,14 +90,14 @@ public class HmDbContextInitializer(
         }
         if (await userManager.FindByEmailAsync(adminEmail) != null)
         {
-            logger.LogInformation("User with the email '{adminEmail}' already exists.", adminEmail);
+            logger.LogInformation("User with the email '{AdminEmail}' already exists.", adminEmail);
             return;
         }
 
         var administrator = new User { UserName = adminEmail, Email = adminEmail };
         await userManager.CreateAsync(administrator, adminPassword);
         await userManager.AddToRoleAsync(administrator, DefaultRoles.Administrator);
-        logger.LogInformation("Default admin '{adminEmail}' has been seeded.", adminEmail);
+        logger.LogInformation("Default admin '{AdminEmail}' has been seeded.", adminEmail);
     }
 
     private string? GetConfigurationValue(string key)

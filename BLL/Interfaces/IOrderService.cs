@@ -5,7 +5,8 @@ namespace HM.BLL.Interfaces;
 
 public interface IOrderService
 {
-    Task<IEnumerable<OrderDto>> GetOrdersAsync(string? userId, CancellationToken cancellationToken);
+    Task<IEnumerable<OrderDto>> GetOrdersAsync(string? userId, IEnumerable<string>? statuses,
+        DateTimeOffset? fromDate, DateTimeOffset? toDate, CancellationToken cancellationToken);
     Task<OrderDto?> GetOrderByIdAsync(int orderId, CancellationToken cancellationToken);
     Task<OperationResult<OrderDto>> CreateOrderAsync(OrderCreateDto orderDto, string userId,
         CancellationToken cancellationToken);
