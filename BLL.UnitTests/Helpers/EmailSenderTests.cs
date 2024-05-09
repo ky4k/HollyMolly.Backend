@@ -7,7 +7,6 @@ using HM.DAL.Data;
 using HM.DAL.Entities;
 using MailKit.Net.Smtp;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using NSubstitute;
@@ -20,7 +19,7 @@ public class EmailSenderTests
     private readonly ISmtpClientFactory _smtpClientFactory;
     private readonly ISmtpClient _smtpClient;
     private readonly HmDbContext _context;
-    private readonly IConfiguration _configuration;
+    private readonly IConfigurationHelper _configurationHelper;
     private readonly ILogger<EmailSender> _logger;
     private readonly EmailSender _emailSender;
     public EmailSenderTests()
@@ -39,9 +38,9 @@ public class EmailSenderTests
         _smtpClientFactory.CreateClient().Returns(_smtpClient);
 
         _context = ServiceHelper.GetTestDbContext();
-        _configuration = Substitute.For<IConfiguration>();
+        _configurationHelper = Substitute.For<IConfigurationHelper>();
         _logger = Substitute.For<ILogger<EmailSender>>();
-        _emailSender = new EmailSender(_smtpClientFactory, _context, _configuration, _logger);
+        _emailSender = new EmailSender(_smtpClientFactory, _context, _configurationHelper, _logger);
     }
 
     [Fact]
@@ -82,7 +81,7 @@ public class EmailSenderTests
     [Fact]
     public async Task SendEmailAsync_ShouldReadConfigurations()
     {
-        _configuration.GetValue<string>(Arg.Any<string>()).Returns("TestConfiguration");
+        _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns("TestConfiguration");
         UserMailInfo recipient = new()
         {
             Email = "test@example.com",
@@ -95,12 +94,12 @@ public class EmailSenderTests
 
         Assert.NotNull(result);
         Assert.True(result.Succeeded);
-        _configuration.Received().GetValue<string>(Arg.Any<string>());
+        _configurationHelper.Received().GetConfigurationValue(Arg.Any<string>());
     }
     [Fact]
     public async Task SendEmailAsync_ShouldLogErrorWhenNoConfigurationsWereProvided()
     {
-        _configuration.GetValue<string>(Arg.Any<string>()).Returns((string)null!);
+        _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns((string)null!);
         UserMailInfo recipient = new()
         {
             Email = "test@example.com",
@@ -140,7 +139,7 @@ public class EmailSenderTests
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
         dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync<InvalidOperationException>();
-        var sender = new EmailSender(_smtpClientFactory, dbContextMock, _configuration, _logger);
+        var sender = new EmailSender(_smtpClientFactory, dbContextMock, _configurationHelper, _logger);
         UserMailInfo recipient = new()
         {
             Email = "test@example.com",

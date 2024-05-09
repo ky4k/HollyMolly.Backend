@@ -2,13 +2,11 @@
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace HM.DAL.Data;
 
 public class HmDbContextInitializer(
-    IConfiguration configuration,
     HmDbContext context,
     UserManager<User> userManager,
     RoleManager<Role> roleManager,
@@ -41,12 +39,12 @@ public class HmDbContextInitializer(
         }
     }
 
-    public async Task SeedAsync()
+    public async Task SeedAsync(string? adminEmail, string? adminPassword)
     {
         try
         {
             await SeedDefaultRolesAsync();
-            await SeedDefaultAdminAsync();
+            await SeedDefaultAdminAsync(adminEmail, adminPassword);
         }
         catch (Exception ex)
         {
@@ -77,10 +75,8 @@ public class HmDbContextInitializer(
         }
     }
 
-    private async Task SeedDefaultAdminAsync()
+    private async Task SeedDefaultAdminAsync(string? adminEmail, string? adminPassword)
     {
-        string? adminEmail = GetConfigurationValue("DefaultAdmin:Email");
-        string? adminPassword = GetConfigurationValue("DefaultAdmin:Password");
         if (string.IsNullOrEmpty(adminEmail)
             || string.IsNullOrEmpty(adminPassword))
         {
@@ -98,15 +94,5 @@ public class HmDbContextInitializer(
         await userManager.CreateAsync(administrator, adminPassword);
         await userManager.AddToRoleAsync(administrator, DefaultRoles.Administrator);
         logger.LogInformation("Default admin '{AdminEmail}' has been seeded.", adminEmail);
-    }
-
-    private string? GetConfigurationValue(string key)
-    {
-        string? value = Environment.GetEnvironmentVariable(key);
-        if (string.IsNullOrEmpty(value))
-        {
-            value = configuration[key];
-        }
-        return value;
     }
 }

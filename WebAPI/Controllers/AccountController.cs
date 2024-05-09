@@ -3,6 +3,7 @@ using HM.BLL.Models.Common;
 using HM.BLL.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
 
 namespace HM.WebAPI.Controllers;
@@ -13,9 +14,11 @@ public class AccountController(
     IAccountService accountService,
     IGoogleOAuthService googleOAuthService,
     IEmailService emailService,
-    IUserService userService
+    IUserService userService,
+    IConfigurationHelper configurationHelper
     ) : ControllerBase
 {
+    private readonly string _mainPage = configurationHelper.GetConfigurationValue("FrontendUrls:PaymentPage") ?? "";
     /// <summary>
     /// Allows to register a new user.
     /// </summary>
@@ -129,9 +132,16 @@ public class AccountController(
         {
             return BadRequest(result.Message);
         }
-        string? oidcToken = (await accountService.GetOidcTokenAsync(email)).Payload;
-
-        string redirectToFrontendUrl = $"https://holly-molly.vercel.app/?token={oidcToken}";
+        OperationResult<string> tokenResult = await accountService.GetOidcTokenAsync(email);
+        if (tokenResult.Payload == null)
+        {
+            return BadRequest(result.Message);
+        }
+        Dictionary<string, string?> parameters = new()
+        {
+            { "token", Uri.EscapeDataString(tokenResult.Payload) }
+        };
+        string redirectToFrontendUrl = QueryHelpers.AddQueryString(_mainPage, parameters);
         return Redirect(redirectToFrontendUrl);
     }
 

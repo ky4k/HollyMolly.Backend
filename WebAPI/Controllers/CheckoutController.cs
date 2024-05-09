@@ -2,6 +2,7 @@
 using HM.BLL.Models.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Security.Claims;
 
 namespace HM.WebAPI.Controllers;
@@ -9,9 +10,11 @@ namespace HM.WebAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class CheckoutController(
-    ICheckoutService checkoutService
+    ICheckoutService checkoutService,
+    IConfigurationHelper configurationHelper
     ) : ControllerBase
 {
+    private readonly string _paymentPage = configurationHelper.GetConfigurationValue("FrontendUrls:MainPage") ?? "";
     /// <summary>
     /// Allows registered users to get link to the Stripe payment page.
     /// </summary>
@@ -57,8 +60,11 @@ public class CheckoutController(
         {
             return BadRequest(result.Message);
         }
-        string redirectToFrontendUrl = $"https://holly-molly.vercel.app/?paymentSucceeded=true";
-        return Redirect(redirectToFrontendUrl);
+        Dictionary<string, string?> parameters = new()
+        {
+            { "paymentSucceeded", "true" }
+        };
+        return Redirect(QueryHelpers.AddQueryString(_paymentPage, parameters));
     }
 
     /// <summary>
@@ -70,7 +76,10 @@ public class CheckoutController(
     [HttpGet]
     public ActionResult CheckoutFailed()
     {
-        string redirectToFrontendUrl = $"https://holly-molly.vercel.app/?paymentSucceeded=false";
-        return Redirect(redirectToFrontendUrl);
+        Dictionary<string, string?> parameters = new()
+        {
+            { "paymentSucceeded", "false" }
+        };
+        return Redirect(QueryHelpers.AddQueryString(_paymentPage, parameters));
     }
 }

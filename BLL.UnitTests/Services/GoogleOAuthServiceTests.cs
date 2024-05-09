@@ -1,6 +1,6 @@
-﻿using HM.BLL.Services;
+﻿using HM.BLL.Interfaces;
+using HM.BLL.Services;
 using HM.BLL.UnitTests.TestHelpers;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using System.Net;
@@ -9,7 +9,7 @@ namespace HM.BLL.UnitTests.Services;
 
 public class GoogleOAuthServiceTests
 {
-    private readonly IConfiguration _configuration;
+    private readonly IConfigurationHelper _configurationHelper;
     private readonly MockHttpMessageHandler _httpMessageHandler;
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<GoogleOAuthService> _logger;
@@ -17,25 +17,15 @@ public class GoogleOAuthServiceTests
 
     public GoogleOAuthServiceTests()
     {
-        _configuration = Substitute.For<IConfiguration>();
-        _configuration["GoogleOAuth:token_uri"].Returns("https://test.com/token");
+        _configurationHelper = Substitute.For<IConfigurationHelper>();
+        _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns("https://test.com/token");
         _httpMessageHandler = new(HttpStatusCode.OK);
         _httpClientFactory = Substitute.For<IHttpClientFactory>();
         _httpClientFactory.CreateClient().Returns(new HttpClient(_httpMessageHandler));
         _logger = Substitute.For<ILogger<GoogleOAuthService>>();
-        _googleOAuthService = new GoogleOAuthService(_configuration, _httpClientFactory, _logger);
+        _googleOAuthService = new GoogleOAuthService(_configurationHelper, _httpClientFactory, _logger);
     }
 
-    [Fact]
-    public void GoogleOAuthServiceConstructor_ShouldLogErrorWhenNoConfigurationsWereProvided()
-    {
-        _configuration["GoogleOAuth:client_secret"].Returns((string)null!);
-
-        var service = new GoogleOAuthService(_configuration, _httpClientFactory, _logger);
-
-        Assert.NotNull(service);
-        _logger.ReceivedWithAnyArgs().LogError(new Exception(), "");
-    }
     [Fact]
     public void GenerateOAuthRequestUrl_ShouldReturnUrlWithAllRequiredParameters()
     {

@@ -12,11 +12,14 @@ namespace WebAPI.UnitTests.Controllers;
 public class CheckoutControllerTests
 {
     private readonly ICheckoutService _checkoutService;
+    private readonly IConfigurationHelper _configurationHelper;
     private readonly CheckoutController _checkoutController;
     public CheckoutControllerTests()
     {
         _checkoutService = Substitute.For<ICheckoutService>();
-        _checkoutController = new CheckoutController(_checkoutService);
+        _configurationHelper = Substitute.For<IConfigurationHelper>();
+        _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns((string?)null);
+        _checkoutController = new CheckoutController(_checkoutService, _configurationHelper);
     }
     [Fact]
     public async Task CheckoutOrder_ShouldReturnOkResult_WhenSucceeded()
@@ -86,6 +89,20 @@ public class CheckoutControllerTests
         ActionResult response = await _checkoutController.CheckoutSucceeded("session1");
 
         Assert.IsType<RedirectResult>(response);
+    }
+    [Fact]
+    public async Task CheckoutSucceeded_ShouldUseConfiguratedUrlToRedirect()
+    {
+        string testUrl = "http://test.example";
+        _checkoutService.CheckoutSuccessAsync(Arg.Any<string>()).Returns(new OperationResult(true));
+        _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns(testUrl);
+        var checkoutController = new CheckoutController(_checkoutService, _configurationHelper);
+
+        ActionResult response = await checkoutController.CheckoutSucceeded("session1");
+        var result = response as RedirectResult;
+
+        Assert.NotNull(result);
+        Assert.Contains(testUrl, result.Url);
     }
     [Fact]
     public async Task CheckoutSucceeded_ShouldReturnBadResult_WhenCheckoutHasNotBeenProcessedCorrectly()

@@ -33,7 +33,7 @@ public class OrdersController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IEnumerable<OrderDto>>> GetAllOrders(
-        [FromQuery]IEnumerable<string>? statuses = null,
+        [FromQuery] IEnumerable<string>? statuses = null,
         DateTimeOffset? fromDate = null, DateTimeOffset? toDate = null,
         CancellationToken cancellationToken = default)
     {

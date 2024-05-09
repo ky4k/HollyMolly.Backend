@@ -7,7 +7,6 @@ using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,21 +19,21 @@ public class AccountService(
     HmDbContext context,
     UserManager<User> userManager,
     JwtSecurityTokenHandler jwtSecurityTokenHandler,
-    IConfiguration configuration,
+    IConfigurationHelper configurationHelper,
     ILogger<AccountService> logger
     ) : IAccountService
 {
     private const string UserNotExist = "User with such an id does not exist.";
     public async Task<OperationResult<RegistrationResponse>> RegisterUserAsync(RegistrationRequest request)
     {
-        if (await userManager.FindByEmailAsync(request.Email.ToLower()) != null)
+        if (await userManager.FindByEmailAsync(request.Email) != null)
         {
-            return new OperationResult<RegistrationResponse>(false, "A user with such an email already exist.");
+            return new OperationResult<RegistrationResponse>(false, "User with such an email already exist.");
         }
         User user = new()
         {
-            UserName = request.Email.ToLower(),
-            Email = request.Email.ToLower()
+            UserName = request.Email,
+            Email = request.Email
         };
         try
         {
@@ -196,7 +195,6 @@ public class AccountService(
             logger.LogError(ex, "An error occurred while setting the JWT token.");
             return new OperationResult<LoginResponse>(false, "Cannot create JWT token.");
         }
-
         LoginResponse response = new()
         {
             UserId = user.Id,
@@ -205,7 +203,6 @@ public class AccountService(
             RefreshToken = refreshToken,
             Roles = roles.ToList()
         };
-
         return new OperationResult<LoginResponse>(true, response);
     }
 
@@ -223,18 +220,16 @@ public class AccountService(
             claims.Add(new Claim(ClaimTypes.Role, role));
         }
 
-        double expiresIn = double.TryParse(
-            configuration?["JwtSettings:ExpirationTimeInMinutes"], out double exp) ? exp : 60.0;
+        double expiresIn = double.TryParse(configurationHelper.GetConfigurationValue(
+            "JwtSettings:ExpirationTimeInMinutes"), out double exp) ? exp : 60.0;
 
-        byte[] key = Encoding.UTF8.GetBytes(
-            Environment.GetEnvironmentVariable("JwtSettings:SecurityKey")
-            ?? configuration?["JwtSettings:SecurityKey"]
-            ?? "defaultKey_that_is_32_characters");
+        byte[] key = Encoding.UTF8.GetBytes(configurationHelper.GetConfigurationValue(
+            "JwtSettings:SecurityKey") ?? "defaultKey_that_is_32_characters");
         var secret = new SymmetricSecurityKey(key);
 
         return new JwtSecurityToken(
-            issuer: configuration?["JwtSettings:Issuer"] ?? "HollyMolly",
-            audience: configuration?["JwtSettings:Audience"] ?? "*",
+            issuer: configurationHelper.GetConfigurationValue("JwtSettings:Issuer") ?? "HollyMolly",
+            audience: configurationHelper.GetConfigurationValue("JwtSettings:Audience") ?? "*",
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(expiresIn),
             signingCredentials: new SigningCredentials(secret, SecurityAlgorithms.HmacSha256));
@@ -247,18 +242,16 @@ public class AccountService(
             new(ClaimTypes.Name, userName)
         };
 
-        double expiresIn = double.TryParse(
-            configuration?["JwtSettings:RefreshTokenValidForMinutes"], out double exp) ? exp : 120.0;
+        double expiresIn = double.TryParse(configurationHelper.GetConfigurationValue(
+            "JwtSettings:RefreshTokenValidForMinutes"), out double exp) ? exp : 120.0;
 
-        byte[] key = Encoding.UTF8.GetBytes(
-            Environment.GetEnvironmentVariable("JwtSettings:SecurityKey")
-            ?? configuration?["JwtSettings:SecurityKey"]
-            ?? "defaultKey_that_is_32_characters");
+        byte[] key = Encoding.UTF8.GetBytes(configurationHelper.GetConfigurationValue(
+            "JwtSettings:SecurityKey") ?? "defaultKey_that_is_32_characters");
         var secret = new SymmetricSecurityKey(key);
 
         return new JwtSecurityToken(
-            issuer: configuration?["JwtSettings:Issuer"] ?? "HollyMolly",
-            audience: configuration?["JwtSettings:Audience"] ?? "*",
+            issuer: configurationHelper.GetConfigurationValue("JwtSettings:Issuer") ?? "HollyMolly",
+            audience: configurationHelper.GetConfigurationValue("JwtSettings:Audience") ?? "*",
             claims: claims,
             expires: DateTime.UtcNow.AddMinutes(expiresIn),
             signingCredentials: new SigningCredentials(secret, SecurityAlgorithms.HmacSha256));
@@ -319,14 +312,7 @@ public class AccountService(
         {
             return new OperationResult<UserDto>(false, UserNotExist);
         }
-
-        user.FirstName = profile.FirstName;
-        user.LastName = profile.LastName;
-        user.PhoneNumber = profile.PhoneNumber;
-        user.DateOfBirth = profile.DateOfBirth;
-        user.City = profile.City;
-        user.DeliveryAddress = profile.DeliveryAddress;
-
+        UpdateUserProperties(user, profile);
         IdentityResult result = await userManager.UpdateAsync(user);
         if (result.Succeeded)
         {
@@ -340,7 +326,15 @@ public class AccountService(
             return new OperationResult<UserDto>(false, "An error occurred while updating user");
         }
     }
-
+    private static void UpdateUserProperties(User user, ProfileUpdateDto profile)
+    {
+        user.FirstName = profile.FirstName;
+        user.LastName = profile.LastName;
+        user.PhoneNumber = profile.PhoneNumber;
+        user.DateOfBirth = profile.DateOfBirth;
+        user.City = profile.City;
+        user.DeliveryAddress = profile.DeliveryAddress;
+    }
     public async Task<OperationResult> UpdateEmailAsync(string userId, string newEmail)
     {
         User? user = await userManager.FindByIdAsync(userId);

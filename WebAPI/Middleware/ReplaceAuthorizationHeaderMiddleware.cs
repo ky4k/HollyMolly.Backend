@@ -17,7 +17,6 @@ public class ReplaceAuthorizationHeaderMiddleware : IMiddleware
                 context.Request.Headers.Authorization = bearer;
             }
         }
-
         await next(context);
     }
 }

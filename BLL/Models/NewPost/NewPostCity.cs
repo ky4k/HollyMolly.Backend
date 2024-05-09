@@ -2,7 +2,7 @@
 
 public class NewPostCity
 {
-    public string Id { get; set; }
-    public string Koatuu { get; set; }
-    public string Text { get; set; }
+    public string Id { get; set; } = null!;
+    public string Koatuu { get; set; } = null!;
+    public string Text { get; set; } = null!;
 }

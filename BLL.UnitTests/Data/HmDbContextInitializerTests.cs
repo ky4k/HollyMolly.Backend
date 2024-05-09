@@ -13,7 +13,6 @@ namespace HM.BLL.UnitTests.Data;
 
 public class HmDbContextInitializerTests
 {
-    private readonly IConfiguration _configuration;
     private readonly ILogger<HmDbContextInitializer> _logger;
     private readonly HmDbContext _context;
     private readonly UserManager<User> _userManager;
@@ -21,13 +20,11 @@ public class HmDbContextInitializerTests
     private readonly HmDbContextInitializer _initializer;
     public HmDbContextInitializerTests()
     {
-        _configuration = Substitute.For<IConfiguration>();
         _context = ServiceHelper.GetTestDbContext();
         _userManager = ServiceHelper.GetUserManager(_context);
         _roleManager = ServiceHelper.GetRoleManager(_context);
         _logger = Substitute.For<ILogger<HmDbContextInitializer>>();
-        _initializer = new HmDbContextInitializer(_configuration, _context,
-            _userManager, _roleManager, _logger);
+        _initializer = new HmDbContextInitializer(_context, _userManager, _roleManager, _logger);
     }
 
     [Fact]
@@ -56,8 +53,7 @@ public class HmDbContextInitializerTests
         var context = new HmDbContext(options);
         context.Database.EnsureDeleted();
 
-        var initializer = new HmDbContextInitializer(_configuration, context,
-            _userManager, _roleManager, _logger);
+        var initializer = new HmDbContextInitializer(context, _userManager, _roleManager, _logger);
 
         Exception? exception = await Record.ExceptionAsync(initializer.ApplyMigrationsAsync);
 
@@ -73,8 +69,7 @@ public class HmDbContextInitializerTests
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(options);
         var dbFacade = Substitute.ForPartsOf<DatabaseFacade>(dbContextMock);
         dbContextMock.Database.Returns(dbFacade);
-        var initializer = new HmDbContextInitializer(_configuration, dbContextMock,
-            _userManager, _roleManager, _logger);
+        var initializer = new HmDbContextInitializer(dbContextMock, _userManager, _roleManager, _logger);
 
         Exception? exception = await Record.ExceptionAsync(initializer.ApplyMigrationsAsync);
 
@@ -94,7 +89,7 @@ public class HmDbContextInitializerTests
     {
         int numberBefore = await _context.Roles.CountAsync();
 
-        await _initializer.SeedAsync();
+        await _initializer.SeedAsync("", "");
         int numberAfter = await _context.Roles.CountAsync();
 
         Assert.Equal(0, numberBefore);
@@ -105,9 +100,9 @@ public class HmDbContextInitializerTests
     {
         int numberBefore = await _context.Roles.CountAsync();
 
-        await _initializer.SeedAsync();
+        await _initializer.SeedAsync("", "");
         int numberAfter1 = await _context.Roles.CountAsync();
-        await _initializer.SeedAsync();
+        await _initializer.SeedAsync("", "");
         int numberAfter2 = await _context.Roles.CountAsync();
 
         Assert.Equal(0, numberBefore);
@@ -118,11 +113,11 @@ public class HmDbContextInitializerTests
     public async Task SeedAsync_ShouldSeedDefaultAdmin_WhenTheyNotExist()
     {
         int numberBefore = await _context.Users.CountAsync();
-        _configuration["DefaultAdmin:Email"] = "default@example.com";
-        _configuration["DefaultAdmin:Password"] = "defaultPassword";
+        string adminEmail = "default@example.com";
+        string adminPassword = "defaultPassword";
         _userManager.AddToRoleAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(IdentityResult.Success);
 
-        await _initializer.SeedAsync();
+        await _initializer.SeedAsync(adminEmail, adminPassword);
         int numberAfter = await _context.Users.CountAsync();
 
         Assert.Equal(0, numberBefore);
@@ -136,11 +131,11 @@ public class HmDbContextInitializerTests
             Email = "default@example.com",
             UserName = "default@example.com"
         });
-        _configuration["DefaultAdmin:Email"] = "default@example.com";
-        _configuration["DefaultAdmin:Password"] = "defaultPassword";
+        string adminEmail = "default@example.com";
+        string adminPassword = "defaultPassword";
         int numberBefore = await _context.Users.CountAsync();
 
-        await _initializer.SeedAsync();
+        await _initializer.SeedAsync(adminEmail, adminPassword);
         int numberAfter = await _context.Users.CountAsync();
 
         Assert.Equal(1, numberBefore);
@@ -149,9 +144,10 @@ public class HmDbContextInitializerTests
     [Fact]
     public async Task SeedAsync_ShouldNotSeedDefaultAdmin_WhenEmailNotProvided()
     {
-        _configuration["DefaultAdmin:Password"] = "defaultPassword";
+        string adminEmail = null!;
+        string adminPassword = "defaultPassword";
 
-        await _initializer.SeedAsync();
+        await _initializer.SeedAsync(adminEmail, adminPassword);
         int numberAfter = await _context.Users.CountAsync();
 
         Assert.Equal(0, numberAfter);
@@ -159,9 +155,10 @@ public class HmDbContextInitializerTests
     [Fact]
     public async Task SeedAsync_ShouldNotSeedDefaultAdmin_WhenPasswordNotProvided()
     {
-        _configuration["DefaultAdmin:Email"] = "default@example.com";
+        string adminEmail = "default@example.com";
+        string adminPassword = null!;
 
-        await _initializer.SeedAsync();
+        await _initializer.SeedAsync(adminEmail, adminPassword);
         int numberAfter = await _context.Users.CountAsync();
 
         Assert.Equal(0, numberAfter);
@@ -169,10 +166,11 @@ public class HmDbContextInitializerTests
     [Fact]
     public async Task SeedAsync_ShouldHandleErrors()
     {
-        _configuration["DefaultAdmin:Email"] = "default@example.com";
-        _configuration["DefaultAdmin:Password"] = "defaultPassword";
+        string adminEmail = "default@example.com";
+        string adminPassword = "defaultPassword";
 
-        Exception? exception = await Record.ExceptionAsync(_initializer.SeedAsync);
+        Exception? exception = await Record.ExceptionAsync(
+            async () => await _initializer.SeedAsync(adminEmail, adminPassword));
 
         Assert.Null(exception);
     }

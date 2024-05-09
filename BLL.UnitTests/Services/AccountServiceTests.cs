@@ -1,4 +1,5 @@
-﻿using HM.BLL.Models.Common;
+﻿using HM.BLL.Interfaces;
+using HM.BLL.Models.Common;
 using HM.BLL.Models.Users;
 using HM.BLL.Services;
 using HM.BLL.UnitTests.TestHelpers;
@@ -6,7 +7,6 @@ using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using NSubstitute;
@@ -22,7 +22,7 @@ public class AccountServiceTests
     private readonly JwtSecurityTokenHandler _jwtSecurityTokenHandler;
     private readonly HmDbContext _context;
     private readonly UserManager<User> _userManager;
-    private readonly IConfiguration _configuration;
+    private readonly IConfigurationHelper _configurationHelper;
     private readonly ILogger<AccountService> _logger;
     private readonly AccountService _accountService;
     public AccountServiceTests()
@@ -30,10 +30,10 @@ public class AccountServiceTests
         _jwtSecurityTokenHandler = Substitute.ForPartsOf<JwtSecurityTokenHandler>();
         _context = ServiceHelper.GetTestDbContext();
         _userManager = ServiceHelper.GetUserManager(_context);
-        _configuration = Substitute.For<IConfiguration>();
+        _configurationHelper = Substitute.For<IConfigurationHelper>();
         _logger = Substitute.For<ILogger<AccountService>>();
         _accountService = new AccountService(_context, _userManager, _jwtSecurityTokenHandler,
-            _configuration, _logger);
+            _configurationHelper, _logger);
     }
 
     [Fact]
@@ -205,7 +205,7 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(true);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
         LoginRequest request = new()
         {
             Email = "user1@example.com",
@@ -224,7 +224,7 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(true);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
         LoginRequest request = new()
         {
             Email = "nonExistingUser@example.com",
@@ -242,7 +242,7 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(false);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
         LoginRequest request = new()
         {
             Email = "user1@example.com",
@@ -260,7 +260,8 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(true);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        var service = new AccountService(_context, _userManager, _jwtSecurityTokenHandler, null!, _logger);
+        _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns((string?)null);
+        var service = new AccountService(_context, _userManager, _jwtSecurityTokenHandler, _configurationHelper, _logger);
         LoginRequest request = new()
         {
             Email = "user1@example.com",
@@ -278,8 +279,8 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(true);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:ExpirationTimeInMinutes"] = "UseDefault";
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:ExpirationTimeInMinutes").Returns("UseDefault");
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
 
         LoginRequest request = new()
         {
@@ -298,9 +299,8 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(true);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        string? tempVariable = Environment.GetEnvironmentVariable("JwtSettings:SecurityKey");
-        Environment.SetEnvironmentVariable("JwtSettings:SecurityKey", "LongEnoughTestSecurityKeyForTheApplication");
-        _configuration["JwtSettings:ExpirationTimeInMinutes"] = "UseDefault";
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns("LongEnoughTestSecurityKeyForTheApplication");
+        _configurationHelper.GetConfigurationValue("JwtSettings:ExpirationTimeInMinutes").Returns("UseDefault");
 
         LoginRequest request = new()
         {
@@ -312,8 +312,6 @@ public class AccountServiceTests
 
         Assert.NotNull(result);
         Assert.True(result.Succeeded);
-        Assert.Equal("LongEnoughTestSecurityKeyForTheApplication", Environment.GetEnvironmentVariable("JwtSettings:SecurityKey"));
-        Environment.SetEnvironmentVariable("JwtSettings:SecurityKey", tempVariable);
     }
     [Fact]
     public async Task LoginAsync_ShouldUseConfigurationSettingsCreatingToken_WhenProvided()
@@ -321,11 +319,11 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(true);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:ExpirationTimeInMinutes"] = "30";
-        _configuration["JwtSettings:Issuer"] = "TestIssuer";
-        _configuration["JwtSettings:Audience"] = "localhost";
-        _configuration["JwtSettings:SecurityKey"] = "LongEnoughTestSecurityKeyForTheApplication";
-        _configuration["JwtSettings:RefreshTokenValidForMinutes"] = "60";
+        _configurationHelper.GetConfigurationValue("JwtSettings:ExpirationTimeInMinutes").Returns("30");
+        _configurationHelper.GetConfigurationValue("JwtSettings:Issuer").Returns("TestIssuer");
+        _configurationHelper.GetConfigurationValue("JwtSettings:Audience").Returns("localhost");
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns("LongEnoughTestSecurityKeyForTheApplication");
+        _configurationHelper.GetConfigurationValue("JwtSettings:RefreshTokenValidForMinutes").Returns("60");
         LoginRequest request = new()
         {
             Email = "user1@example.com",
@@ -336,10 +334,10 @@ public class AccountServiceTests
 
         Assert.NotNull(result);
         Assert.True(result.Succeeded);
-        _ = _configuration.Received()["JwtSettings:ExpirationTimeInMinutes"];
-        _ = _configuration.Received()["JwtSettings:Issuer"];
-        _ = _configuration.Received()["JwtSettings:Audience"];
-        _ = _configuration.Received()["JwtSettings:SecurityKey"];
+        _ = _configurationHelper.Received().GetConfigurationValue("JwtSettings:ExpirationTimeInMinutes");
+        _ = _configurationHelper.Received().GetConfigurationValue("JwtSettings:Issuer");
+        _ = _configurationHelper.Received().GetConfigurationValue("JwtSettings:Audience");
+        _ = _configurationHelper.Received().GetConfigurationValue("JwtSettings:SecurityKey");
     }
     [Fact]
     public async Task LoginAsync_ShouldReturnFalseResult_WhenConfigurationIsInvalid()
@@ -347,7 +345,7 @@ public class AccountServiceTests
         await SeedDbContextAsync();
         _userManager.CheckPasswordAsync(Arg.Any<User>(), Arg.Any<string>()).Returns(true);
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = "TooShort";
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns("TooShort");
 
         LoginRequest request = new()
         {
@@ -409,7 +407,7 @@ public class AccountServiceTests
     {
         await SeedDbContextAsync();
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
 
         OperationResult<LoginResponse> result = await _accountService.LoginOidcUserAsync("TestToken");
 
@@ -422,7 +420,7 @@ public class AccountServiceTests
     {
         await SeedDbContextAsync();
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
 
         OperationResult<LoginResponse> result = await _accountService.LoginOidcUserAsync("InvalidToken");
 
@@ -436,7 +434,7 @@ public class AccountServiceTests
         await _context.Tokens.AddRangeAsync(Tokens);
         await SeedDbContextAsync();
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
         TokensDto tokensDto = new()
         {
             AccessToken = Tokens[0].AccessToken,
@@ -454,7 +452,7 @@ public class AccountServiceTests
         await _context.Tokens.AddRangeAsync(Tokens);
         await SeedDbContextAsync();
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
         TokensDto tokensDto = new()
         {
             AccessToken = Tokens[1].AccessToken,
@@ -472,7 +470,7 @@ public class AccountServiceTests
         await _context.Tokens.AddRangeAsync(Tokens);
         await SeedDbContextAsync();
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
         TokensDto tokensDto = new()
         {
             AccessToken = Tokens[2].AccessToken,
@@ -490,7 +488,7 @@ public class AccountServiceTests
         await _context.Tokens.AddRangeAsync(Tokens);
         await SeedDbContextAsync();
         _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
         TokensDto tokensDto = new()
         {
             AccessToken = Tokens[1].AccessToken,
@@ -510,7 +508,7 @@ public class AccountServiceTests
         await SeedDbContextAsync(dbContextMock);
         UserManager<User> userManager = ServiceHelper.GetUserManager(dbContextMock);
         userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _configuration["JwtSettings:SecurityKey"] = null;
+        _configurationHelper.GetConfigurationValue("JwtSettings:SecurityKey").Returns((string?)null);
         TokensDto tokensDto = new()
         {
             AccessToken = Tokens[0].AccessToken,
@@ -519,7 +517,7 @@ public class AccountServiceTests
         dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
             .ThrowsAsync<InvalidOperationException>();
         var service = new AccountService(dbContextMock, userManager, _jwtSecurityTokenHandler,
-            _configuration, _logger);
+            _configurationHelper, _logger);
 
         OperationResult<LoginResponse> result = await service.RefreshTokenAsync(tokensDto);
 

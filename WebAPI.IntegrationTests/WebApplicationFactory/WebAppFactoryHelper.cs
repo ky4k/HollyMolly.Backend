@@ -39,6 +39,14 @@ public class WebAppFactoryHelper
                     services.Remove(newPostDescriptor);
                 }
                 services.AddScoped<INewPostService, MockNewPostService>();
+
+                var emailSenderDescriptor = services.FirstOrDefault(
+                    d => d.ServiceType == typeof(IEmailSender));
+                if (emailSenderDescriptor != null)
+                {
+                    services.Remove(emailSenderDescriptor);
+                }
+                services.AddScoped<IEmailSender, MockEmailSender>();
             })
         );
         return factory;

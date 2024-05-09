@@ -8,6 +8,8 @@ public class SupportCreateDtoValidator : AbstractValidator<SupportCreateDto>
     public SupportCreateDtoValidator()
     {
         RuleFor(x => x.Name)
+            .NotEmpty()
+                .WithMessage("Name is required.")
             .ApplyNameValidationRules();
         RuleFor(x => x.Email)
             .ApplyEmailValidationRules();

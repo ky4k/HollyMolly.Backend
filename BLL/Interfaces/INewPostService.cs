@@ -6,10 +6,9 @@ namespace HM.BLL.Interfaces;
 public interface INewPostService
 {
     Task<OperationResult<IEnumerable<NewPostCity>>> GetCitiesAsync(
-        string? name, int page, CancellationToken cancellationToken);
-
+        string? name, CancellationToken cancellationToken);
     Task<OperationResult<IEnumerable<NewPostWarehouse>>> GetWarehousesAsync(
-        string? koatuu, int page, CancellationToken cancellationToken);
-
+        string? warehouse, string koatuu, int page, CancellationToken cancellationToken);
+    Task<bool> CheckIfCityIsValidAsync(string city, CancellationToken cancellationToken);
     Task<bool> CheckIfAddressIsValidAsync(string city, string address, CancellationToken cancellationToken);
 }

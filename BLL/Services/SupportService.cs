@@ -19,7 +19,7 @@ public class SupportService(
         try
         {
             await EnsureCorrectOrderIdAsync(supportDto, cancellationToken);
-            var support = supportDto.ToSupport();
+            Support support = supportDto.ToSupport();
 
             await context.Supports.AddAsync(support, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
@@ -37,7 +37,8 @@ public class SupportService(
     {
         if (supportDto.OrderId != null)
         {
-            Order? order = await context.Orders.FirstOrDefaultAsync(o => o.Id == supportDto.OrderId, cancellationToken);
+            Order? order = await context.Orders
+                .FirstOrDefaultAsync(o => o.Id == supportDto.OrderId, cancellationToken);
             if (order == null)
             {
                 supportDto.OrderId = null;

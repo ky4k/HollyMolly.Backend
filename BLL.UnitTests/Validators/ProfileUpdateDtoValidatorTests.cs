@@ -14,6 +14,8 @@ public class ProfileUpdateDtoValidatorTests
     public ProfileUpdateDtoValidatorTests()
     {
         _newPostService = Substitute.For<INewPostService>();
+        _newPostService.CheckIfCityIsValidAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(true);
         _newPostService.CheckIfAddressIsValidAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(true);
         _validator = new ProfileUpdateDtoValidator(_newPostService);

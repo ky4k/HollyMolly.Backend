@@ -110,8 +110,7 @@ public class CheckoutService(
         if (session.PaymentStatus == "paid")
         {
             int orderId = int.Parse(session.Metadata["orderId"]);
-            Order? order = await context.Orders
-                .FirstOrDefaultAsync(o => o.Id == orderId);
+            Order? order = await context.Orders.FirstOrDefaultAsync(o => o.Id == orderId);
             if (order == null)
             {
                 return new OperationResult(false, "Payment was not processed correctly. "

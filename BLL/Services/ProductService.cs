@@ -59,14 +59,16 @@ public class ProductService(
     {
         return products.Where(p => p.Name.ToLower().Contains(name.ToLower()));
     }
-    private static IEnumerable<Product> SortProducts(List<Product> products, bool sortByPrice,
-        bool sortByRating, bool sortAsc)
+    private static IEnumerable<Product> SortProducts(List<Product> products,
+        bool sortByPrice, bool sortByRating, bool sortAsc)
     {
         if (sortByPrice)
         {
             return sortAsc
-                ? products.OrderBy(p => p.ProductInstances.Select(pi => CalculatePriceAfterDiscount(pi)).Min())
-                : products.OrderByDescending(p => p.ProductInstances.Select(pi => CalculatePriceAfterDiscount(pi)).Max());
+                ? products.OrderBy(p => p.ProductInstances
+                    .Select(pi => CalculatePriceAfterDiscount(pi)).Min())
+                : products.OrderByDescending(p => p.ProductInstances
+                    .Select(pi => CalculatePriceAfterDiscount(pi)).Max());
         }
         else if (sortByRating)
         {
@@ -140,7 +142,8 @@ public class ProductService(
         return product?.ToProductDto();
     }
 
-    public async Task<OperationResult<ProductDto>> CreateProductAsync(ProductCreateDto productDto, CancellationToken cancellationToken)
+    public async Task<OperationResult<ProductDto>> CreateProductAsync(
+        ProductCreateDto productDto, CancellationToken cancellationToken)
     {
         Category? category = await context.Categories
             .FirstOrDefaultAsync(c => c.Id == productDto.CategoryId, cancellationToken);
@@ -149,7 +152,6 @@ public class ProductService(
             return new OperationResult<ProductDto>(false, $"Category with ID {productDto.CategoryId} " +
                 $"does not exist. Create the category first or specify another category.");
         }
-
         Product product = new()
         {
             Name = productDto.Name,
@@ -170,8 +172,8 @@ public class ProductService(
         }
     }
 
-    public async Task<OperationResult<ProductDto>> UpdateProductAsync(int productId,
-        ProductUpdateDto productDto, CancellationToken cancellationToken)
+    public async Task<OperationResult<ProductDto>> UpdateProductAsync(
+        int productId, ProductUpdateDto productDto, CancellationToken cancellationToken)
     {
         Product? product = await context.Products
             .Include(p => p.ProductInstances)
@@ -192,7 +194,6 @@ public class ProductService(
         product.Name = productDto.Name;
         product.Description = productDto.Description;
         product.Category = category;
-
         try
         {
             context.Products.Update(product);
@@ -231,8 +232,8 @@ public class ProductService(
         }
     }
 
-    public async Task<OperationResult<ProductInstanceDto>> UpdateProductInstanceAsync(int productId, int productInstanceId,
-        ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
+    public async Task<OperationResult<ProductInstanceDto>> UpdateProductInstanceAsync(int productId,
+        int productInstanceId, ProductInstanceCreateDto productInstanceDto, CancellationToken cancellationToken)
     {
         OperationResult<ProductInstance> instanceResult =
             await GetProductInstanceAsync(productId, productInstanceId, cancellationToken);
@@ -488,7 +489,6 @@ public class ProductService(
         Product? product = await context.Products
             .Include(p => p.Feedbacks)
             .FirstOrDefaultAsync(p => p.Id == productId, cancellationToken);
-
         if (product == null)
         {
             return new OperationResult(false, "Product with such an id does not exist.");
