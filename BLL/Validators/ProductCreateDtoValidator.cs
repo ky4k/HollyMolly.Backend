@@ -10,7 +10,7 @@ public class ProductCreateDtoValidator : AbstractValidator<ProductCreateDto>
         RuleFor(product => product.Name)
             .NotEmpty()
             .Length(5, 50)
-            .Matches(@"^[\p{L}0-9\s]+$")
+            .Matches(@"^[\p{L}0-9\s()\-'`’]+$")
                 .WithMessage("Product Name must be 5-50 characters long and contain only Latin " +
                     "or Ukrainian letters, numbers, and spaces.");
 
@@ -22,6 +22,8 @@ public class ProductCreateDtoValidator : AbstractValidator<ProductCreateDto>
                     "numbers, and special characters (!#$%&\"/?.,-_).");
 
         RuleForEach(product => product.ProductInstances)
+            .NotEmpty()
+                .WithMessage("Product must contain at least one product instance.")
             .SetValidator(new ProductInstanceCreateDtoValidator());
     }
 }
