@@ -10,5 +10,5 @@ public class UserDto
     public DateOnly? DateOfBirth { get; set; }
     public string? City { get; set; }
     public string? DeliveryAddress { get; set; }
-    public IEnumerable<string> Roles { get; set; } = new List<string>();
+    public List<string> Roles { get; set; } = [];
 }

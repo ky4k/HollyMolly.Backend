@@ -18,11 +18,11 @@ public class CategoryService(
 {
     public async Task<IEnumerable<CategoryGroupDto>> GetAllCategoryGroupsAsync(CancellationToken cancellationToken)
     {
-        List<CategoryGroup> groups = await context.CategoryGroups
+        return await context.CategoryGroups
             .Include(c => c.Categories)
             .AsNoTracking()
+            .Select(g => g.ToCategoryGroupDto())
             .ToListAsync(cancellationToken);
-        return groups.Select(g => g.ToCategoryGroupDto());
     }
 
     public async Task<CategoryGroupDto?> GetCategoryGroupByIdAsync(int categoryGroupId,
@@ -90,12 +90,12 @@ public class CategoryService(
             return new OperationResult(false, $"The category group with id {categoryGroupId} does not exist");
         }
 
-        string filePath = group.ImageFilePath;
+        string oldFilePath = group.ImageFilePath;
         OperationResult result = await AddImageToCategoryGroupAsync(group, image, baseUrlPath, cancellationToken);
 
-        if (result.Succeeded && !string.IsNullOrEmpty(filePath))
+        if (result.Succeeded && !string.IsNullOrEmpty(oldFilePath))
         {
-            imageService.DeleteImage(filePath);
+            imageService.DeleteImage(oldFilePath);
         }
         return result;
     }
@@ -228,11 +228,11 @@ public class CategoryService(
                 $"the category with id {category.Id}");
         }
 
-        string filePath = category.ImageFilePath;
+        string oldFilePath = category.ImageFilePath;
         OperationResult result = await AddImageToCategoryAsync(category, image, baseUrlPath, cancellationToken);
-        if (result.Succeeded && !string.IsNullOrEmpty(filePath))
+        if (result.Succeeded && !string.IsNullOrEmpty(oldFilePath))
         {
-            imageService.DeleteImage(filePath);
+            imageService.DeleteImage(oldFilePath);
         }
         return result;
     }
@@ -280,7 +280,7 @@ public class CategoryService(
 
             if (result.Payload != null)
             {
-                ImageDto imageDto = result.Payload!;
+                ImageDto imageDto = result.Payload;
                 category.ImageFilePath = imageDto.FilePath;
                 category.ImageLink = imageDto.Link;
             }
@@ -304,7 +304,7 @@ public class CategoryService(
                 .UploadImageAsync(image, baseUrlPath, savePath, cancellationToken);
             if (result.Payload != null)
             {
-                ImageDto imageDto = result.Payload!;
+                ImageDto imageDto = result.Payload;
                 categoryGroup.ImageFilePath = imageDto.FilePath;
                 categoryGroup.ImageLink = imageDto.Link;
             }

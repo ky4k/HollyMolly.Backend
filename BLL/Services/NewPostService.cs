@@ -1,7 +1,6 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -9,24 +8,22 @@ using System.Text.RegularExpressions;
 namespace HM.BLL.Services;
 
 public partial class NewPostService(
-    IConfiguration configuration,
+    IConfigurationHelper configurationHelper,
     IHttpClientFactory httpClientFactory,
     ILogger<NewPostService> logger
         ) : INewPostService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
     private readonly ILogger<NewPostService> _logger = logger;
-    private readonly string? _baseUrl = Environment.GetEnvironmentVariable("NewPost:BaseUrl")
-            ?? configuration["NewPost:BaseUrl"];
+    private readonly string? _baseUrl = configurationHelper.GetConfigurationValue("NewPost:BaseUrl");
     private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
     public async Task<OperationResult<IEnumerable<NewPostCity>>> GetCitiesAsync(
-        string? name, int page, CancellationToken cancellationToken)
+        string? name, CancellationToken cancellationToken)
     {
         name ??= "";
         string city = RegionPattern().Replace(name, "").Trim();
-        string uri = _baseUrl + $"/cities?q={Uri.EscapeDataString(city)}&page={page}";
-
+        string uri = _baseUrl + $"/cities?q={Uri.EscapeDataString(city)}";
         try
         {
             HttpResponseMessage? response = await _httpClient.GetAsync(uri, cancellationToken);
@@ -37,7 +34,7 @@ public partial class NewPostService(
             }
             NewPostResponse<NewPostCity>? deserialized = JsonSerializer
                 .Deserialize<NewPostResponse<NewPostCity>>(content, _jsonSerializerOptions);
-            IEnumerable<NewPostCity> cities = deserialized?.Results?.Where(c => c.Id.Contains(name!)) ?? [];
+            IEnumerable<NewPostCity> cities = deserialized?.Results?.Where(c => c.Id.Contains(name!, StringComparison.CurrentCultureIgnoreCase)) ?? [];
             return new OperationResult<IEnumerable<NewPostCity>>(true, cities);
         }
         catch (Exception ex)
@@ -48,10 +45,9 @@ public partial class NewPostService(
     }
 
     public async Task<OperationResult<IEnumerable<NewPostWarehouse>>> GetWarehousesAsync(
-        string? koatuu, int page, CancellationToken cancellationToken)
+        string? warehouse, string koatuu, int page, CancellationToken cancellationToken)
     {
-        string uri = _baseUrl + $"/warehouse?city={koatuu}&page={page}";
-
+        string uri = _baseUrl + $"/warehouse?warehouse={warehouse}&city={koatuu}&page={page}";
         try
         {
             HttpResponseMessage? response = await _httpClient.GetAsync(uri, cancellationToken);
@@ -70,37 +66,26 @@ public partial class NewPostService(
             return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Server cannot get warehouses!");
         }
     }
-
+    public async Task<bool> CheckIfCityIsValidAsync(string city, CancellationToken cancellationToken)
+    {
+        OperationResult<IEnumerable<NewPostCity>> resultCity = await GetCitiesAsync(city, cancellationToken);
+        return resultCity.Payload?.FirstOrDefault(c => c.Id == city) != null;
+    }
     public async Task<bool> CheckIfAddressIsValidAsync(string city, string address, CancellationToken cancellationToken)
     {
-        OperationResult<IEnumerable<NewPostCity>> resultCity = await GetCitiesAsync(city, 1, cancellationToken);
-        if (!resultCity.Succeeded)
-        {
-            return false;
-        }
-        NewPostCity? newPostCity = resultCity.Payload!.FirstOrDefault(c => c.Id == city);
+        OperationResult<IEnumerable<NewPostCity>> resultCity = await GetCitiesAsync(city, cancellationToken);
+        NewPostCity? newPostCity = resultCity.Payload?.FirstOrDefault(c => c.Id == city);
         if (newPostCity == null)
         {
             return false;
         }
         address = address.Trim();
+        OperationResult<IEnumerable<NewPostWarehouse>> resultWarehouse =
+            await GetWarehousesAsync(address, newPostCity.Koatuu, 1, cancellationToken);
 
-        int page = 1;
-        bool found = false;
-        while (!found && page < 100)
-        {
-            OperationResult<IEnumerable<NewPostWarehouse>> resultWarehouse =
-                await GetWarehousesAsync(newPostCity.Koatuu, page, cancellationToken);
-            if (!resultWarehouse.Succeeded || !resultWarehouse.Payload!.Any())
-            {
-                break;
-            }
-            found = resultWarehouse.Payload!.Any(w => w.Id == address);
-            page++;
-        }
-        return found;
+        return resultWarehouse.Payload?.Any(w => w.Id == address) ?? false;
     }
 
-    [GeneratedRegex(@"\(.*\)| село| селище| смт| місто")]
+    [GeneratedRegex(@"\(.*\)|\(.*$| село| селище| смт| місто")]
     private static partial Regex RegionPattern();
 }

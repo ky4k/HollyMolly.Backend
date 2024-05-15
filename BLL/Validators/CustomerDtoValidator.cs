@@ -26,7 +26,9 @@ public class CustomerDtoValidator : AbstractValidator<CustomerDto>
             .ApplyPhoneNumberValidationRules();
         RuleFor(c => c.City)
             .NotEmpty()
-                .WithMessage("City is required");
+                .WithMessage("City is required")
+            .MustAsync(newPostService.CheckIfCityIsValidAsync)
+                .WithMessage("The city name must be in the exact format provided by the New Post.");
         RuleFor(c => c.DeliveryAddress)
             .NotEmpty()
                 .WithMessage("Delivery address is required")

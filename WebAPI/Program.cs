@@ -1,19 +1,15 @@
 using FluentValidation;
-using HM.BLL.Helpers;
-using HM.BLL.Interfaces;
-using HM.BLL.Services;
 using HM.BLL.Validators;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using HM.WebAPI.Configurations;
-using HM.WebAPI.Middleware;
+using HM.WebAPI.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SharpGrip.FluentValidation.AutoValidation.Mvc.Extensions;
-using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -53,38 +49,11 @@ builder.Services.AddSerilog(new SerilogConfigureOptions(builder.Configuration).C
 Stripe.StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
     ?? builder.Configuration["Stripe:SecretKey"];
 
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<ReplaceAuthorizationHeaderMiddleware>();
-builder.Services.AddScoped<TokenRevocationMiddleware>();
-builder.Services.AddScoped<HmDbContextInitializer>();
-builder.Services.AddScoped<JwtSecurityTokenHandler>();
-builder.Services.AddScoped<IGoogleOAuthService, GoogleOAuthService>();
-builder.Services.AddScoped<IAccountService, AccountService>();
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IProductService, ProductService>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<IImageService, ImageService>();
-builder.Services.AddScoped<ISmtpClientFactory, SmtpClientFactory>();
-builder.Services.AddScoped<IEmailSender, EmailSender>();
-builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<INewsSubscriptionService, NewsSubscriptionService>();
-builder.Services.AddScoped<IStatisticsService, StatisticsService>();
-builder.Services.AddScoped<IExcelHelper, ExcelHelper>();
-builder.Services.AddScoped<IWishListService, WishListService>();
-builder.Services.AddScoped<ICheckoutService, CheckoutService>();
-builder.Services.AddScoped<Stripe.Checkout.SessionService>();
-builder.Services.AddScoped<ISupportService, SupportService>();
-builder.Services.AddScoped<INewPostService, NewPostService>();
+builder.RegisterDIServices();
 
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
-{
-    var initializer = scope.ServiceProvider.GetRequiredService<HmDbContextInitializer>();
-    await initializer.ApplyMigrationsAsync();
-    await initializer.SeedAsync();
-}
+await app.SeedDatabaseAsync();
 
 app.UseSerilogRequestLogging();
 
@@ -96,10 +65,10 @@ app.UseHttpsRedirection();
 
 app.UseStaticFiles();
 
-app.UseMiddleware<ReplaceAuthorizationHeaderMiddleware>();
+app.UseReplaceAuthorizationHeader();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseMiddleware<TokenRevocationMiddleware>();
+app.UseTokenRevocation();
 
 app.MapControllers();
 

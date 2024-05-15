@@ -15,6 +15,7 @@ public class AccountControllerTests
     private readonly IGoogleOAuthService _googleOAuthService;
     private readonly IEmailService _emailService;
     private readonly IUserService _userService;
+    private readonly IConfigurationHelper _configurationHelper;
     private readonly AccountController _accountController;
     public AccountControllerTests()
     {
@@ -22,8 +23,10 @@ public class AccountControllerTests
         _googleOAuthService = Substitute.For<IGoogleOAuthService>();
         _emailService = Substitute.For<IEmailService>();
         _userService = Substitute.For<IUserService>();
+        _configurationHelper = Substitute.For<IConfigurationHelper>();
+        _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns((string?)null);
         _accountController = new AccountController(_accountService,
-            _googleOAuthService, _emailService, _userService);
+            _googleOAuthService, _emailService, _userService, _configurationHelper);
     }
 
     [Fact]
@@ -246,6 +249,29 @@ public class AccountControllerTests
         Assert.IsType<RedirectResult>(response);
     }
     [Fact]
+    public async Task GetGoogleToken_ShouldReturnRedirectToTheConfiguredUrl()
+    {
+        string testUrl = "http://test.example";
+        _googleOAuthService.ExchangeCodeOnTokenAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("googleToken");
+        _googleOAuthService.GetUserEmailAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("user@gmail.com");
+        _accountService.RegisterOidcUserAsync(Arg.Any<string>())
+            .Returns(new OperationResult(true));
+        _accountService.GetOidcTokenAsync(Arg.Any<string>())
+            .Returns(new OperationResult<string>(true, "", "token"));
+        _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns(testUrl);
+        var accountController = new AccountController(_accountService, _googleOAuthService,
+            _emailService, _userService, _configurationHelper);
+        ControllerHelper.MockHost(accountController);
+
+        ActionResult response = await accountController.GetGoogleToken("code", CancellationToken.None);
+        var result = response as RedirectResult;
+
+        Assert.NotNull(result);
+        Assert.Contains(testUrl, result.Url);
+    }
+    [Fact]
     public async Task GetGoogleToken_ShouldReturnBadRequest_WhenCannotGetToken()
     {
         ControllerHelper.MockHost(_accountController);
@@ -293,6 +319,24 @@ public class AccountControllerTests
             .Returns(new OperationResult(false, "Registration error!"));
         _accountService.GetOidcTokenAsync(Arg.Any<string>())
             .Returns(new OperationResult<string>(true, "", "token"));
+
+        ActionResult response = await _accountController.GetGoogleToken("code", CancellationToken.None);
+
+        Assert.NotNull(response);
+        Assert.IsType<BadRequestObjectResult>(response);
+    }
+    [Fact]
+    public async Task GetGoogleToken_ShouldReturnBadRequest_WhenTokenWasNotCreated()
+    {
+        ControllerHelper.MockHost(_accountController);
+        _googleOAuthService.ExchangeCodeOnTokenAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("googleToken");
+        _googleOAuthService.GetUserEmailAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns("user@gmail.com");
+        _accountService.RegisterOidcUserAsync(Arg.Any<string>())
+            .Returns(new OperationResult(true));
+        _accountService.GetOidcTokenAsync(Arg.Any<string>())
+            .Returns(new OperationResult<string>(true, "", null!));
 
         ActionResult response = await _accountController.GetGoogleToken("code", CancellationToken.None);
 

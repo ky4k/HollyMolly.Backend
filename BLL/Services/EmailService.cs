@@ -5,14 +5,14 @@ using HM.BLL.Models.NewsSubscriptions;
 using HM.BLL.Models.Orders;
 using HM.BLL.Models.Supports;
 using HM.BLL.Models.Users;
-using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.WebUtilities;
 using System.Text;
 
 namespace HM.BLL.Services;
 
 public class EmailService(
     IEmailSender emailSender,
-    IConfiguration configuration
+    IConfigurationHelper configurationHelper
     ) : IEmailService
 {
     private const string RegistrationSubject = "Реєстрація успішна";
@@ -29,12 +29,15 @@ public class EmailService(
     private const string OrderStatusUpdatedTemplate = "<p>Статус вашого замовлення з ідентифікатором №{{orderId}} було змінено на {{newStatus}}. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string NewsTemplate = "{{news}}<p>____<br />Відписатися від новин можна за посиланням: <a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
 
-    private readonly IEmailSender emailSender = emailSender;
-    private readonly string supportEmail = Environment.GetEnvironmentVariable("Support:Email") ??
-        configuration["Support:Email"] ?? "";
+    private readonly IEmailSender _emailSender = emailSender;
+    private readonly string? _supportEmail = configurationHelper.GetConfigurationValue("Support:Email");
+    private readonly string _confirmEmailPage = configurationHelper.GetConfigurationValue("FrontendUrls:ConfirmEmailPage") ?? "";
+    private readonly string _resetPasswordPage = configurationHelper.GetConfigurationValue("FrontendUrls:ResetPasswordPage") ?? "";
+    private readonly string _myOrdersPage = configurationHelper.GetConfigurationValue("FrontendUrls:MyOrdersPage") ?? "";
+    private readonly string _cancelSubscriptionPage = configurationHelper.GetConfigurationValue("FrontendUrls:CancelSubscriptionPage") ?? "";
     public async Task<OperationResult> SendSupportEmailAsync(SupportCreateDto supportDto, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(supportEmail))
+        if (string.IsNullOrEmpty(_supportEmail))
         {
             return new OperationResult(false, "Support email has not been set.");
         }
@@ -49,11 +52,11 @@ public class EmailService(
 
         UserMailInfo userMailInfo = new()
         {
-            Email = supportEmail
+            Email = _supportEmail
         };
-
-        return await emailSender.SendEmailAsync(userMailInfo, subject, emailBody, cancellationToken);
+        return await _emailSender.SendEmailAsync(userMailInfo, subject, emailBody, cancellationToken);
     }
+
     public async Task<OperationResult> SendRegistrationResultEmailAsync(string email,
         ConfirmationEmailDto confirmationEmail, CancellationToken cancellationToken)
     {
@@ -61,12 +64,15 @@ public class EmailService(
         {
             Email = email,
         };
-        string link = $"https://holly-molly.vercel.app/confirm-email" +
-            $"?userId={Uri.EscapeDataString(confirmationEmail.UserId)}&token={Uri.EscapeDataString(confirmationEmail.Token)}";
+        Dictionary<string, string?> parameters = new()
+        {
+            { "userId", Uri.EscapeDataString(confirmationEmail.UserId) },
+            { "token",  Uri.EscapeDataString(confirmationEmail.Token) }
+        };
+        string link = QueryHelpers.AddQueryString(_confirmEmailPage, parameters);
         string emailBody = RegistrationTemplate.Replace("{{link}}", link);
 
-        return await emailSender.SendEmailAsync(userMailInfo,
-            RegistrationSubject, emailBody, cancellationToken);
+        return await _emailSender.SendEmailAsync(userMailInfo, RegistrationSubject, emailBody, cancellationToken);
     }
 
     public async Task<OperationResult> SendForgetPasswordEmailAsync(string email,
@@ -76,12 +82,15 @@ public class EmailService(
         {
             Email = email,
         };
-        string link = $"https://holly-molly.vercel.app/reset-password/" +
-            $"?userId={Uri.EscapeDataString(resetPassword.UserId)}&token={Uri.EscapeDataString(resetPassword.Token)}";
+        Dictionary<string, string?> parameters = new()
+        {
+            { "userId", Uri.EscapeDataString(resetPassword.UserId) },
+            { "token",  Uri.EscapeDataString(resetPassword.Token) }
+        };
+        string link = QueryHelpers.AddQueryString(_resetPasswordPage, parameters);
         string emailBody = ForgetPasswordTemplate.Replace("{{link}}", link);
 
-        return await emailSender.SendEmailAsync(userMailInfo, ForgetPasswordSubject,
-            emailBody, cancellationToken);
+        return await _emailSender.SendEmailAsync(userMailInfo, ForgetPasswordSubject, emailBody, cancellationToken);
     }
 
     public async Task<OperationResult> SendPasswordChangedEmailAsync(string email,
@@ -91,11 +100,15 @@ public class EmailService(
         {
             Email = email,
         };
-        string link = $"https://holly-molly.vercel.app/" +
-            $"?userId={Uri.EscapeDataString(resetPassword.UserId)}&token={Uri.EscapeDataString(resetPassword.Token)}";
+        Dictionary<string, string?> parameters = new()
+        {
+            { "userId", Uri.EscapeDataString(resetPassword.UserId) },
+            { "token",  Uri.EscapeDataString(resetPassword.Token) }
+        };
+        string link = QueryHelpers.AddQueryString(_resetPasswordPage, parameters);
         string emailBody = PasswordChangedTemplate.Replace("{{link}}", link);
 
-        return await emailSender.SendEmailAsync(userMailInfo, PasswordChangedSubject, emailBody, cancellationToken);
+        return await _emailSender.SendEmailAsync(userMailInfo, PasswordChangedSubject, emailBody, cancellationToken);
     }
 
     public async Task<OperationResult> SendEmailChangedEmailAsync(string email, CancellationToken cancellationToken)
@@ -104,8 +117,7 @@ public class EmailService(
         {
             Email = email,
         };
-
-        return await emailSender.SendEmailAsync(userMailInfo, EmailChangedSubject, EmailChangedTemplate, cancellationToken);
+        return await _emailSender.SendEmailAsync(userMailInfo, EmailChangedSubject, EmailChangedTemplate, cancellationToken);
     }
 
     public async Task<OperationResult> SendOrderCreatedEmailAsync(OrderDto order, CancellationToken cancellationToken)
@@ -116,12 +128,11 @@ public class EmailService(
             FirstName = order.Customer.FirstName,
             LastName = order.Customer.LastName,
         };
-        string link = $"https://holly-molly.vercel.app/";
         string emailBody = OrderCreatedTemplate
-            .Replace("{{link}}", link)
+            .Replace("{{link}}", _myOrdersPage)
             .Replace("{{orderId}}", order.Id.ToString());
 
-        return await emailSender.SendEmailAsync(userMailInfo, OrderCreatedSubject, emailBody, cancellationToken);
+        return await _emailSender.SendEmailAsync(userMailInfo, OrderCreatedSubject, emailBody, cancellationToken);
     }
 
     public async Task<OperationResult> SendOrderStatusUpdatedEmailAsync(OrderDto order, CancellationToken cancellationToken)
@@ -132,13 +143,12 @@ public class EmailService(
             FirstName = order.Customer.FirstName,
             LastName = order.Customer.LastName,
         };
-        string link = $"https://holly-molly.vercel.app/";
         string emailBody = OrderStatusUpdatedTemplate
-            .Replace("{{link}}", link)
+            .Replace("{{link}}", _myOrdersPage)
             .Replace("{{orderId}}", order.Id.ToString())
             .Replace("{{newStatus}}", order.Status);
 
-        return await emailSender.SendEmailAsync(userMailInfo, OrderStatusUpdatedSubject, emailBody, cancellationToken);
+        return await _emailSender.SendEmailAsync(userMailInfo, OrderStatusUpdatedSubject, emailBody, cancellationToken);
     }
 
     public async Task<OperationResult> SendNewsEmailAsync(IEnumerable<NewsSubscriptionDto> subscriptions,
@@ -150,11 +160,15 @@ public class EmailService(
         foreach (NewsSubscriptionDto subscription in subscriptions)
         {
             UserMailInfo userMailInfo = new() { Email = subscription.Email };
-            string link = $"https://holly-molly.vercel.app/?token={Uri.EscapeDataString(subscription.RemoveToken)}";
+            Dictionary<string, string?> parameters = new()
+            {
+                { "token",  Uri.EscapeDataString(subscription.RemoveToken) }
+            };
+            string link = QueryHelpers.AddQueryString(_cancelSubscriptionPage, parameters);
             string emailBody = NewsTemplate
                 .Replace("{{link}}", link)
                 .Replace("{{news}}", textHtml);
-            OperationResult result = await emailSender.SendEmailAsync(userMailInfo, subject, emailBody, cancellationToken);
+            OperationResult result = await _emailSender.SendEmailAsync(userMailInfo, subject, emailBody, cancellationToken);
             if (result.Succeeded)
             {
                 succeeded++;

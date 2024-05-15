@@ -61,7 +61,7 @@ public class OrderServiceTests
     public async Task GetOrdersAsync_ShouldFilterOrdersByStatus()
     {
         await SeedDbContextAsync();
-        
+
         IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(
             null, ["Delivered"], null, null, CancellationToken.None);
 

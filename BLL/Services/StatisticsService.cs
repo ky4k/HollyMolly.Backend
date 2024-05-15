@@ -32,10 +32,7 @@ public class StatisticsService(
         List<ProductStatisticDto> productStatisticDtos = await GetProductStatisticDto(groupedResult)
             .ToListAsync(cancellationToken);
 
-        IOrderedEnumerable<ProductStatisticDto> sortedProductStatistics = SortProductStatistic(
-            productStatisticDtos, sortByDateFirst, sortByDateAsc, sortByProductAsc);
-
-        return sortedProductStatistics;
+        return SortProductStatistic(productStatisticDtos, sortByDateFirst, sortByDateAsc, sortByProductAsc);
     }
 
     private async Task<IQueryable<ProductStatistics>> FilterProductStatisticsAsync(

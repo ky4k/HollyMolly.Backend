@@ -13,9 +13,8 @@ public class ImageService(
     public async Task<OperationResult<ImageDto>> UploadImageAsync(IFormFile image,
         string baseUrlPath, string savePath, CancellationToken cancellationToken)
     {
-        IFormFile[] images = [image];
         OperationResult<List<ImageDto>> result = await UploadImagesAsync(
-            images, baseUrlPath, savePath, cancellationToken);
+            [image], baseUrlPath, savePath, cancellationToken);
         return result.Succeeded && result.Payload!.Count > 0
             ? new OperationResult<ImageDto>(true, result.Payload[0])
             : new OperationResult<ImageDto>(false, result.Message!);

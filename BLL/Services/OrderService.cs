@@ -52,7 +52,7 @@ public class OrderService(
     public async Task<OperationResult<OrderDto>> CreateOrderAsync(OrderCreateDto orderDto, string userId,
         CancellationToken cancellationToken)
     {
-        var order = new Order()
+        Order order = new()
         {
             UserId = userId,
             Customer = orderDto.Customer.ToCustomerInfo(),
@@ -65,36 +65,12 @@ public class OrderService(
         decimal totalCost = 0;
         foreach (OrderRecordCreateDto orderRecordDto in orderDto.OrderRecords)
         {
-            Product? product = await context.Products
-                .Include(p => p.ProductInstances)
-                .FirstOrDefaultAsync(p =>
-                    p.ProductInstances.Select(pi => pi.Id).Contains(orderRecordDto.ProductInstanceId),
-                    cancellationToken);
-            ProductInstance? productInstance = product?.ProductInstances
-                .Find(pi => pi.Id == orderRecordDto.ProductInstanceId);
-            if (productInstance == null)
+            OrderRecord? orderRecord = await PrepareOrderRecordAsync(orderRecordDto, cancellationToken);
+            if (orderRecord == null)
             {
                 continue;
             }
-            if (productInstance.StockQuantity == 0)
-            {
-                continue;
-            }
-            if (productInstance.StockQuantity < orderRecordDto.Quantity)
-            {
-                orderRecordDto.Quantity = productInstance.StockQuantity;
-            }
-            var orderRecord = new OrderRecord()
-            {
-                ProductInstanceId = productInstance.Id,
-                ProductName = product!.Name,
-                Price = productInstance.Price,
-                Quantity = orderRecordDto.Quantity,
-                Discount = orderRecordDto.Quantity * productInstance.GetCombinedDiscount()
-            };
             totalCost += orderRecord.Price * orderRecord.Quantity - orderRecord.Discount;
-
-            productInstance.StockQuantity -= orderRecordDto.Quantity;
             order.OrderRecords.Add(orderRecord);
         }
 
@@ -119,6 +95,37 @@ public class OrderService(
             logger.LogError(ex, "An error occurred while creating order {@Order}", order);
             return new OperationResult<OrderDto>(false, "The order has not been created.");
         }
+    }
+    private async Task<OrderRecord?> PrepareOrderRecordAsync(OrderRecordCreateDto orderRecordDto, CancellationToken cancellationToken)
+    {
+        Product? product = await context.Products
+                .Include(p => p.ProductInstances)
+                .FirstOrDefaultAsync(p =>
+                    p.ProductInstances.Select(pi => pi.Id).Contains(orderRecordDto.ProductInstanceId),
+                    cancellationToken);
+        ProductInstance? productInstance = product?.ProductInstances
+            .Find(pi => pi.Id == orderRecordDto.ProductInstanceId);
+        if (productInstance == null)
+        {
+            return null;
+        }
+        if (productInstance.StockQuantity == 0)
+        {
+            return null;
+        }
+        if (productInstance.StockQuantity < orderRecordDto.Quantity)
+        {
+            orderRecordDto.Quantity = productInstance.StockQuantity;
+        }
+        productInstance.StockQuantity -= orderRecordDto.Quantity;
+        return new OrderRecord()
+        {
+            ProductInstanceId = productInstance.Id,
+            ProductName = product!.Name,
+            Price = productInstance.Price,
+            Quantity = orderRecordDto.Quantity,
+            Discount = orderRecordDto.Quantity * productInstance.GetCombinedDiscount()
+        };
     }
 
     public async Task<OperationResult<OrderDto>> UpdateOrderAsync(int orderId, OrderUpdateDto updateDto,

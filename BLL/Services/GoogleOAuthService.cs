@@ -1,6 +1,5 @@
 ﻿using HM.BLL.Interfaces;
 using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -8,34 +7,21 @@ using System.Text.Json.Serialization;
 
 namespace HM.BLL.Services;
 
-public class GoogleOAuthService : IGoogleOAuthService
+public class GoogleOAuthService(
+    IConfigurationHelper configurationHelper,
+    IHttpClientFactory httpClientFactory,
+    ILogger<GoogleOAuthService> logger
+        ) : IGoogleOAuthService
 {
-    private readonly HttpClient _httpClient;
-    private readonly IConfiguration _configuration;
-    private readonly ILogger<GoogleOAuthService> _logger;
+    private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
+    private readonly ILogger<GoogleOAuthService> _logger = logger;
 
-    private const string GoogleApiEndpoint = "https://openidconnect.googleapis.com/v1/userinfo";
-
-    private const string _scope = "https://www.googleapis.com/auth/userinfo.email";
-    private readonly string _clientId;
-    private readonly string _clientSecret;
-    private readonly string _authUri;
-    private readonly string _tokenUri;
-    public GoogleOAuthService(
-        IConfiguration configuration,
-        IHttpClientFactory httpClientFactory,
-        ILogger<GoogleOAuthService> logger
-        )
-    {
-        _configuration = configuration;
-        _httpClient = httpClientFactory.CreateClient();
-        _logger = logger;
-
-        _clientId = GetCredential("GoogleOAuth:client_id");
-        _clientSecret = GetCredential("GoogleOAuth:client_secret");
-        _authUri = GetCredential("GoogleOAuth:auth_uri");
-        _tokenUri = GetCredential("GoogleOAuth:token_uri");
-    }
+    private readonly string? _googleApiEndpoint = configurationHelper.GetConfigurationValue("GoogleOAuth:api_endpoint");
+    private readonly string? _scope = configurationHelper.GetConfigurationValue("GoogleOAuth:scope");
+    private readonly string? _clientId = configurationHelper.GetConfigurationValue("GoogleOAuth:client_id");
+    private readonly string? _clientSecret = configurationHelper.GetConfigurationValue("GoogleOAuth:client_secret");
+    private readonly string? _authUri = configurationHelper.GetConfigurationValue("GoogleOAuth:auth_uri");
+    private readonly string? _tokenUri = configurationHelper.GetConfigurationValue("GoogleOAuth:token_uri");
 
     public string GenerateOAuthRequestUrl(string redirectUri)
     {
@@ -46,7 +32,7 @@ public class GoogleOAuthService : IGoogleOAuthService
             { "response_type", "code" },
             { "scope", _scope }
         };
-        return QueryHelpers.AddQueryString(_authUri, queryParam);
+        return QueryHelpers.AddQueryString(_authUri!, queryParam);
     }
 
     public async Task<string?> ExchangeCodeOnTokenAsync(string code, string redirectUri,
@@ -78,7 +64,7 @@ public class GoogleOAuthService : IGoogleOAuthService
 
     public async Task<string?> GetUserEmailAsync(string token, CancellationToken cancellationToken)
     {
-        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, GoogleApiEndpoint);
+        using var requestMessage = new HttpRequestMessage(HttpMethod.Get, _googleApiEndpoint);
         requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         try
@@ -93,18 +79,6 @@ public class GoogleOAuthService : IGoogleOAuthService
             _logger.LogError(ex, "An error occurred while getting the user email address from the Google API");
             return null;
         }
-    }
-
-    private string GetCredential(string key)
-    {
-        string? value = Environment.GetEnvironmentVariable(key);
-        value ??= _configuration[key];
-        if (value == null)
-        {
-            _logger.LogError("Cannot get the value of the {Key} from the environment or " +
-                "the configuration. Google API may not work correctly.", key);
-        }
-        return value ?? "";
     }
 
     private sealed class TokenResult

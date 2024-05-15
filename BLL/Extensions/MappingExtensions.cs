@@ -26,18 +26,9 @@ public static class MappingExtensions
     }
     public static UserDto ToUserDto(this User user, IEnumerable<string> roles)
     {
-        return new UserDto()
-        {
-            Id = user.Id,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            DateOfBirth = user.DateOfBirth,
-            PhoneNumber = user.PhoneNumber,
-            City = user.City,
-            DeliveryAddress = user.DeliveryAddress,
-            Roles = roles
-        };
+        UserDto userDto = user.ToUserDto();
+        userDto.Roles = roles.ToList();
+        return userDto;
     }
 
     public static ProductDto ToProductDto(this Product product)
@@ -57,11 +48,6 @@ public static class MappingExtensions
 
     public static ProductInstanceDto ToProductInstanceDto(this ProductInstance productInstance)
     {
-        var images = new List<ProductImageDto>();
-        foreach (ProductImage image in productInstance.Images)
-        {
-            images.Add(image.ToProductImageDto());
-        }
         return new ProductInstanceDto()
         {
             Id = productInstance.Id,
@@ -75,7 +61,7 @@ public static class MappingExtensions
             Material = productInstance.Material,
             AbsoluteDiscount = productInstance.AbsoluteDiscount,
             PercentageDiscount = productInstance.PercentageDiscount,
-            Images = images
+            Images = productInstance.Images.Select(im => im.ToProductImageDto()).ToList()
         };
     }
 
@@ -131,7 +117,6 @@ public static class MappingExtensions
             Notes = order.Notes,
             OrderRecords = order.OrderRecords.Select(or => or.ToOrderRecordDto()).ToList()
         };
-
     }
 
     public static CustomerDto ToCustomerDto(this CustomerInfo customer)

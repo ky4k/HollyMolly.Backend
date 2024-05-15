@@ -29,7 +29,7 @@ public class NewsSubscriptionService(
     {
         if (await context.NewsSubscriptions.AnyAsync(s => s.Email.ToLower() == subscriptionDto.Email.ToLower(), cancellationToken))
         {
-            return new OperationResult(true, "Subscription has already existed.");
+            return new OperationResult(true, "Subscription already exist.");
         }
         NewsSubscription newsSubscription = new()
         {
@@ -53,7 +53,6 @@ public class NewsSubscriptionService(
     {
         NewsSubscription? newsSubscription = await context.NewsSubscriptions
             .FirstOrDefaultAsync(ns => ns.RemoveToken == removeToken, cancellationToken);
-
         if (newsSubscription == null)
         {
             return new OperationResult(true, "Subscription has not already exist");

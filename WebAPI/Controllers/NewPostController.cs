@@ -16,7 +16,6 @@ public class NewPostController(
     /// </summary>
     /// <param name="name">Name of the city or its part to search.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <param name="page">Page number with cities.</param>
     /// <response code="200">Returns the page that contains list of cities (up to 100).</response>
     /// <response code="400">Indicates that cities cannot be obtained and return the error message.</response>
     [Route("cities")]
@@ -24,16 +23,17 @@ public class NewPostController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<NewPostCity>>> GetCities(
-        string? name, CancellationToken cancellationToken, int page = 1)
+        string? name, CancellationToken cancellationToken)
     {
         OperationResult<IEnumerable<NewPostCity>> result = await newPostService
-            .GetCitiesAsync(name, page, cancellationToken);
+            .GetCitiesAsync(name, cancellationToken);
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
     /// <summary>
     /// Allows to get list of cities from the New Post warehouses in the specified city.
     /// </summary>
-    /// <param name="cityKoatuu">KOATUU of the city obtained from NewPost/cities endpoint.</param>
+    /// <param name="cityKoatuu">Required. KOATUU of the city obtained from NewPost/cities endpoint.</param>
+    /// <param name="warehouse">Optional. Name of the warehouse or its part to narrow search.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <param name="page">Page number with warehouses.</param>
     /// <response code="200">Returns the page that contains list of warehouses in the city (up to 100).</response>
@@ -43,10 +43,10 @@ public class NewPostController(
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IEnumerable<NewPostWarehouse>>> GetWarehouses(
-        string cityKoatuu, CancellationToken cancellationToken, int page = 1)
+        string? warehouse, string cityKoatuu, CancellationToken cancellationToken, int page = 1)
     {
         OperationResult<IEnumerable<NewPostWarehouse>> result = await newPostService
-            .GetWarehousesAsync(cityKoatuu, page, cancellationToken);
+            .GetWarehousesAsync(warehouse, cityKoatuu, page, cancellationToken);
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
 }
