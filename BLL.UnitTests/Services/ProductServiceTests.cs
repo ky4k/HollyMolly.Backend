@@ -1562,14 +1562,14 @@ public class ProductServiceTests
                 new()
                 {
                     Id = 15,
-                    StockQuantity = 100,
+                    StockQuantity = 5,
                     Price = 130,
                     AbsoluteDiscount = 10
                 },
                 new()
                 {
                     Id = 16,
-                    StockQuantity = 100,
+                    StockQuantity = 0,
                     Price = 120,
                     PercentageDiscount = 10
                 }

@@ -1,5 +1,6 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models.Common;
+using HM.DAL.Constants;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -118,7 +119,7 @@ public class CheckoutService(
             }
             try
             {
-                order.Status = "Payment Received";
+                order.Status = OrderStatuses.PaymentReceived;
                 order.PaymentReceived = true;
                 context.Orders.Update(order);
                 await context.SaveChangesAsync();

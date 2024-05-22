@@ -31,7 +31,7 @@ public class OrderServiceTests
         IEnumerable<OrderDto> orders = await _orderService.GetOrdersAsync(
             null, null, null, null, CancellationToken.None);
 
-        Assert.Equal(2, orders.Count());
+        Assert.Equal(4, orders.Count());
     }
 
     [Fact]
@@ -452,7 +452,91 @@ public class OrderServiceTests
         Assert.False(result.Succeeded);
         Assert.Null(result.Payload);
     }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldRestoreProductQuantity_WhenOrderIsBeingCancelled()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Cancelled",
+            Notes = "New notes"
+        };
 
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            1, orderUpdateDto, CancellationToken.None);
+        Product? product = await _context.Products
+            .Include(p => p.ProductInstances)
+            .FirstOrDefaultAsync(p => p.Id == 1);
+        ProductInstance? productInstance = product?.ProductInstances.Find(pi => pi.Id == 1);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+        Assert.Equal(101, productInstance?.StockQuantity);
+    }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldRestoreProductQuantity_WhenOrderStopBeingCancelled()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Created",
+            Notes = "New notes"
+        };
+
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            3, orderUpdateDto, CancellationToken.None);
+        Product? product = await _context.Products
+            .Include(p => p.ProductInstances)
+            .FirstOrDefaultAsync(p => p.Id == 1);
+        ProductInstance? productInstance = product?.ProductInstances.Find(pi => pi.Id == 1);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+        Assert.Equal(95, productInstance?.StockQuantity);
+    }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldChangeOrderRecord_WhenOrderStopBeingCancelledButNotEnoughProductsAreInStock()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Created",
+            Notes = "New notes"
+        };
+
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            4, orderUpdateDto, CancellationToken.None);
+        Product? product = await _context.Products
+            .Include(p => p.ProductInstances)
+            .FirstOrDefaultAsync(p => p.Id == 1);
+        ProductInstance? productInstance = product?.ProductInstances.Find(pi => pi.Id == 1);
+
+        Assert.NotNull(result.Payload);
+        Assert.True(result.Succeeded);
+        Assert.Equal(100, result.Payload.OrderRecords[0].Quantity);
+        Assert.Equal(0, productInstance?.StockQuantity);
+    }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldNotChangeProductQuantity_WhenOrderRemainsCancelled()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Cancelled",
+            Notes = "New notes"
+        };
+
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            3, orderUpdateDto, CancellationToken.None);
+        Product? product = await _context.Products
+            .Include(p => p.ProductInstances)
+            .FirstOrDefaultAsync(p => p.Id == 1);
+        ProductInstance? productInstance = product?.ProductInstances.Find(pi => pi.Id == 1);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+        Assert.Equal(100, productInstance?.StockQuantity);
+    }
     [Fact]
     public async Task UpdateOrderAsync_ShouldHandleDatabaseErrors()
     {
@@ -489,8 +573,7 @@ public class OrderServiceTests
         await context.AddAsync(Product);
         await context.AddAsync(User1);
         await context.AddAsync(User2);
-        await context.AddAsync(Order1);
-        await context.AddAsync(Order2);
+        await context.AddRangeAsync(Order1, Order2, Order3, Order4);
         await context.SaveChangesAsync();
     }
 
@@ -530,39 +613,39 @@ public class OrderServiceTests
         ProductInstances =
         [
             new()
-                {
-                    Id = 1,
-                    StockQuantity = 100,
-                    Price = 50,
-                },
-                new()
-                {
-                    Id = 2,
-                    StockQuantity = 0,
-                    Price = 70,
-                },
-                new()
-                {
-                    Id = 3,
-                    StockQuantity = 1000,
-                    Price = 1,
-                    AbsoluteDiscount = 0.1m
-                },
-                new()
-                {
-                    Id = 4,
-                    StockQuantity = 1000,
-                    Price = 1,
-                    PercentageDiscount = 10
-                },
-                new()
-                {
-                    Id = 5,
-                    StockQuantity = 1000,
-                    Price = 1,
-                    AbsoluteDiscount = 0.1m,
-                    PercentageDiscount = 10
-                }
+            {
+                Id = 1,
+                StockQuantity = 100,
+                Price = 50,
+            },
+            new()
+            {
+                Id = 2,
+                StockQuantity = 0,
+                Price = 70,
+            },
+            new()
+            {
+                Id = 3,
+                StockQuantity = 1000,
+                Price = 1,
+                AbsoluteDiscount = 0.1m
+            },
+            new()
+            {
+                Id = 4,
+                StockQuantity = 1000,
+                Price = 1,
+                PercentageDiscount = 10
+            },
+            new()
+            {
+                Id = 5,
+                StockQuantity = 1000,
+                Price = 1,
+                AbsoluteDiscount = 0.1m,
+                PercentageDiscount = 10
+            }
         ]
     };
 
@@ -628,6 +711,60 @@ public class OrderServiceTests
                 Id = 2,
                 ProductInstanceId = 1,
                 Quantity = 1,
+                Price = 100,
+                ProductName = "Test product"
+            }
+        ]
+    };
+    private static Order Order3 => new()
+    {
+        Customer = new CustomerInfo()
+        {
+            Id = 3,
+            Email = "email@example.com",
+            FirstName = "FirstName",
+            LastName = "LastName",
+            City = "City",
+            DeliveryAddress = "Address",
+            PhoneNumber = "1234567890"
+        },
+        UserId = "2234-5678-9012-3456",
+        OrderDate = new DateTimeOffset(2024, 4, 15, 0, 0, 0, TimeSpan.Zero),
+        Status = "Cancelled",
+        OrderRecords =
+        [
+            new()
+            {
+                Id = 3,
+                ProductInstanceId = 1,
+                Quantity = 5,
+                Price = 100,
+                ProductName = "Test product"
+            }
+        ]
+    };
+    private static Order Order4 => new()
+    {
+        Customer = new CustomerInfo()
+        {
+            Id = 4,
+            Email = "email@example.com",
+            FirstName = "FirstName",
+            LastName = "LastName",
+            City = "City",
+            DeliveryAddress = "Address",
+            PhoneNumber = "1234567890"
+        },
+        UserId = "2234-5678-9012-3456",
+        OrderDate = new DateTimeOffset(2024, 4, 15, 0, 0, 0, TimeSpan.Zero),
+        Status = "Cancelled",
+        OrderRecords =
+        [
+            new()
+            {
+                Id = 4,
+                ProductInstanceId = 1,
+                Quantity = 125,
                 Price = 100,
                 ProductName = "Test product"
             }

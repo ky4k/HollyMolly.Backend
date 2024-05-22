@@ -2,6 +2,7 @@
 using HM.BLL.Interfaces;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.Orders;
+using HM.DAL.Constants;
 using HM.DAL.Data;
 using HM.DAL.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -56,7 +57,7 @@ public class OrderService(
         {
             UserId = userId,
             Customer = orderDto.Customer.ToCustomerInfo(),
-            Status = "Created",
+            Status = OrderStatuses.Created,
             OrderDate = DateTimeOffset.UtcNow,
             PaymentReceived = false,
             OrderRecords = []
@@ -139,6 +140,7 @@ public class OrderService(
         {
             return new OperationResult<OrderDto>(false, "Order with such an id does not exist.");
         }
+        await RestoreProductQuantityAsync(order, updateDto.Status, cancellationToken);
         order.Status = updateDto.Status;
         order.Notes = updateDto.Notes ?? string.Empty;
         try
@@ -151,6 +153,36 @@ public class OrderService(
         {
             logger.LogError(ex, "An error occurred while updating order {@Order}", order);
             return new OperationResult<OrderDto>(false, "The order has not been updated.");
+        }
+    }
+
+    private async Task RestoreProductQuantityAsync(Order order, string newStatus, CancellationToken cancellationToken)
+    {
+        if (order.Status == newStatus ||
+            (order.Status != OrderStatuses.Cancelled && newStatus != OrderStatuses.Cancelled))
+        {
+            return;
+        }
+        foreach (OrderRecord orderRecord in order.OrderRecords)
+        {
+            Product? product = await context.Products
+                .Include(p => p.ProductInstances)
+                .FirstOrDefaultAsync(p => p.ProductInstances
+                    .Any(pi => pi.Id == orderRecord.ProductInstanceId), cancellationToken);
+            ProductInstance productInstance = product?.ProductInstances
+                .Find(pi => pi.Id == orderRecord.ProductInstanceId)!;
+            if (newStatus == OrderStatuses.Cancelled)
+            {
+                productInstance.StockQuantity += orderRecord.Quantity;
+            }
+            else
+            {
+                if (productInstance.StockQuantity < orderRecord.Quantity)
+                {
+                    orderRecord.Quantity = productInstance.StockQuantity;
+                }
+                productInstance.StockQuantity -= orderRecord.Quantity;
+            }
         }
     }
 }

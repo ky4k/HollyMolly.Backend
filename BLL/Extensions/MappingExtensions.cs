@@ -53,7 +53,7 @@ public static class MappingExtensions
             Id = productInstance.Id,
             StockQuantity = productInstance.StockQuantity,
             Price = productInstance.Price,
-            Status = productInstance.Status,
+            Status = productInstance.Status ?? GetStatus(productInstance),
             IsNewCollection = productInstance.IsNewCollection,
             SKU = productInstance.SKU,
             Color = productInstance.Color,
@@ -63,6 +63,23 @@ public static class MappingExtensions
             PercentageDiscount = productInstance.PercentageDiscount,
             Images = productInstance.Images.Select(im => im.ToProductImageDto()).ToList()
         };
+    }
+    private static string GetStatus(ProductInstance productInstance)
+    {
+        string? status = null;
+        switch (productInstance.StockQuantity)
+        {
+            case <= 0:
+                status = "Немає в наявності";
+                break;
+            case <= 10:
+                status = "Закінчується";
+                break;
+            case > 10:
+                status = "В наявності";
+                break;
+        }
+        return status;
     }
 
     public static ProductInstance ToProductInstance(this ProductInstanceCreateDto productInstanceDto)
