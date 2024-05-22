@@ -197,8 +197,8 @@ public static class ValidationData
         "Invalid symbol @",
         new string('a', 2001)
     ];
-    private static readonly IEnumerable<int> _validRatings = [-1, 0, 1];
-    private static readonly IEnumerable<int> _invalidRatings = [-100, -2, 2, 100];
+    private static readonly IEnumerable<int> _validRatings = [0, 1, 2, 3, 4, 5];
+    private static readonly IEnumerable<int> _invalidRatings = [-1, 6, 100];
 
     private static readonly IEnumerable<string> _validOrderStatuses =
     [
@@ -592,7 +592,7 @@ public static class ValidationData
         {
             feedbacks.Add(new ProductFeedbackCreateDto()
             {
-                AuthorName = "Author",
+                AuthorName = "Автор",
                 Review = feedbackText,
                 Rating = 1
             });
@@ -601,7 +601,7 @@ public static class ValidationData
         {
             feedbacks.Add(new ProductFeedbackCreateDto()
             {
-                AuthorName = "Author",
+                AuthorName = "Автор",
                 Review = "Valid feedback",
                 Rating = rating
             });
@@ -615,7 +615,7 @@ public static class ValidationData
         {
             feedbacks.Add(new ProductFeedbackCreateDto()
             {
-                AuthorName = "Author",
+                AuthorName = "Автор",
                 Review = feedbackText,
                 Rating = 1
             });
@@ -624,7 +624,7 @@ public static class ValidationData
         {
             feedbacks.Add(new ProductFeedbackCreateDto()
             {
-                AuthorName = "Author",
+                AuthorName = "Автор",
                 Review = "Valid feedback",
                 Rating = rating
             });

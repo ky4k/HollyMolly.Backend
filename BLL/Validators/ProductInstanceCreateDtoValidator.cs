@@ -29,7 +29,7 @@ public class ProductInstanceCreateDtoValidator : AbstractValidator<ProductInstan
         RuleFor(product => product.AbsoluteDiscount)
             .Must((p, d) => d >= 0 && d <= p.Price)
                 .WithMessage("Absolute discount must be between 0 and the product price.");
-        
+
         RuleFor(product => product.PercentageDiscount)
             .InclusiveBetween(0, 100)
                 .WithMessage("Percentage discount must be between 0 and 100.");

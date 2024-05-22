@@ -9,7 +9,8 @@ public class ProductFeedbackCreateDtoValidator : AbstractValidator<ProductFeedba
     {
         RuleFor(feedback => feedback.AuthorName)
             .NotEmpty()
-            .WithMessage("Name is required");
+                .WithMessage("Name is required")
+            .ApplyNameValidationRules();
 
         RuleFor(feedback => feedback.Review)
             .NotEmpty()
@@ -18,7 +19,7 @@ public class ProductFeedbackCreateDtoValidator : AbstractValidator<ProductFeedba
                 .WithMessage("Review must be 4-2000 characters long and contain only Latin or Ukrainian letters, numbers, spaces, and special characters (!#$%&\"/?.,-_).");
 
         RuleFor(feedback => feedback.Rating)
-            .InclusiveBetween(-1, 1)
-                .WithMessage("Rating must be either Positive (1), Neutral (0), or Negative (-1).");
+            .InclusiveBetween(0, 5)
+                .WithMessage("Rating must be between 0 and 5.");
     }
 }
