@@ -66,8 +66,8 @@ public class EmailService(
         };
         Dictionary<string, string?> parameters = new()
         {
-            { "userId", Uri.EscapeDataString(confirmationEmail.UserId) },
-            { "token",  Uri.EscapeDataString(confirmationEmail.Token) }
+            { "userId", confirmationEmail.UserId },
+            { "token",  confirmationEmail.Token }
         };
         string link = QueryHelpers.AddQueryString(_confirmEmailPage, parameters);
         string emailBody = RegistrationTemplate.Replace("{{link}}", link);
@@ -84,8 +84,8 @@ public class EmailService(
         };
         Dictionary<string, string?> parameters = new()
         {
-            { "userId", Uri.EscapeDataString(resetPassword.UserId) },
-            { "token",  Uri.EscapeDataString(resetPassword.Token) }
+            { "userId", resetPassword.UserId },
+            { "token",  resetPassword.Token }
         };
         string link = QueryHelpers.AddQueryString(_resetPasswordPage, parameters);
         string emailBody = ForgetPasswordTemplate.Replace("{{link}}", link);
@@ -102,8 +102,8 @@ public class EmailService(
         };
         Dictionary<string, string?> parameters = new()
         {
-            { "userId", Uri.EscapeDataString(resetPassword.UserId) },
-            { "token",  Uri.EscapeDataString(resetPassword.Token) }
+            { "userId", resetPassword.UserId },
+            { "token",  resetPassword.Token }
         };
         string link = QueryHelpers.AddQueryString(_resetPasswordPage, parameters);
         string emailBody = PasswordChangedTemplate.Replace("{{link}}", link);
@@ -162,7 +162,7 @@ public class EmailService(
             UserMailInfo userMailInfo = new() { Email = subscription.Email };
             Dictionary<string, string?> parameters = new()
             {
-                { "token",  Uri.EscapeDataString(subscription.RemoveToken) }
+                { "token",  subscription.RemoveToken }
             };
             string link = QueryHelpers.AddQueryString(_cancelSubscriptionPage, parameters);
             string emailBody = NewsTemplate
