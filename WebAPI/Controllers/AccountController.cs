@@ -139,7 +139,7 @@ public class AccountController(
         }
         Dictionary<string, string?> parameters = new()
         {
-            { "token", Uri.EscapeDataString(tokenResult.Payload) }
+            { "token", tokenResult.Payload }
         };
         string redirectToFrontendUrl = QueryHelpers.AddQueryString(_mainPage, parameters);
         return Redirect(redirectToFrontendUrl);
