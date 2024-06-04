@@ -32,8 +32,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<ProductDto>? products = JsonSerializer.Deserialize<IEnumerable<ProductDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        IEnumerable<ProductDto>? products = await JsonSerializer.DeserializeAsync<IEnumerable<ProductDto>>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(products);
         Assert.NotEmpty(products);
@@ -46,8 +46,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<ProductDto>? products = JsonSerializer.Deserialize<IEnumerable<ProductDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        IEnumerable<ProductDto>? products = await JsonSerializer.DeserializeAsync<IEnumerable<ProductDto>>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(products);
         Assert.NotEmpty(products);
@@ -60,8 +60,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        ProductDto? product = JsonSerializer.Deserialize<ProductDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        ProductDto? product = await JsonSerializer.DeserializeAsync<ProductDto>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(product);
         Assert.Equal("Product 1", product.Name);
@@ -82,8 +82,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        ProductDto? product = JsonSerializer.Deserialize<ProductDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        ProductDto? product = await JsonSerializer.DeserializeAsync<ProductDto>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.Equal(HttpStatusCode.Created, httpResponse.StatusCode);
         Assert.NotNull(httpResponse.Headers.Location);
@@ -108,8 +108,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        ProductDto? product = JsonSerializer.Deserialize<ProductDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        ProductDto? product = await JsonSerializer.DeserializeAsync<ProductDto>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
         Assert.NotNull(product);
@@ -140,8 +140,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        ProductInstanceDto? productInstance = JsonSerializer.Deserialize<ProductInstanceDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        ProductInstanceDto? productInstance = await JsonSerializer.DeserializeAsync<ProductInstanceDto>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
         using var scope = _factory.CreateScope();
         var context = scope.ServiceProvider.GetService<HmDbContext>();
         Product? product = await context!.Products
@@ -174,8 +174,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        ProductInstanceDto? productInstance = JsonSerializer.Deserialize<ProductInstanceDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        ProductInstanceDto? productInstance = await JsonSerializer.DeserializeAsync<ProductInstanceDto>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
         Assert.NotNull(productInstance);
@@ -227,8 +227,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<ProductFeedbackDto>? feedbacks = JsonSerializer.Deserialize<IEnumerable<ProductFeedbackDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        IEnumerable<ProductFeedbackDto>? feedbacks = await JsonSerializer.DeserializeAsync<IEnumerable<ProductFeedbackDto>>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(feedbacks);
         Assert.NotEmpty(feedbacks);
@@ -244,8 +244,8 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<ProductFeedbackDto>? feedbacks = JsonSerializer.Deserialize<IEnumerable<ProductFeedbackDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        IEnumerable<ProductFeedbackDto>? feedbacks = await JsonSerializer.DeserializeAsync<IEnumerable<ProductFeedbackDto>>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(feedbacks);
         Assert.Single(feedbacks);

@@ -130,6 +130,7 @@ public static class MappingExtensions
             Customer = order.Customer.ToCustomerDto(),
             OrderDate = order.OrderDate,
             Status = order.Status,
+            StatusHistory = order.StatusHistory.Select(s => s.ToOrderStatusHistoryDto()).ToList(),
             PaymentReceived = order.PaymentReceived,
             Notes = order.Notes,
             OrderRecords = order.OrderRecords.Select(or => or.ToOrderRecordDto()).ToList()
@@ -161,7 +162,15 @@ public static class MappingExtensions
             DeliveryAddress = customer.DeliveryAddress,
         };
     }
-
+    public static OrderStatusHistoryDto ToOrderStatusHistoryDto(this OrderStatusHistory orderStatus)
+    {
+        return new OrderStatusHistoryDto()
+        {
+            Status = orderStatus.Status,
+            Date = orderStatus.Date,
+            Notes = orderStatus.Notes
+        };
+    }
     public static OrderRecordDto ToOrderRecordDto(this OrderRecord orderRecord)
     {
         return new OrderRecordDto()

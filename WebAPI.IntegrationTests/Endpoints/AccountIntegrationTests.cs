@@ -35,8 +35,8 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        RegistrationResponse? result = JsonSerializer.Deserialize<RegistrationResponse>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        RegistrationResponse? result = await JsonSerializer.DeserializeAsync<RegistrationResponse>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(result);
         Assert.NotNull(result.Email);
@@ -55,8 +55,8 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        LoginResponse? result = JsonSerializer.Deserialize<LoginResponse>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        LoginResponse? result = await JsonSerializer.DeserializeAsync<LoginResponse>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(result);
         Assert.NotNull(result.UserEmail);
@@ -80,8 +80,8 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        UserDto? result = JsonSerializer.Deserialize<UserDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        UserDto? result = await JsonSerializer.DeserializeAsync<UserDto>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(result);
         Assert.Equal(email, result.Email);
@@ -102,8 +102,8 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        UserDto? result = JsonSerializer.Deserialize<UserDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        UserDto? result = await JsonSerializer.DeserializeAsync<UserDto>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(result);
         Assert.NotNull(result.Email);

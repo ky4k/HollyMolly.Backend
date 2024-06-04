@@ -226,9 +226,9 @@ public static class ValidationData
         "@ is not in the allowed characters",
         new string('a', 501)
     ];
-    private static IEnumerable<int> _validSupportTopics = [0, 1, 2, 3];
-    private static IEnumerable<int> _invalidSupportTopics = [-10, 99];
-    private static IEnumerable<string> _validSupportDescriptions =
+    private static readonly IEnumerable<int> _validSupportTopics = [0, 1, 2, 3];
+    private static readonly IEnumerable<int> _invalidSupportTopics = [-10, 99];
+    private static readonly IEnumerable<string> _validSupportDescriptions =
     [
         "English letters",
         "Українські букви",
@@ -236,7 +236,7 @@ public static class ValidationData
         "abcd",
         new string('a', 500)
     ];
-    private static IEnumerable<string> _invalidSupportDescriptions =
+    private static readonly IEnumerable<string> _invalidSupportDescriptions =
     [
         "",
         "abc",

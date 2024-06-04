@@ -143,10 +143,11 @@ public class EmailService(
             FirstName = order.Customer.FirstName,
             LastName = order.Customer.LastName,
         };
+        string status = order.StatusHistory.MaxBy(s => s.Date)?.Status ?? "";
         string emailBody = OrderStatusUpdatedTemplate
             .Replace("{{link}}", _myOrdersPage)
             .Replace("{{orderId}}", order.Id.ToString())
-            .Replace("{{newStatus}}", order.Status);
+            .Replace("{{newStatus}}", status);
 
         return await _emailSender.SendEmailAsync(userMailInfo, OrderStatusUpdatedSubject, emailBody, cancellationToken);
     }

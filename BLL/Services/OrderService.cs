@@ -21,6 +21,7 @@ public class OrderService(
         IQueryable<Order> orders = context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+            .Include(o => o.StatusHistory)
             .AsNoTracking();
         if (userId != null)
         {
@@ -46,6 +47,7 @@ public class OrderService(
         Order? order = await context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+            .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         return order?.ToOrderDto();
     }
@@ -58,6 +60,13 @@ public class OrderService(
             UserId = userId,
             Customer = orderDto.Customer.ToCustomerInfo(),
             Status = OrderStatuses.Created,
+            StatusHistory = [
+                new OrderStatusHistory()
+                {
+                    Status = OrderStatuses.Created,
+                    Date = DateTimeOffset.UtcNow
+                }
+            ],
             OrderDate = DateTimeOffset.UtcNow,
             PaymentReceived = false,
             OrderRecords = []
@@ -135,12 +144,23 @@ public class OrderService(
         Order? order = await context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+            .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         if (order == null)
         {
             return new OperationResult<OrderDto>(false, "Order with such an id does not exist.");
         }
         await RestoreProductQuantityAsync(order, updateDto.Status, cancellationToken);
+        if (order.Status != updateDto.Status ||
+            (!string.IsNullOrEmpty(updateDto.Notes) && order.Notes != updateDto.Notes))
+        {
+            order.StatusHistory.Add(new OrderStatusHistory()
+            {
+                Status = updateDto.Status,
+                Date = DateTimeOffset.UtcNow,
+                Notes = updateDto.Notes ?? string.Empty
+            });
+        }
         order.Status = updateDto.Status;
         order.Notes = updateDto.Notes ?? string.Empty;
         try

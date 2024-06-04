@@ -374,7 +374,7 @@ public class AccountServiceTests
         await SeedDbContextAsync();
 
         OperationResult<string> result = await _accountService.GetOidcTokenAsync("user1@example.com");
-        User? user = _context.Users.FirstOrDefault(u => u.Email == "user1@example.com");
+        User? user = await _context.Users.FirstOrDefaultAsync(u => u.Email == "user1@example.com");
 
         Assert.NotNull(result?.Payload);
         Assert.True(result.Succeeded);

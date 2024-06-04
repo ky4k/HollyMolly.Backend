@@ -158,8 +158,8 @@ public class AccountService(
 
     public async Task<OperationResult<LoginResponse>> LoginOidcUserAsync(string oidcToken)
     {
-        User? user = userManager.Users
-            .FirstOrDefault(u => u.OidcToken != null && u.OidcToken == oidcToken);
+        User? user = await userManager.Users
+            .FirstOrDefaultAsync(u => u.OidcToken != null && u.OidcToken == oidcToken);
         if (user == null)
         {
             return new OperationResult<LoginResponse>(false, "Login failed.");

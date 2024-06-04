@@ -33,8 +33,8 @@ public class NewsSubscriptionsIntegrationTests : IClassFixture<SharedWebAppFacto
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<NewsSubscriptionDto>? newsSubscriptions = JsonSerializer.Deserialize<IEnumerable<NewsSubscriptionDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        IEnumerable<NewsSubscriptionDto>? newsSubscriptions = await JsonSerializer.DeserializeAsync<IEnumerable<NewsSubscriptionDto>>(
+            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
 
         Assert.NotNull(newsSubscriptions);
         Assert.NotEmpty(newsSubscriptions);

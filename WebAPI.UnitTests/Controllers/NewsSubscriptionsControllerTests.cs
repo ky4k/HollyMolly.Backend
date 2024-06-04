@@ -35,7 +35,7 @@ public class NewsSubscriptionsControllerTests
     public async Task AddSubscription_ShouldReturnOkResult_WhenSucceeded()
     {
         _subscriptionService.AddSubscriptionAsync(Arg.Any<NewsSubscriptionCreateDto>(), Arg.Any<CancellationToken>())
-            .Returns(new OperationResult(true, "Succeded!"));
+            .Returns(new OperationResult(true, "Succeeded!"));
 
         ActionResult<IEnumerable<NewsSubscriptionDto>> response = await _newsSubscriptionsController
             .AddSubscription(new NewsSubscriptionCreateDto(), CancellationToken.None);
@@ -63,7 +63,7 @@ public class NewsSubscriptionsControllerTests
     public async Task CancelSubscription_ShouldReturnOkResult_WhenSucceeded()
     {
         _subscriptionService.RemoveSubscriptionAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new OperationResult(true, "Succeded!"));
+            .Returns(new OperationResult(true, "Succeeded!"));
 
         ActionResult<IEnumerable<NewsSubscriptionDto>> response = await _newsSubscriptionsController
             .CancelSubscription("remove token", CancellationToken.None);
@@ -93,7 +93,7 @@ public class NewsSubscriptionsControllerTests
         _subscriptionService.GetAllSubscriptionsAsync(Arg.Any<CancellationToken>()).Returns([]);
         _emailService.SendNewsEmailAsync(Arg.Any<IEnumerable<NewsSubscriptionDto>>(),
             Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new OperationResult(true, "Succeded!"));
+            .Returns(new OperationResult(true, "Succeeded!"));
 
         ActionResult<string> response = await _newsSubscriptionsController
             .SendNewsToAllSubscribers("subject", "text", CancellationToken.None);
@@ -110,7 +110,7 @@ public class NewsSubscriptionsControllerTests
             .Returns(new NewsSubscriptionDto[4]);
         _emailService.SendNewsEmailAsync(Arg.Any<IEnumerable<NewsSubscriptionDto>>(),
             Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new OperationResult(true, "Succeded!"));
+            .Returns(new OperationResult(true, "Succeeded!"));
 
         ActionResult<string> response = await _newsSubscriptionsController
             .SendNewsToAllSubscribers("subject", "text", CancellationToken.None);

@@ -58,12 +58,11 @@ public class AccountController(
     /// </summary>
     /// <param name="userId">Id of the user to confirm email.</param>
     /// <param name="confirmationEmailToken">A token that was send to the user email.</param>
-    /// <response code="200"> Indicates that the user was successfully created and returns 
-    ///     the user model object.</response>
-    /// <response code="400">Indicates that user was not created and returns the error message.</response>
+    /// <response code="200"> Indicates that the email was successfully confirmed.</response>
+    /// <response code="400">Indicates that email was not confirmed and returns the error message.</response>
     [Route("{userId}/confirmEmail")]
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult> ConfirmEmail(string userId, string confirmationEmailToken)
     {

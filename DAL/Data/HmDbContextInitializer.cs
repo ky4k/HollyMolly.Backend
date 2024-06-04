@@ -22,7 +22,7 @@ public class HmDbContextInitializer(
                 logger.LogInformation("Migrations cannot be applied to a non relational database.");
             }
 
-            if (context.Database.GetPendingMigrations().Any())
+            if ((await context.Database.GetPendingMigrationsAsync()).Any())
             {
                 logger.LogInformation("Apply migrations.");
                 await context.Database.MigrateAsync();

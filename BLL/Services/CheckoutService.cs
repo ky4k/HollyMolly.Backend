@@ -119,6 +119,11 @@ public class CheckoutService(
             }
             try
             {
+                order.StatusHistory.Add(new OrderStatusHistory()
+                {
+                    Status = OrderStatuses.PaymentReceived,
+                    Date = DateTimeOffset.UtcNow,
+                });
                 order.Status = OrderStatuses.PaymentReceived;
                 order.PaymentReceived = true;
                 context.Orders.Update(order);

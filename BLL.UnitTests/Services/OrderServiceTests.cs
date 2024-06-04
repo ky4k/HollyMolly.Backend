@@ -415,24 +415,46 @@ public class OrderServiceTests
         Assert.NotNull(order);
         Assert.Equal(newStatus, order.Status);
     }
-
     [Fact]
-    public async Task UpdateOrderAsync_ShouldReturnUpdatedOrder()
+    public async Task UpdateOrderAsync_ShouldAddOrderHistoryElement()
     {
         await SeedDbContextAsync();
         const string newStatus = "Updated";
         OrderUpdateDto orderUpdateDto = new()
         {
+            Status = newStatus
+        };
+
+        await _orderService.UpdateOrderAsync(1, orderUpdateDto, CancellationToken.None);
+        Order? order = await _context.Orders
+            .Include(o => o.StatusHistory)
+            .FirstOrDefaultAsync(o => o.Id == 1);
+        OrderStatusHistory? historyRecord = order?.StatusHistory.Find(s => s.OrderId == 1);
+
+        Assert.NotNull(historyRecord?.Id);
+        Assert.Equal(newStatus, historyRecord.Status);
+    }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldReturnUpdatedOrder()
+    {
+        await SeedDbContextAsync();
+        const string newStatus = "Updated";
+        const string newNotes = "New notes";
+        OrderUpdateDto orderUpdateDto = new()
+        {
             Status = newStatus,
-            Notes = "New notes"
+            Notes = newNotes
         };
 
         OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
             1, orderUpdateDto, CancellationToken.None);
+        OrderStatusHistoryDto? status = result.Payload?.StatusHistory.MaxBy(s => s.Date);
 
-        Assert.NotNull(result?.Payload);
+        Assert.NotNull(result.Payload);
+        Assert.NotNull(status);
         Assert.True(result.Succeeded);
-        Assert.Equal(newStatus, result.Payload.Status);
+        Assert.Equal(newStatus, status.Status);
+        Assert.Equal(newNotes, status.Notes);
     }
 
     [Fact]
