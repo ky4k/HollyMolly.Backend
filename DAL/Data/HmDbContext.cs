@@ -8,6 +8,7 @@ namespace HM.DAL.Data;
 public class HmDbContext(DbContextOptions<HmDbContext> options)
     : IdentityDbContext<User, Role, string>(options)
 {
+    public DbSet<Profile> Profiles { get; set; }
     public DbSet<CategoryGroup> CategoryGroups => Set<CategoryGroup>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();

@@ -14,7 +14,6 @@ public class AccountControllerTests
     private readonly IAccountService _accountService;
     private readonly IGoogleOAuthService _googleOAuthService;
     private readonly IEmailService _emailService;
-    private readonly IUserService _userService;
     private readonly IConfigurationHelper _configurationHelper;
     private readonly AccountController _accountController;
     public AccountControllerTests()
@@ -22,11 +21,10 @@ public class AccountControllerTests
         _accountService = Substitute.For<IAccountService>();
         _googleOAuthService = Substitute.For<IGoogleOAuthService>();
         _emailService = Substitute.For<IEmailService>();
-        _userService = Substitute.For<IUserService>();
         _configurationHelper = Substitute.For<IConfigurationHelper>();
         _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns((string?)null);
         _accountController = new AccountController(_accountService,
-            _googleOAuthService, _emailService, _userService, _configurationHelper);
+            _googleOAuthService, _emailService, _configurationHelper);
     }
 
     [Fact]
@@ -262,7 +260,7 @@ public class AccountControllerTests
             .Returns(new OperationResult<string>(true, "", "token"));
         _configurationHelper.GetConfigurationValue(Arg.Any<string>()).Returns(testUrl);
         var accountController = new AccountController(_accountService, _googleOAuthService,
-            _emailService, _userService, _configurationHelper);
+            _emailService, _configurationHelper);
         ControllerHelper.MockHost(accountController);
 
         ActionResult response = await accountController.GetGoogleToken("code", CancellationToken.None);
@@ -482,19 +480,25 @@ public class AccountControllerTests
         Assert.Equal(400, result.StatusCode);
     }
     [Fact]
-    public async Task GetProfile_ShouldReturnProfile_WhenUserIsAuthorized()
+    public async Task GetUserInfo_ShouldReturnProfile_WhenUserIsAuthorized()
     {
         UserDto userDto = new()
         {
             Id = "1",
             Email = "user1@example.com",
-            FirstName = "First name",
-            LastName = "Last name"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "First name",
+                    LastName = "Last name"
+                }
+            ]
         };
-        _userService.GetUserByIdAsync(Arg.Any<string>()).Returns(userDto);
+        _accountService.GetUserInfoAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns(userDto);
         ControllerHelper.MockUserIdentity(userDto, _accountController);
 
-        ActionResult<UserDto> response = await _accountController.GetProfile();
+        ActionResult<UserDto> response = await _accountController.GetUserInfo(CancellationToken.None);
         var result = response.Result as OkObjectResult;
 
         Assert.NotNull(result);
@@ -503,33 +507,111 @@ public class AccountControllerTests
         Assert.Equal(userDto.Email, (result.Value as UserDto)?.Email);
     }
     [Fact]
-    public async Task GetProfile_ShouldReturnUnauthorized_WhenUserIsUnauthorized()
+    public async Task GetUserInfo_ShouldReturnUnauthorized_WhenUserIsUnauthorized()
     {
         ControllerHelper.MockUserIdentity(new UserDto(), _accountController);
-        ActionResult<UserDto> response = await _accountController.GetProfile();
+        ActionResult<UserDto> response = await _accountController.GetUserInfo(CancellationToken.None);
         var result = response.Result as UnauthorizedResult;
 
         Assert.NotNull(result);
         Assert.Equal(401, result.StatusCode);
     }
     [Fact]
-    public async Task GetProfile_ShouldReturnNotFound_WhenUserDoesNotExist()
+    public async Task GetUserInfo_ShouldReturnNotFound_WhenUserDoesNotExist()
     {
         UserDto userDto = new()
         {
             Id = "1",
             Email = "user1@example.com",
-            FirstName = "First name",
-            LastName = "Last name"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "First name",
+                    LastName = "Last name"
+                }
+            ]
         };
-        _userService.GetUserByIdAsync(Arg.Any<string>()).Returns((UserDto?)null);
+        _accountService.GetUserInfoAsync(Arg.Any<string>(), Arg.Any<CancellationToken>()).Returns((UserDto?)null);
         ControllerHelper.MockUserIdentity(userDto, _accountController);
 
-        ActionResult<UserDto> response = await _accountController.GetProfile();
+        ActionResult<UserDto> response = await _accountController.GetUserInfo(CancellationToken.None);
         var result = response.Result as NotFoundResult;
 
         Assert.NotNull(result);
         Assert.Equal(404, result.StatusCode);
+    }
+    [Fact]
+    public async Task CreateProfile_ShouldReturnOkResult_WhenSucceeded()
+    {
+        UserDto userDto = new()
+        {
+            Id = "1",
+            Email = "user1@example.com",
+            Roles = [DefaultRoles.User]
+        };
+        ControllerHelper.MockUserIdentity(userDto, _accountController);
+        ProfileUpdateDto profileUpdateDto = new()
+        {
+            FirstName = "Updated name"
+        };
+        _accountService.CreateProfileAsync(Arg.Any<string>(), Arg.Any<ProfileUpdateDto>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult<ProfileDto>(true, new ProfileDto() { FirstName = "Updated name" }));
+
+        ActionResult<ProfileDto> response = await _accountController.CreateProfile(
+            profileUpdateDto, CancellationToken.None);
+        var result = response.Result as OkObjectResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(200, result.StatusCode);
+        Assert.IsType<ProfileDto>(result.Value);
+    }
+    [Fact]
+    public async Task CreateProfile_ShouldReturnUnauthorizedResult_WhenCalledByUnauthenticatedUsers()
+    {
+        UserDto userDto = new()
+        {
+            Id = null!,
+            Email = null
+        };
+        ControllerHelper.MockUserIdentity(userDto, _accountController);
+        ProfileUpdateDto profileUpdateDto = new()
+        {
+            FirstName = "Updated name"
+        };
+        _accountService.CreateProfileAsync(Arg.Any<string>(), Arg.Any<ProfileUpdateDto>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult<ProfileDto>(true, new ProfileDto() { FirstName = "Updated name" }));
+
+        ActionResult<ProfileDto> response = await _accountController.CreateProfile(
+            profileUpdateDto, CancellationToken.None);
+        var result = response.Result as UnauthorizedResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(401, result.StatusCode);
+    }
+    [Fact]
+    public async Task CreateProfile_ShouldReturnBadRequest_WhenFailed()
+    {
+        UserDto userDto = new()
+        {
+            Id = "1",
+            Email = "user1@example.com",
+            Roles = [DefaultRoles.User]
+        };
+        ControllerHelper.MockUserIdentity(userDto, _accountController);
+        ProfileUpdateDto profileUpdateDto = new()
+        {
+            FirstName = "Updated name"
+        };
+        _accountService.CreateProfileAsync(Arg.Any<string>(), Arg.Any<ProfileUpdateDto>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult<ProfileDto>(false, "Not created!"));
+
+        ActionResult<ProfileDto> response = await _accountController.CreateProfile(
+            profileUpdateDto, CancellationToken.None);
+        var result = response.Result as BadRequestObjectResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(400, result.StatusCode);
     }
     [Fact]
     public async Task UpdateProfile_ShouldReturnOkResult_WhenSucceeded()
@@ -545,15 +627,17 @@ public class AccountControllerTests
         {
             FirstName = "Updated name"
         };
-        _accountService.UpdateUserProfileAsync(Arg.Any<string>(), Arg.Any<ProfileUpdateDto>())
-            .Returns(new OperationResult<UserDto>(true, userDto));
+        _accountService.UpdateProfileAsync(
+            Arg.Any<string>(), Arg.Any<int>(), Arg.Any<ProfileUpdateDto>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult<ProfileDto>(true, new ProfileDto() { FirstName = "Updated name" }));
 
-        ActionResult<UserDto> response = await _accountController.UpdateProfile(profileUpdateDto);
+        ActionResult<ProfileDto> response = await _accountController.UpdateProfile(
+            1, profileUpdateDto, CancellationToken.None);
         var result = response.Result as OkObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal(200, result.StatusCode);
-        Assert.IsType<UserDto>(result.Value);
+        Assert.IsType<ProfileDto>(result.Value);
     }
     [Fact]
     public async Task UpdateProfile_ShouldReturnUnauthorizedResult_WhenCalledByUnauthenticatedUsers()
@@ -561,17 +645,19 @@ public class AccountControllerTests
         UserDto userDto = new()
         {
             Id = null!,
-            Email = null!
+            Email = null
         };
         ControllerHelper.MockUserIdentity(userDto, _accountController);
         ProfileUpdateDto profileUpdateDto = new()
         {
             FirstName = "Updated name"
         };
-        _accountService.UpdateUserProfileAsync(Arg.Any<string>(), Arg.Any<ProfileUpdateDto>())
-            .Returns(new OperationResult<UserDto>(false, "Unauthorized"));
+        _accountService.UpdateProfileAsync(Arg.Any<string>(), Arg.Any<int>(),
+            Arg.Any<ProfileUpdateDto>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult<ProfileDto>(true, new ProfileDto() { FirstName = "Updated name" }));
 
-        ActionResult<UserDto> response = await _accountController.UpdateProfile(profileUpdateDto);
+        ActionResult<ProfileDto> response = await _accountController.UpdateProfile(
+            1, profileUpdateDto, CancellationToken.None);
         var result = response.Result as UnauthorizedResult;
 
         Assert.NotNull(result);
@@ -591,11 +677,69 @@ public class AccountControllerTests
         {
             FirstName = "Updated name"
         };
-        _accountService.UpdateUserProfileAsync(Arg.Any<string>(), Arg.Any<ProfileUpdateDto>())
-            .Returns(new OperationResult<UserDto>(false, "Not updated!"));
+        _accountService.UpdateProfileAsync(Arg.Any<string>(), Arg.Any<int>(),
+            Arg.Any<ProfileUpdateDto>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult<ProfileDto>(false, "Not Updated"));
 
-        ActionResult<UserDto> response = await _accountController.UpdateProfile(profileUpdateDto);
+        ActionResult<ProfileDto> response = await _accountController.UpdateProfile(
+            1, profileUpdateDto, CancellationToken.None);
         var result = response.Result as BadRequestObjectResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(400, result.StatusCode);
+    }
+    [Fact]
+    public async Task DeleteProfile_ShouldReturnNoContent_WhenSucceeded()
+    {
+        UserDto userDto = new()
+        {
+            Id = "1",
+            Email = "user1@example.com",
+            Roles = [DefaultRoles.User]
+        };
+        ControllerHelper.MockUserIdentity(userDto, _accountController);
+        _accountService.DeleteProfileAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult(true));
+
+        ActionResult response = await _accountController.DeleteProfile(1, CancellationToken.None);
+        var result = response as NoContentResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(204, result.StatusCode);
+    }
+    [Fact]
+    public async Task DeleteProfile_ShouldReturnUnauthorizedResult_WhenCalledByUnauthenticatedUsers()
+    {
+        UserDto userDto = new()
+        {
+            Id = null!,
+            Email = null
+        };
+        ControllerHelper.MockUserIdentity(userDto, _accountController);
+        _accountService.DeleteProfileAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult(true));
+
+        ActionResult response = await _accountController.DeleteProfile(1, CancellationToken.None);
+        var result = response as UnauthorizedResult;
+
+        Assert.NotNull(result);
+        Assert.Equal(401, result.StatusCode);
+    }
+    [Fact]
+    public async Task DeleteProfile_ShouldReturnBadRequest_WhenFailed()
+    {
+        UserDto userDto = new()
+        {
+            Id = "1",
+            Email = "user1@example.com",
+            Roles = [DefaultRoles.User]
+        };
+        ControllerHelper.MockUserIdentity(userDto, _accountController);
+        _accountService.DeleteProfileAsync(Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Returns(new OperationResult(false, "Not deleted!"));
+
+        ActionResult response = await _accountController.DeleteProfile(1, CancellationToken.None);
+        var result = response as BadRequestObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal(400, result.StatusCode);

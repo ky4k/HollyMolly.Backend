@@ -1,4 +1,8 @@
 ﻿using HM.BLL.Models.Users;
+using HM.DAL.Data;
+using HM.DAL.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -35,8 +39,9 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         RegistrationResponse? result = await JsonSerializer.DeserializeAsync<RegistrationResponse>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(result);
         Assert.NotNull(result.Email);
@@ -55,8 +60,9 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         LoginResponse? result = await JsonSerializer.DeserializeAsync<LoginResponse>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(result);
         Assert.NotNull(result.UserEmail);
@@ -67,7 +73,7 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
     public async Task GetProfile_ShouldWork()
     {
         string email = "user2@example.com";
-        HttpRequestMessage requestMessage = new(HttpMethod.Get, "api/Account/profile");
+        HttpRequestMessage requestMessage = new(HttpMethod.Get, "api/Account/userInfo");
         requestMessage.Headers.Authorization = await _authorizationHelper
             .GetAuthorizationHeaderAsync(email, "password");
         ProfileUpdateDto profileUpdate = new()
@@ -80,16 +86,41 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        UserDto? result = await JsonSerializer.DeserializeAsync<UserDto>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        UserDto? result = await JsonSerializer.DeserializeAsync<UserDto>(stream, jsonSerializerOptions);
 
         Assert.NotNull(result);
         Assert.Equal(email, result.Email);
     }
     [Fact]
+    public async Task CreateProfile_ShouldWork()
+    {
+        HttpRequestMessage requestMessage = new(HttpMethod.Post, "api/Account/profiles");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync("user1@example.com", "password");
+        ProfileUpdateDto profileUpdate = new()
+        {
+            FirstName = "Правильне",
+            LastName = "Ім'я"
+        };
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(profileUpdate),
+            Encoding.UTF8, "application/json");
+
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
+        httpResponse.EnsureSuccessStatusCode();
+
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        ProfileDto? result = await JsonSerializer.DeserializeAsync<ProfileDto>(
+            stream, jsonSerializerOptions);
+
+        Assert.NotNull(result);
+        Assert.Equal(profileUpdate.FirstName, result.FirstName);
+        Assert.Equal(profileUpdate.LastName, result.LastName);
+    }
+    [Fact]
     public async Task UpdateProfile_ShouldWork()
     {
-        HttpRequestMessage requestMessage = new(HttpMethod.Put, "api/Account/profile");
+        HttpRequestMessage requestMessage = new(HttpMethod.Put, "api/Account/profiles/2");
         requestMessage.Headers.Authorization = await _authorizationHelper
             .GetAuthorizationHeaderAsync("user2@example.com", "password");
         ProfileUpdateDto profileUpdate = new()
@@ -102,13 +133,36 @@ public class AccountIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        UserDto? result = await JsonSerializer.DeserializeAsync<UserDto>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        ProfileDto? result = await JsonSerializer.DeserializeAsync<ProfileDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(result);
-        Assert.NotNull(result.Email);
         Assert.Equal(profileUpdate.FirstName, result.FirstName);
         Assert.Equal(profileUpdate.LastName, result.LastName);
+    }
+    [Fact]
+    public async Task DeleteProfile_ShouldWork()
+    {
+        HttpRequestMessage requestMessage = new(HttpMethod.Delete, "api/Account/profiles/3");
+        requestMessage.Headers.Authorization = await _authorizationHelper
+            .GetAuthorizationHeaderAsync("user3@example.com", "password");
+        ProfileUpdateDto profileUpdate = new()
+        {
+            FirstName = "Правильне",
+            LastName = "Ім'я"
+        };
+        requestMessage.Content = new StringContent(JsonSerializer.Serialize(profileUpdate),
+            Encoding.UTF8, "application/json");
+
+        HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
+        using var scope = _factory.CreateScope();
+        var context = scope.ServiceProvider.GetService<HmDbContext>();
+        Profile? profile = await context!.Profiles.FirstOrDefaultAsync(p => p.Id == 3);
+
+        Assert.Equal(HttpStatusCode.NoContent, httpResponse.StatusCode);
+        Assert.Null(profile);
     }
     [Fact]
     public async Task UpdateEmail_ShouldWork()

@@ -30,7 +30,7 @@ public partial class NewPostService(
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             if (content.Length < 3)
             {
-                return new OperationResult<IEnumerable<NewPostCity>>(true, Array.Empty<NewPostCity>());
+                return new OperationResult<IEnumerable<NewPostCity>>(true, []);
             }
             NewPostResponse<NewPostCity>? deserialized = JsonSerializer
                 .Deserialize<NewPostResponse<NewPostCity>>(content, _jsonSerializerOptions);
@@ -54,7 +54,7 @@ public partial class NewPostService(
             var content = await response.Content.ReadAsStringAsync(cancellationToken);
             if (content.Length < 3)
             {
-                return new OperationResult<IEnumerable<NewPostWarehouse>>(true, Array.Empty<NewPostWarehouse>());
+                return new OperationResult<IEnumerable<NewPostWarehouse>>(true, []);
             }
             NewPostResponse<NewPostWarehouse>? cities = JsonSerializer
                 .Deserialize<NewPostResponse<NewPostWarehouse>>(content, _jsonSerializerOptions);

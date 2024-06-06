@@ -10,7 +10,7 @@ namespace HM.BLL.UnitTests.Validators;
 public class CustomerDtoValidatorTests
 {
     private readonly INewPostService _newPostService;
-    private readonly CustomerDtoValidator _validator;
+    private readonly CustomerCreateDtoValidator _validator;
     public CustomerDtoValidatorTests()
     {
         _newPostService = Substitute.For<INewPostService>();
@@ -18,22 +18,22 @@ public class CustomerDtoValidatorTests
             .Returns(true);
         _newPostService.CheckIfAddressIsValidAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(true);
-        _validator = new CustomerDtoValidator(_newPostService);
+        _validator = new CustomerCreateDtoValidator(_newPostService);
     }
     [Theory]
     [MemberData(nameof(ValidationData.ValidCustomers), MemberType = typeof(ValidationData))]
-    public async Task Validation_ShouldSucceed_WhenAllFieldsAreValid(CustomerDto customer)
+    public async Task Validation_ShouldSucceed_WhenAllFieldsAreValid(CustomerCreateDto customer)
     {
-        TestValidationResult<CustomerDto> result = await _validator.TestValidateAsync(customer);
+        TestValidationResult<CustomerCreateDto> result = await _validator.TestValidateAsync(customer);
 
         Assert.NotNull(result);
         Assert.True(result.IsValid);
     }
     [Theory]
     [MemberData(nameof(ValidationData.InvalidCustomers), MemberType = typeof(ValidationData))]
-    public async Task Validation_ShouldFail_WhenAnyFieldIsInvalid(CustomerDto customer)
+    public async Task Validation_ShouldFail_WhenAnyFieldIsInvalid(CustomerCreateDto customer)
     {
-        TestValidationResult<CustomerDto> result = await _validator.TestValidateAsync(customer);
+        TestValidationResult<CustomerCreateDto> result = await _validator.TestValidateAsync(customer);
 
         Assert.NotNull(result);
         Assert.False(result.IsValid);

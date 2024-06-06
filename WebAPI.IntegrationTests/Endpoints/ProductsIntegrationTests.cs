@@ -32,8 +32,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<ProductDto>? products = await JsonSerializer.DeserializeAsync<IEnumerable<ProductDto>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(products);
         Assert.NotEmpty(products);
@@ -46,8 +47,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<ProductDto>? products = await JsonSerializer.DeserializeAsync<IEnumerable<ProductDto>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(products);
         Assert.NotEmpty(products);
@@ -60,8 +62,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         ProductDto? product = await JsonSerializer.DeserializeAsync<ProductDto>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(product);
         Assert.Equal("Product 1", product.Name);
@@ -82,8 +85,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         ProductDto? product = await JsonSerializer.DeserializeAsync<ProductDto>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.Equal(HttpStatusCode.Created, httpResponse.StatusCode);
         Assert.NotNull(httpResponse.Headers.Location);
@@ -108,8 +112,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         ProductDto? product = await JsonSerializer.DeserializeAsync<ProductDto>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
         Assert.NotNull(product);
@@ -140,8 +145,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         ProductInstanceDto? productInstance = await JsonSerializer.DeserializeAsync<ProductInstanceDto>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
         using var scope = _factory.CreateScope();
         var context = scope.ServiceProvider.GetService<HmDbContext>();
         Product? product = await context!.Products
@@ -174,8 +180,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         ProductInstanceDto? productInstance = await JsonSerializer.DeserializeAsync<ProductInstanceDto>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
         Assert.NotNull(productInstance);
@@ -227,8 +234,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<ProductFeedbackDto>? feedbacks = await JsonSerializer.DeserializeAsync<IEnumerable<ProductFeedbackDto>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(feedbacks);
         Assert.NotEmpty(feedbacks);
@@ -244,8 +252,9 @@ public class ProductsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<ProductFeedbackDto>? feedbacks = await JsonSerializer.DeserializeAsync<IEnumerable<ProductFeedbackDto>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(feedbacks);
         Assert.Single(feedbacks);

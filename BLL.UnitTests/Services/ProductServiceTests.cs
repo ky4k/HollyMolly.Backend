@@ -127,7 +127,7 @@ public class ProductServiceTests
             .GetProductsAsync(null, null, null, false, false, true, false, CancellationToken.None);
 
         Assert.NotNull(products);
-        Assert.Equal(0.8m, products.First().Rating);
+        Assert.Equal(1m, products.First().Rating);
     }
     [Fact]
     public async Task GetRecommendedProductsAsync_ShouldReturnTheCorrectNumberOfProducts()
@@ -1137,11 +1137,31 @@ public class ProductServiceTests
         OperationResult result = await _productService
             .DeleteProductFeedbackAsync(1, 1, CancellationToken.None);
         ProductFeedback? feedback = await _context.Products
+            .Include(p => p.Feedbacks)
             .SelectMany(p => p.Feedbacks).FirstOrDefaultAsync(f => f.Id == 1);
 
         Assert.NotNull(result);
         Assert.True(result.Succeeded);
         Assert.Null(feedback);
+    }
+    [Fact]
+    public async Task DeleteProductFeedbackAsync_ShouldRestoreProductRating()
+    {
+        await SeedDbContextAsync();
+
+        OperationResult result = await _productService
+            .DeleteProductFeedbackAsync(2, 3, CancellationToken.None);
+        Product? product = await _context.Products
+            .Include(p => p.Feedbacks)
+            .FirstOrDefaultAsync(p => p.Id == 2);
+        ProductFeedback? feedback = product?.Feedbacks.Find(f => f.Id == 3);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+        Assert.NotNull(product);
+        Assert.Null(feedback);
+        Assert.Equal(0, product.TimesRated);
+        Assert.Equal(0, product.Rating);
     }
     [Fact]
     public async Task DeleteProductFeedbackAsync_ShouldReturnFalseResult_WhenProductDoesNotExist()
@@ -1297,8 +1317,8 @@ public class ProductServiceTests
             CategoryId = 1,
             Name = "Product 2",
             Description = "Description 2",
-            Rating = 0.6m,
-            TimesRated = 10,
+            Rating = 1,
+            TimesRated = 1,
             ProductInstances =
             [
                 new()

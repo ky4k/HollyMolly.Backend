@@ -24,8 +24,11 @@ public class UserService(
         List<IdentityUserRole<string>> allUsersRoles = await context.UserRoles
             .AsNoTracking()
             .ToListAsync(cancellationToken);
-        List<UserDto> users = [];
-        foreach (var user in await userManager.Users.AsNoTracking().ToListAsync(cancellationToken))
+        List<User> users = await userManager.Users
+            .Include(u => u.Profiles)
+            .AsNoTracking().ToListAsync(cancellationToken);
+        List<UserDto> userDtos = [];
+        foreach (var user in users)
         {
             List<string> userRoles = [];
             foreach (var r in allUsersRoles.Where(ur => ur.UserId == user.Id))
@@ -33,14 +36,16 @@ public class UserService(
                 userRoles.Add(allRoles[r.RoleId]!);
             }
             UserDto userDto = user.ToUserDto(userRoles);
-            users.Add(userDto);
+            userDtos.Add(userDto);
         }
-        return users;
+        return userDtos;
     }
 
     public async Task<UserDto?> GetUserByIdAsync(string userId)
     {
-        var user = await userManager.FindByIdAsync(userId);
+        User? user = await userManager.Users
+            .Include(u => u.Profiles)
+            .FirstOrDefaultAsync(u => u.Id == userId);
         UserDto? userDto = null;
         if (user != null)
         {
@@ -89,6 +94,9 @@ public class UserService(
         {
             return new OperationResult(false, "User with such an id does not exist.");
         }
+        var profiles = await context.Profiles.Where(p => p.UserId == userId).ToListAsync();
+        context.Profiles.RemoveRange(profiles);
+        await context.SaveChangesAsync();
         var result = await userManager.DeleteAsync(user);
         return result.Succeeded
             ? new OperationResult(true)

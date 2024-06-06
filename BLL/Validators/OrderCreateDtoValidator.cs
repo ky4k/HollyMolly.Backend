@@ -9,7 +9,7 @@ public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
     public OrderCreateDtoValidator(INewPostService newPostService)
     {
         RuleFor(ocd => ocd.Customer)
-            .SetValidator(new CustomerDtoValidator(newPostService));
+            .SetValidator(new CustomerCreateDtoValidator(newPostService));
         RuleForEach(ocd => ocd.OrderRecords)
             .Must(or => or.Quantity > 0)
                 .WithMessage("Quantity must be greater than 0.");

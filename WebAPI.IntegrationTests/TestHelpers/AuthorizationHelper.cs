@@ -20,8 +20,9 @@ internal class AuthorizationHelper(HttpClient httpClient)
             Encoding.UTF8, "application/json");
 
         var httpResponse = await httpClient.PostAsync(RequestURI, content);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         var result = await JsonSerializer.DeserializeAsync<LoginResponse>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
         return new AuthenticationHeaderValue("Bearer", result?.AccessToken);
     }
 }

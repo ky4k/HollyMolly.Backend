@@ -538,7 +538,8 @@ public class ProductService(
         {
             product.Rating = product.TimesRated == 1
                 ? 0
-                : (product.Rating * product.TimesRated - feedback.Rating) / (decimal)--product.TimesRated;
+                : (product.Rating * product.TimesRated - feedback.Rating) / product.TimesRated;
+            product.TimesRated--;
             context.Remove(feedback);
             await context.SaveChangesAsync(cancellationToken);
             return new OperationResult(true);

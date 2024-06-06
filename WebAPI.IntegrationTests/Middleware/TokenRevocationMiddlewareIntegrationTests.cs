@@ -65,8 +65,9 @@ public class TokenRevocationMiddlewareIntegrationTests : IClassFixture<SharedWeb
         };
         var registrationResponse = await _httpClient.SendAsync(registrationMessage);
         registrationResponse.EnsureSuccessStatusCode();
+        using Stream stream = await registrationResponse.Content.ReadAsStreamAsync();
         RegistrationResponse? deserializedRegistrationResponse = await JsonSerializer.DeserializeAsync<RegistrationResponse>(
-            await registrationResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
         Assert.NotNull(deserializedRegistrationResponse);
 
         HttpRequestMessage requestMessage = new(HttpMethod.Get, "api/Test/authorize");

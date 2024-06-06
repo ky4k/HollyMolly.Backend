@@ -161,7 +161,8 @@ public class OrderServiceTests
             OrderRecords = []
         };
 
-        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(orderDto, "", CancellationToken.None);
+        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(
+            orderDto, "1234-5678-9012-3456", CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.False(result.Succeeded);
@@ -184,7 +185,8 @@ public class OrderServiceTests
             ]
         };
 
-        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(orderDto, "", CancellationToken.None);
+        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(
+            orderDto, "1234-5678-9012-3456", CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.False(result.Succeeded);
@@ -207,7 +209,8 @@ public class OrderServiceTests
             ]
         };
 
-        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(orderDto, "", CancellationToken.None);
+        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(
+            orderDto, "1234-5678-9012-3456", CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.False(result.Succeeded);
@@ -235,7 +238,8 @@ public class OrderServiceTests
             ]
         };
 
-        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(orderDto, "", CancellationToken.None);
+        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(
+            orderDto, "1234-5678-9012-3456", CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.True(result.Succeeded);
@@ -348,6 +352,23 @@ public class OrderServiceTests
     }
 
     [Fact]
+    public async Task CreateOrderAsync_ShouldNotCreateOrder_WithoutOrderRecords()
+    {
+        await SeedDbContextAsync();
+        OrderCreateDto orderDto = new()
+        {
+            Customer = Customer,
+            OrderRecords = []
+        };
+
+        OperationResult<OrderDto> result = await _orderService.CreateOrderAsync(
+            orderDto, "1234-5678-9012-3456", CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+
+    [Fact]
     public async Task CreateOrderAsync_ShouldNotCreateOrder_WhenTotalPriceIsLowerThanMinimum()
     {
         await SeedDbContextAsync();
@@ -429,7 +450,8 @@ public class OrderServiceTests
         Order? order = await _context.Orders
             .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == 1);
-        OrderStatusHistory? historyRecord = order?.StatusHistory.Find(s => s.OrderId == 1);
+        OrderStatusHistory? historyRecord = order?.StatusHistory
+            .Where(s => s.OrderId == 1).MaxBy(s => s.Date);
 
         Assert.NotNull(historyRecord?.Id);
         Assert.Equal(newStatus, historyRecord.Status);
@@ -473,6 +495,69 @@ public class OrderServiceTests
         Assert.NotNull(result);
         Assert.False(result.Succeeded);
         Assert.Null(result.Payload);
+    }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldAddHistoryStatus_WhenUpdatedStatusIsDifferent()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Updated",
+            Notes = "Notes"
+        };
+
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            1, orderUpdateDto, CancellationToken.None);
+
+        Assert.NotNull(result.Payload);
+        Assert.Equal(2, result.Payload.StatusHistory.Count);
+    }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldAddHistoryStatus_WhenUpdatedNotesAreDifferent()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Created",
+            Notes = "New notes"
+        };
+
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            1, orderUpdateDto, CancellationToken.None);
+
+        Assert.NotNull(result.Payload);
+        Assert.Equal(2, result.Payload.StatusHistory.Count);
+    }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldNotAddHistoryStatus_WhenUpdatedStatusAndNotesRepeatTheCurrent()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Created",
+            Notes = "Notes"
+        };
+
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            1, orderUpdateDto, CancellationToken.None);
+
+        Assert.NotNull(result.Payload);
+        Assert.Single(result.Payload.StatusHistory);
+    }
+    [Fact]
+    public async Task UpdateOrderAsync_ShouldNotAddHistoryStatus_WhenUpdatedStatuRepeatTheCurrentAndNoNotesProvided()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Created"
+        };
+
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            1, orderUpdateDto, CancellationToken.None);
+
+        Assert.NotNull(result.Payload);
+        Assert.Single(result.Payload.StatusHistory);
     }
     [Fact]
     public async Task UpdateOrderAsync_ShouldRestoreProductQuantity_WhenOrderIsBeingCancelled()
@@ -560,6 +645,29 @@ public class OrderServiceTests
         Assert.Equal(100, productInstance?.StockQuantity);
     }
     [Fact]
+    public async Task UpdateOrderAsync_ShouldNotChangeProductQuantity_WhenProductNoLongerExist()
+    {
+        await SeedDbContextAsync();
+        OrderUpdateDto orderUpdateDto = new()
+        {
+            Status = "Cancelled",
+            Notes = "New notes"
+        };
+        Product product = await _context.Products
+            .Include(p => p.ProductInstances)
+            .FirstAsync(p => p.Id == 1);
+        ProductInstance productInstance = product.ProductInstances.Find(p => p.Id == 1)!;
+        product.ProductInstances.Remove(productInstance);
+        await _context.SaveChangesAsync();
+
+        OperationResult<OrderDto> result = await _orderService.UpdateOrderAsync(
+            2, orderUpdateDto, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+        Assert.Equal(4, product.ProductInstances.Count);
+    }
+    [Fact]
     public async Task UpdateOrderAsync_ShouldHandleDatabaseErrors()
     {
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
@@ -599,11 +707,10 @@ public class OrderServiceTests
         await context.SaveChangesAsync();
     }
 
-    private static CustomerDto Customer => new()
+    private static CustomerCreateDto Customer => new()
     {
         FirstName = "Test",
         LastName = "Customer",
-        Email = "email@example.com",
         City = "City",
         DeliveryAddress = "Address",
         PhoneNumber = "1234567890"
@@ -699,6 +806,15 @@ public class OrderServiceTests
         UserId = "1234-5678-9012-3456",
         OrderDate = new DateTimeOffset(2024, 3, 15, 0, 0, 0, TimeSpan.Zero),
         Status = "Created",
+        Notes = "Notes",
+        StatusHistory = [
+            new()
+            {
+                Status = "Created",
+                Date = new DateTimeOffset(2024, 3, 15, 0, 0, 0, TimeSpan.Zero),
+                Notes = "Notes"
+            }
+        ],
         OrderRecords =
         [
             new()

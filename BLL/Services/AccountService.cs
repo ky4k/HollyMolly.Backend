@@ -292,7 +292,6 @@ public class AccountService(
             return new OperationResult<LoginResponse>(false, "Token was not refreshed.");
         }
     }
-
     public async Task<OperationResult> InvalidateAllPreviousTokensAsync(string userId)
     {
         User? user = await userManager.FindByIdAsync(userId);
@@ -304,36 +303,97 @@ public class AccountService(
         await userManager.UpdateAsync(user);
         return new OperationResult(true);
     }
-
-    public async Task<OperationResult<UserDto>> UpdateUserProfileAsync(string userId, ProfileUpdateDto profile)
+    public async Task<UserDto?> GetUserInfoAsync(string userId, CancellationToken cancellationToken)
     {
-        User? user = await userManager.FindByIdAsync(userId);
+        var user = await context.Users
+            .Include(u => u.Profiles)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        return user?.ToUserDto();
+    }
+    public async Task<OperationResult<ProfileDto>> CreateProfileAsync(
+        string userId, ProfileUpdateDto updatedProfile, CancellationToken cancellationToken)
+    {
+        User? user = await context.Users
+            .Include(u => u.Profiles)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
         if (user == null)
         {
-            return new OperationResult<UserDto>(false, UserNotExist);
+            return new OperationResult<ProfileDto>(false, UserNotExist);
         }
-        UpdateUserProperties(user, profile);
-        IdentityResult result = await userManager.UpdateAsync(user);
-        if (result.Succeeded)
+        Profile profile = new();
+        UpdateProfileProperties(profile, updatedProfile);
+        try
         {
-            IEnumerable<string> roles = await userManager.GetRolesAsync(user);
-            return new OperationResult<UserDto>(true, user.ToUserDto(roles));
+            user.Profiles.Add(profile);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult<ProfileDto>(true, profile.ToProfileDto());
         }
-        else
+        catch (Exception ex)
         {
-            logger.LogError("User has not been updated: {Errors}",
-                string.Join(' ', result.Errors.Select(e => e.Description)));
-            return new OperationResult<UserDto>(false, "An error occurred while updating user");
+            logger.LogError(ex, "Profile has not been created: {@Profile}", profile);
+            return new OperationResult<ProfileDto>(false, "Profile has not been created.");
         }
     }
-    private static void UpdateUserProperties(User user, ProfileUpdateDto profile)
+
+    public async Task<OperationResult<ProfileDto>> UpdateProfileAsync(
+        string userId, int profileId, ProfileUpdateDto updatedProfile, CancellationToken cancellationToken)
     {
-        user.FirstName = profile.FirstName;
-        user.LastName = profile.LastName;
-        user.PhoneNumber = profile.PhoneNumber;
-        user.DateOfBirth = profile.DateOfBirth;
-        user.City = profile.City;
-        user.DeliveryAddress = profile.DeliveryAddress;
+        User? user = await context.Users
+            .Include(u => u.Profiles)
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            return new OperationResult<ProfileDto>(false, UserNotExist);
+        }
+        Profile? profile = user.Profiles.Find(p => p.Id == profileId);
+        if (profile == null)
+        {
+            return new OperationResult<ProfileDto>(false, $"User with id {userId} does not contain profile with id {profileId}");
+        }
+        try
+        {
+            UpdateProfileProperties(profile, updatedProfile);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult<ProfileDto>(true, profile.ToProfileDto());
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Profile has not been updated: {@Profile}", profile);
+            return new OperationResult<ProfileDto>(false, "An error occurred while updating user profile.");
+        }
+    }
+    private static void UpdateProfileProperties(Profile profile, ProfileUpdateDto updatedProfile)
+    {
+        profile.FirstName = updatedProfile.FirstName;
+        profile.LastName = updatedProfile.LastName;
+        profile.PhoneNumber = updatedProfile.PhoneNumber;
+        profile.DateOfBirth = updatedProfile.DateOfBirth;
+        profile.City = updatedProfile.City;
+        profile.DeliveryAddress = updatedProfile.DeliveryAddress;
+    }
+    public async Task<OperationResult> DeleteProfileAsync(string userId, int profileId, CancellationToken cancellationToken)
+    {
+        Profile? profile = await context.Profiles
+            .FirstOrDefaultAsync(p => p.Id == profileId, cancellationToken);
+        if (profile == null)
+        {
+            return new OperationResult(false, "Profile does not exist.");
+        }
+        if (profile.UserId != userId)
+        {
+            return new OperationResult(false, "Profile does not belong to the user.");
+        }
+        try
+        {
+            context.Profiles.Remove(profile);
+            await context.SaveChangesAsync(cancellationToken);
+            return new OperationResult(true);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Profile was not deleted {@Profile}", profile);
+            return new OperationResult(false, "Profile has not been deleted.");
+        }
     }
     public async Task<OperationResult> UpdateEmailAsync(string userId, string newEmail)
     {

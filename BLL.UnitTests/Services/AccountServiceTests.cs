@@ -547,10 +547,80 @@ public class AccountServiceTests
         Assert.False(result.Succeeded);
     }
     [Fact]
+    public async Task GetUserInfoAsync_ShouldReturnUserInfo()
+    {
+        await SeedDbContextAsync();
+
+        UserDto? userInfo = await _accountService.GetUserInfoAsync("1", CancellationToken.None);
+
+        Assert.NotNull(userInfo);
+        Assert.NotEmpty(userInfo.Profiles);
+    }
+    [Fact]
+    public async Task GetUserInfoAsync_ShouldReturnNull_WhenUserDoesNotExist()
+    {
+        await SeedDbContextAsync();
+
+        UserDto? userInfo = await _accountService.GetUserInfoAsync("999", CancellationToken.None);
+
+        Assert.Null(userInfo);
+    }
+    [Fact]
+    public async Task CreateProfileAsync_ShouldCreateUserProfile()
+    {
+        await SeedDbContextAsync();
+        ProfileUpdateDto profileUpdateDto = new()
+        {
+            FirstName = "New profile"
+        };
+
+        OperationResult<ProfileDto> result = await _accountService.CreateProfileAsync(
+            "1", profileUpdateDto, CancellationToken.None);
+
+        Assert.NotNull(result?.Payload);
+        Assert.True(result.Succeeded);
+        Assert.Equal(profileUpdateDto.FirstName, result.Payload.FirstName);
+    }
+    [Fact]
+    public async Task CreateProfileAsync_ShouldReturnFalseResult_WhenUserDoesNotExist()
+    {
+        await SeedDbContextAsync();
+        ProfileUpdateDto profileUpdateDto = new()
+        {
+            FirstName = "New profile"
+        };
+
+        OperationResult<ProfileDto> result = await _accountService.CreateProfileAsync(
+            "999", profileUpdateDto, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
+    public async Task CreateProfileAsync_ShouldHandleDatabaseErrors()
+    {
+        var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
+        await dbContextMock.Tokens.AddRangeAsync(Tokens);
+        await SeedDbContextAsync(dbContextMock);
+        dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync<InvalidOperationException>();
+        var service = new AccountService(dbContextMock, _userManager, _jwtSecurityTokenHandler,
+            _configurationHelper, _logger);
+        ProfileUpdateDto profileUpdateDto = new()
+        {
+            FirstName = "New profile"
+        };
+
+        OperationResult<ProfileDto> result = await service.CreateProfileAsync(
+            "1", profileUpdateDto, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
     public async Task UpdateUserProfileAsync_ShouldUpdateUserProfile()
     {
         await SeedDbContextAsync();
-        _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
         ProfileUpdateDto profile = new()
         {
             FirstName = "UpdatedFirstName",
@@ -561,7 +631,8 @@ public class AccountServiceTests
             PhoneNumber = "1234567890"
         };
 
-        OperationResult<UserDto> result = await _accountService.UpdateUserProfileAsync("1", profile);
+        OperationResult<ProfileDto> result = await _accountService.UpdateProfileAsync(
+            "1", 1, profile, CancellationToken.None);
 
         Assert.NotNull(result?.Payload);
         Assert.True(result.Succeeded);
@@ -571,7 +642,6 @@ public class AccountServiceTests
     public async Task UpdateUserProfileAsync_ShouldReturnFalseResult_WhenUserDoesNotExist()
     {
         await SeedDbContextAsync();
-        _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
         ProfileUpdateDto profile = new()
         {
             FirstName = "UpdatedFirstName",
@@ -582,18 +652,42 @@ public class AccountServiceTests
             PhoneNumber = "1234567890"
         };
 
-        OperationResult<UserDto> result = await _accountService.UpdateUserProfileAsync("999", profile);
+        OperationResult<ProfileDto> result = await _accountService.UpdateProfileAsync(
+            "999", 1, profile, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
+    public async Task UpdateUserProfileAsync_ShouldReturnFalseResult_WhenProfileDoesNotExist()
+    {
+        await SeedDbContextAsync();
+        ProfileUpdateDto profile = new()
+        {
+            FirstName = "UpdatedFirstName",
+            LastName = "UpdatedLastName",
+            City = "UpdatedCity",
+            DeliveryAddress = "UpdatedAddress",
+            DateOfBirth = new DateOnly(2000, 1, 1),
+            PhoneNumber = "1234567890"
+        };
+
+        OperationResult<ProfileDto> result = await _accountService.UpdateProfileAsync(
+            "1", 999, profile, CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.False(result.Succeeded);
 
     }
     [Fact]
-    public async Task UpdateUserProfileAsync_ShouldReturnFalseResult_WhenUserHasNotBeenUpdated()
+    public async Task UpdateUserProfileAsync_ShouldHandleDatabaseErrors()
     {
-        await SeedDbContextAsync();
-        _userManager.GetRolesAsync(Arg.Any<User>()).Returns(["Registered user"]);
-        _userManager.UpdateAsync(Arg.Any<User>()).Returns(IdentityResult.Failed());
+        var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
+        await SeedDbContextAsync(dbContextMock);
+        dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync<InvalidOperationException>();
+        var service = new AccountService(dbContextMock, _userManager,
+            _jwtSecurityTokenHandler, _configurationHelper, _logger);
         ProfileUpdateDto profile = new()
         {
             FirstName = "UpdatedFirstName",
@@ -604,12 +698,61 @@ public class AccountServiceTests
             PhoneNumber = "1234567890"
         };
 
-        OperationResult<UserDto> result = await _accountService.UpdateUserProfileAsync("1", profile);
+        OperationResult<ProfileDto> result = await service.UpdateProfileAsync(
+            "1", 1, profile, CancellationToken.None);
 
         Assert.NotNull(result);
         Assert.False(result.Succeeded);
     }
+    [Fact]
+    public async Task DeleteProfileAsync_ShouldDeleteAProfile()
+    {
+        await SeedDbContextAsync();
 
+        OperationResult result = await _accountService.DeleteProfileAsync(
+            "1", 1, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+    }
+    [Fact]
+    public async Task DeleteProfileAsync_ShouldReturnFalseResult_WhenProfileDoesNotExist()
+    {
+        await SeedDbContextAsync();
+
+        OperationResult result = await _accountService.DeleteProfileAsync(
+            "1", 999, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
+    public async Task DeleteProfileAsync_ShouldReturnFalseResult_WhenProfileDoesNotBelongToTheUser()
+    {
+        await SeedDbContextAsync();
+
+        OperationResult result = await _accountService.DeleteProfileAsync(
+            "1", 2, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
+    public async Task DeleteProfileAsync_ShouldHandleDatabaseErrors()
+    {
+        var dbContextMock = Substitute.ForPartsOf<HmDbContext>(ServiceHelper.GetTestDbContextOptions());
+        await dbContextMock.Tokens.AddRangeAsync(Tokens);
+        await SeedDbContextAsync(dbContextMock);
+        dbContextMock.SaveChangesAsync(Arg.Any<CancellationToken>())
+            .ThrowsAsync<InvalidOperationException>();
+        var service = new AccountService(dbContextMock, _userManager, _jwtSecurityTokenHandler,
+            _configurationHelper, _logger);
+
+        OperationResult result = await service.DeleteProfileAsync("1", 1, CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
     [Fact]
     public async Task UpdateEmailAsync_ShouldUpdateUserNameAndEmail()
     {
@@ -862,8 +1005,15 @@ public class AccountServiceTests
             NormalizedUserName = "USER1@EXAMPLE.COM",
             Email = "user1@example.com",
             NormalizedEmail = "USER1@EXAMPLE.COM",
-            FirstName = "First",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    Id = 1,
+                    FirstName = "First",
+                    LastName = "User"
+                }
+            ]
         },
         new()
         {
@@ -874,8 +1024,15 @@ public class AccountServiceTests
             NormalizedEmail = "USER2@EXAMPLE.COM",
             IsOidcUser = true,
             OidcToken = "TestToken",
-            FirstName = "Second",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    Id = 2,
+                    FirstName = "Second",
+                    LastName = "User"
+                }
+            ]
         },
         new()
         {
@@ -884,8 +1041,15 @@ public class AccountServiceTests
             NormalizedUserName = "ADMIN@EXAMPLE.COM",
             Email = "admin@example.com",
             NormalizedEmail = "ADMIN@EXAMPLE.COM",
-            FirstName = "Default",
-            LastName = "Administrator"
+            Profiles =
+            [
+                new()
+                {
+                    Id = 3,
+                    FirstName = "Default",
+                    LastName = "Administrator"
+                }
+            ]
         }
     ];
 

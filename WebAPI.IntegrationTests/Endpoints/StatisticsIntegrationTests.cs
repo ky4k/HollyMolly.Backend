@@ -29,8 +29,9 @@ public class StatisticsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<ProductStatisticDto>? productStatisticDto = await JsonSerializer.DeserializeAsync<IEnumerable<ProductStatisticDto>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(productStatisticDto);
         Assert.NotEmpty(productStatisticDto);
@@ -46,8 +47,9 @@ public class StatisticsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<CategoryStatisticDto>? categoryStatisticDto = await JsonSerializer.DeserializeAsync<IEnumerable<CategoryStatisticDto>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(categoryStatisticDto);
         Assert.NotEmpty(categoryStatisticDto);
@@ -63,8 +65,9 @@ public class StatisticsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<CategoryStatisticDto>? categoryStatisticDto = await JsonSerializer.DeserializeAsync<IEnumerable<CategoryStatisticDto>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(categoryStatisticDto);
         Assert.NotEmpty(categoryStatisticDto);
@@ -80,8 +83,9 @@ public class StatisticsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<OrderStatisticDto>? orderStatisticDto = await JsonSerializer.DeserializeAsync<IEnumerable<OrderStatisticDto>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(orderStatisticDto);
         Assert.Single(orderStatisticDto);
@@ -96,8 +100,9 @@ public class StatisticsIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
         IEnumerable<EmailLog>? emailStatisticDto = await JsonSerializer.DeserializeAsync<IEnumerable<EmailLog>>(
-            await httpResponse.Content.ReadAsStreamAsync(), jsonSerializerOptions);
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(emailStatisticDto);
         Assert.NotEmpty(emailStatisticDto);

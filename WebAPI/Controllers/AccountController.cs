@@ -14,7 +14,6 @@ public class AccountController(
     IAccountService accountService,
     IGoogleOAuthService googleOAuthService,
     IEmailService emailService,
-    IUserService userService,
     IConfigurationHelper configurationHelper
     ) : ControllerBase
 {
@@ -203,48 +202,104 @@ public class AccountController(
     /// <summary>
     /// Allows a user to get their profile information.
     /// </summary>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Returns the profile of the user.</response>
     /// <response code="401">Indicates that the user is unauthenticated.</response>
     /// <response code="404">Indicates that the profile was not found.</response>
     [Authorize]
-    [Route("profile")]
+    [Route("userInfo")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<UserDto>> GetProfile()
+    public async Task<ActionResult<UserDto>> GetUserInfo(CancellationToken cancellationToken)
     {
         string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null)
         {
             return Unauthorized();
         }
-        UserDto? user = await userService.GetUserByIdAsync(userId);
+        UserDto? user = await accountService.GetUserInfoAsync(userId, cancellationToken);
         return user == null ? NotFound() : Ok(user);
+    }
+
+    /// <summary>
+    /// Allows a user to create a new profile.
+    /// </summary>
+    /// <param name="profile">Profile information.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Indicates that the profile has been created.</response>
+    /// <response code="400">Indicates that the profile has not been created and returns the error message.</response>
+    /// <response code="401">Indicates that the user is unauthenticated and therefore cannot create profile.</response>
+    [Authorize]
+    [Route("profiles")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ProfileDto>> CreateProfile(ProfileUpdateDto profile, CancellationToken cancellationToken)
+    {
+        string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+        OperationResult<ProfileDto> result = await accountService.CreateProfileAsync(
+            userId, profile, cancellationToken);
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
 
     /// <summary>
     /// Allows a user to update their profile information.
     /// </summary>
+    /// <param name="profileId">Id of the profile to update.</param>
     /// <param name="profile">Updated profile information.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
     /// <response code="200">Indicates that the profile has been updated and returns updated user.</response>
     /// <response code="400">Indicates that the profile has not been updated and returns the error message.</response>
     /// <response code="401">Indicates that the user is unauthenticated and therefore cannot update profile.</response>
     [Authorize]
-    [Route("profile")]
+    [Route("profiles/{profileId}")]
     [HttpPut]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<ActionResult<UserDto>> UpdateProfile(ProfileUpdateDto profile)
+    public async Task<ActionResult<ProfileDto>> UpdateProfile(int profileId,
+        ProfileUpdateDto profile, CancellationToken cancellationToken)
     {
         string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userId == null)
         {
             return Unauthorized();
         }
-        OperationResult<UserDto> result = await accountService.UpdateUserProfileAsync(userId, profile);
+        OperationResult<ProfileDto> result = await accountService.UpdateProfileAsync(
+            userId, profileId, profile, cancellationToken);
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
+    /// <summary>
+    /// Allows a user to delete their profile information.
+    /// </summary>
+    /// <param name="profileId">Id of the profile to delete.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="204">Indicates that the profile has been successfully deleted.</response>
+    /// <response code="400">Indicates that the profile has not been deleted and returns the error message.</response>
+    /// <response code="401">Indicates that the user is unauthenticated and therefore cannot delete profile.</response>
+    [Authorize]
+    [Route("profiles/{profileId}")]
+    [HttpDelete]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult> DeleteProfile(int profileId, CancellationToken cancellationToken)
+    {
+        string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null)
+        {
+            return Unauthorized();
+        }
+        OperationResult result = await accountService.DeleteProfileAsync(
+            userId, profileId, cancellationToken);
+        return result.Succeeded ? NoContent() : BadRequest(result.Message);
     }
 
     /// <summary>

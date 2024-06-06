@@ -14,7 +14,13 @@ public interface IAccountService
     Task<OperationResult<LoginResponse>> LoginAsync(LoginRequest loginRequest);
     Task<OperationResult<LoginResponse>> RefreshTokenAsync(TokensDto tokens);
     Task<OperationResult> InvalidateAllPreviousTokensAsync(string userId);
-    Task<OperationResult<UserDto>> UpdateUserProfileAsync(string userId, ProfileUpdateDto profile);
+    Task<UserDto?> GetUserInfoAsync(string userId, CancellationToken cancellationToken);
+    Task<OperationResult<ProfileDto>> CreateProfileAsync(string userId,
+        ProfileUpdateDto updatedProfile, CancellationToken cancellationToken);
+    Task<OperationResult<ProfileDto>> UpdateProfileAsync(string userId,
+        int profileId, ProfileUpdateDto updatedProfile, CancellationToken cancellationToken);
+    Task<OperationResult> DeleteProfileAsync(string userId, int profileId, CancellationToken cancellationToken);
+
     Task<OperationResult> UpdateEmailAsync(string userId, string newEmail);
     Task<OperationResult<ResetPasswordTokenDto>> ChangePasswordAsync(string userId, ChangePasswordDto passwords);
     Task<OperationResult<ResetPasswordTokenDto>> CreatePasswordResetKeyAsync(string email);
