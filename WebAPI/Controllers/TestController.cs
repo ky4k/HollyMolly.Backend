@@ -23,7 +23,7 @@ public class TestController : ControllerBase
     /// <response code="200">Indicates that API is working.</response>
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult Test()
+    public ActionResult<object> Test()
     {
         return Ok(new { Succeded = true });
     }
@@ -38,7 +38,7 @@ public class TestController : ControllerBase
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public ActionResult TestAuthorize()
+    public ActionResult<object> TestAuthorize()
     {
         return Ok(new { Succeded = true });
     }
@@ -65,7 +65,7 @@ public class TestController : ControllerBase
     [Route("login/google")]
     [HttpGet]
     [ProducesResponseType(StatusCodes.Status200OK)]
-    public ActionResult ImitateGetRedirectUrl(string frontendUrlToRedirectUserTo)
+    public ActionResult<LinkDto> ImitateGetRedirectUrl(string frontendUrlToRedirectUserTo)
     {
         string redirectUrl = $"https://{Request.Host}{Request.PathBase}/api/Test/login/google/getToken?redirectTo={frontendUrlToRedirectUserTo}";
         return Ok(new LinkDto { RedirectToUrl = redirectUrl });
@@ -96,7 +96,7 @@ public class TestController : ControllerBase
     /// <response code="200">Indicates that the login was successful and returns an access token and user information.</response>
     [Route("login/google")]
     [HttpPost]
-    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<LoginResponse>(StatusCodes.Status200OK)]
     public ActionResult ImitateGoogleLogin(LoginOidcRequest loginRequest)
     {
         if (loginRequest.Token == "1234-5678-9012-3456")

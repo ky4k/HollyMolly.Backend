@@ -226,9 +226,9 @@ public static class ValidationData
         "@ is not in the allowed characters",
         new string('a', 501)
     ];
-    private static IEnumerable<int> _validSupportTopics = [0, 1, 2, 3];
-    private static IEnumerable<int> _invalidSupportTopics = [-10, 99];
-    private static IEnumerable<string> _validSupportDescriptions =
+    private static readonly IEnumerable<int> _validSupportTopics = [0, 1, 2, 3];
+    private static readonly IEnumerable<int> _invalidSupportTopics = [-10, 99];
+    private static readonly IEnumerable<string> _validSupportDescriptions =
     [
         "English letters",
         "Українські букви",
@@ -236,7 +236,7 @@ public static class ValidationData
         "abcd",
         new string('a', 500)
     ];
-    private static IEnumerable<string> _invalidSupportDescriptions =
+    private static readonly IEnumerable<string> _invalidSupportDescriptions =
     [
         "",
         "abc",
@@ -297,8 +297,8 @@ public static class ValidationData
     public static TheoryData<OrderCreateDto> InvalidOrdersCreate => new(GetInvalidOrdersCreateDto());
     public static TheoryData<OrderUpdateDto> ValidOrdersUpdate => new(GetValidOrdersUpdateDto());
     public static TheoryData<OrderUpdateDto> InvalidOrdersUpdate => new(GetInvalidOrdersUpdateDto());
-    public static TheoryData<CustomerDto> ValidCustomers => new(GetValidCustomers());
-    public static TheoryData<CustomerDto> InvalidCustomers => new(GetInvalidCustomers());
+    public static TheoryData<CustomerCreateDto> ValidCustomers => new(GetValidCustomers());
+    public static TheoryData<CustomerCreateDto> InvalidCustomers => new(GetInvalidCustomers());
     public static TheoryData<NewsSubscriptionCreateDto> ValidNewsSubscriptions =>
         new(_validEmails.Select(e => new NewsSubscriptionCreateDto() { Email = e }));
     public static TheoryData<NewsSubscriptionCreateDto> InvalidNewsSubscriptions =>
@@ -545,7 +545,7 @@ public static class ValidationData
     private static List<ProductInstanceCreateDto> GetValidProductInstances()
     {
         List<ProductInstanceCreateDto> productInstances = [];
-        for (int i = 0; i < 8; i++)
+        for (int i = 0; i < 12; i++)
         {
             productInstances.Add(GetProductInstancePrototype());
         }
@@ -557,12 +557,16 @@ public static class ValidationData
         productInstances[5].SKU = "Abc";
         productInstances[6].SKU = "12345678901234567890123456789012345678901234567890";
         productInstances[7].SKU = "Valid characters: #/-():_";
+        productInstances[8].AbsoluteDiscount = 1;
+        productInstances[9].AbsoluteDiscount = 99;
+        productInstances[10].PercentageDiscount = 1;
+        productInstances[11].PercentageDiscount = 99;
         return productInstances;
     }
     private static List<ProductInstanceCreateDto> GetInvalidProductInstances()
     {
         List<ProductInstanceCreateDto> productInstances = [];
-        for (int i = 0; i < 9; i++)
+        for (int i = 0; i < 13; i++)
         {
             productInstances.Add(GetProductInstancePrototype());
         }
@@ -575,6 +579,10 @@ public static class ValidationData
         productInstances[6].SKU = "Invalid characters: \\";
         productInstances[7].SKU = "Invalid characters: \"";
         productInstances[8].SKU = "Invalid characters: @";
+        productInstances[9].AbsoluteDiscount = -1;
+        productInstances[10].AbsoluteDiscount = 101;
+        productInstances[11].PercentageDiscount = -1;
+        productInstances[12].PercentageDiscount = 101;
         return productInstances;
     }
     private static ProductInstanceCreateDto GetProductInstancePrototype() => new()
@@ -756,82 +764,70 @@ public static class ValidationData
             }
         ];
     }
-    private static List<CustomerDto> GetValidCustomers()
+    private static List<CustomerCreateDto> GetValidCustomers()
     {
-        List<CustomerDto> customers = [];
-        foreach (string email in _validEmails)
-        {
-            CustomerDto customer = GetCustomerDtoPrototype();
-            customer.Email = email;
-            customers.Add(customer);
-        }
+        List<CustomerCreateDto> customers = [];
         foreach (string name in _validNames)
         {
-            CustomerDto customer = GetCustomerDtoPrototype();
+            CustomerCreateDto customer = GetCustomerDtoPrototype();
             customer.FirstName = name;
             customer.LastName = name;
             customers.Add(customer);
         }
         foreach (string phoneNumber in _validPhoneNumbers)
         {
-            CustomerDto customer = GetCustomerDtoPrototype();
+            CustomerCreateDto customer = GetCustomerDtoPrototype();
             customer.PhoneNumber = phoneNumber;
             customers.Add(customer);
         }
         foreach (string city in _validCities)
         {
-            CustomerDto customer = GetCustomerDtoPrototype();
+            CustomerCreateDto customer = GetCustomerDtoPrototype();
             customer.City = city;
             customers.Add(customer);
         }
         foreach (string address in _validDeliveryAddress)
         {
-            CustomerDto customer = GetCustomerDtoPrototype();
+            CustomerCreateDto customer = GetCustomerDtoPrototype();
             customer.DeliveryAddress = address;
             customers.Add(customer);
         }
         return customers;
     }
-    private static List<CustomerDto> GetInvalidCustomers()
+    private static List<CustomerCreateDto> GetInvalidCustomers()
     {
-        List<CustomerDto> customers = [];
-        foreach (string email in _invalidEmails)
-        {
-            CustomerDto customer = GetCustomerDtoPrototype();
-            customer.Email = email;
-            customers.Add(customer);
-        }
+        List<CustomerCreateDto> customers = [];
         foreach (string name in _invalidNames)
         {
-            CustomerDto customer = GetCustomerDtoPrototype();
+            CustomerCreateDto customer = GetCustomerDtoPrototype();
             customer.FirstName = name;
             customer.LastName = name;
             customers.Add(customer);
         }
         foreach (string phoneNumber in _invalidPhoneNumbers)
         {
-            CustomerDto customer = GetCustomerDtoPrototype();
+            CustomerCreateDto customer = GetCustomerDtoPrototype();
             customer.PhoneNumber = phoneNumber;
             customers.Add(customer);
         }
         foreach (string city in _invalidCities)
         {
-            CustomerDto customer = GetCustomerDtoPrototype();
+            CustomerCreateDto customer = GetCustomerDtoPrototype();
             customer.City = city;
             customers.Add(customer);
         }
         foreach (string address in _invalidDeliveryAddress)
         {
-            CustomerDto customer = GetCustomerDtoPrototype();
+            CustomerCreateDto customer = GetCustomerDtoPrototype();
             customer.DeliveryAddress = address;
             customers.Add(customer);
         }
         customers.AddRange(GetCustomerWithoutSomeProperties());
         return customers;
     }
-    private static List<CustomerDto> GetCustomerWithoutSomeProperties()
+    private static List<CustomerCreateDto> GetCustomerWithoutSomeProperties()
     {
-        List<CustomerDto> customers = [];
+        List<CustomerCreateDto> customers = [];
         for (int i = 0; i < 5; i++)
         {
             customers.Add(GetCustomerDtoPrototype());
@@ -843,11 +839,10 @@ public static class ValidationData
         customers[4].DeliveryAddress = "";
         return customers;
     }
-    private static CustomerDto GetCustomerDtoPrototype()
+    private static CustomerCreateDto GetCustomerDtoPrototype()
     {
-        return new CustomerDto()
+        return new CustomerCreateDto()
         {
-            Email = "validEmail@example.com",
             FirstName = "Правильне",
             LastName = "Прізвище",
             PhoneNumber = "0123456789",

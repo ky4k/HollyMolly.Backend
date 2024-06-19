@@ -30,8 +30,9 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<OrderDto>? orders = JsonSerializer.Deserialize<IEnumerable<OrderDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        IEnumerable<OrderDto>? orders = await JsonSerializer.DeserializeAsync<IEnumerable<OrderDto>>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(orders);
         Assert.NotEmpty(orders);
@@ -46,8 +47,9 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<OrderDto>? orders = JsonSerializer.Deserialize<IEnumerable<OrderDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        IEnumerable<OrderDto>? orders = await JsonSerializer.DeserializeAsync<IEnumerable<OrderDto>>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(orders);
         Assert.Single(orders);
@@ -61,8 +63,9 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        OrderDto? order = JsonSerializer.Deserialize<OrderDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        OrderDto? order = await JsonSerializer.DeserializeAsync<OrderDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(order);
         Assert.Single(order.OrderRecords);
@@ -75,9 +78,8 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
             .GetAuthorizationHeaderAsync("user1@example.com", "password");
         OrderCreateDto orderCreateDto = new()
         {
-            Customer = new CustomerDto()
+            Customer = new CustomerCreateDto()
             {
-                Email = "user1@example.com",
                 FirstName = "Перше",
                 LastName = "Останнє",
                 PhoneNumber = "0123456789",
@@ -98,8 +100,9 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        OrderDto? order = JsonSerializer.Deserialize<OrderDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        OrderDto? order = await JsonSerializer.DeserializeAsync<OrderDto>(
+            stream, jsonSerializerOptions);
 
         Assert.Equal(HttpStatusCode.Created, httpResponse.StatusCode);
         Assert.NotNull(httpResponse.Headers.Location);
@@ -116,9 +119,8 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
             .GetAuthorizationHeaderAsync("admin1@example.com", "password");
         OrderCreateDto orderCreateDto = new()
         {
-            Customer = new CustomerDto()
+            Customer = new CustomerCreateDto()
             {
-                Email = "user1@example.com",
                 FirstName = "Перше",
                 LastName = "Останнє",
                 PhoneNumber = "0123456789",
@@ -139,8 +141,9 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        OrderDto? order = JsonSerializer.Deserialize<OrderDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        OrderDto? order = await JsonSerializer.DeserializeAsync<OrderDto>(
+            stream, jsonSerializerOptions);
 
         Assert.Equal(HttpStatusCode.Created, httpResponse.StatusCode);
         Assert.NotNull(httpResponse.Headers.Location);
@@ -165,12 +168,15 @@ public class OrderIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        OrderDto? order = JsonSerializer.Deserialize<OrderDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        OrderDto? order = await JsonSerializer.DeserializeAsync<OrderDto>(
+            stream, jsonSerializerOptions);
+        OrderStatusHistoryDto? status = order?.StatusHistory.MaxBy(s => s.Date);
 
         Assert.Equal(HttpStatusCode.OK, httpResponse.StatusCode);
         Assert.NotNull(order);
-        Assert.Equal(orderUpdateDto.Status, order.Status);
-        Assert.Equal(orderUpdateDto.Notes, order.Notes);
+        Assert.NotNull(status);
+        Assert.Equal(orderUpdateDto.Status, status.Status);
+        Assert.Equal(orderUpdateDto.Notes, status.Notes);
     }
 }

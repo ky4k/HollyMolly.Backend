@@ -21,6 +21,7 @@ public class OrderService(
         IQueryable<Order> orders = context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+            .Include(o => o.StatusHistory)
             .AsNoTracking();
         if (userId != null)
         {
@@ -46,6 +47,7 @@ public class OrderService(
         Order? order = await context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+            .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         return order?.ToOrderDto();
     }
@@ -53,11 +55,24 @@ public class OrderService(
     public async Task<OperationResult<OrderDto>> CreateOrderAsync(OrderCreateDto orderDto, string userId,
         CancellationToken cancellationToken)
     {
+        User? user = await context.Users
+            .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+        if (user == null)
+        {
+            return new OperationResult<OrderDto>(false, "User does not exist");
+        }
         Order order = new()
         {
             UserId = userId,
-            Customer = orderDto.Customer.ToCustomerInfo(),
+            Customer = orderDto.Customer.ToCustomerInfo(user.Email!),
             Status = OrderStatuses.Created,
+            StatusHistory = [
+                new OrderStatusHistory()
+                {
+                    Status = OrderStatuses.Created,
+                    Date = DateTimeOffset.UtcNow
+                }
+            ],
             OrderDate = DateTimeOffset.UtcNow,
             PaymentReceived = false,
             OrderRecords = []
@@ -135,12 +150,23 @@ public class OrderService(
         Order? order = await context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+            .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         if (order == null)
         {
             return new OperationResult<OrderDto>(false, "Order with such an id does not exist.");
         }
         await RestoreProductQuantityAsync(order, updateDto.Status, cancellationToken);
+        if (order.Status != updateDto.Status ||
+            (!string.IsNullOrEmpty(updateDto.Notes) && order.Notes != updateDto.Notes))
+        {
+            order.StatusHistory.Add(new OrderStatusHistory()
+            {
+                Status = updateDto.Status,
+                Date = DateTimeOffset.UtcNow,
+                Notes = updateDto.Notes ?? string.Empty
+            });
+        }
         order.Status = updateDto.Status;
         order.Notes = updateDto.Notes ?? string.Empty;
         try
@@ -165,19 +191,17 @@ public class OrderService(
         }
         foreach (OrderRecord orderRecord in order.OrderRecords)
         {
-            Product? product = await context.Products
+            ProductInstance? productInstance = await context.Products
                 .Include(p => p.ProductInstances)
-                .FirstOrDefaultAsync(p => p.ProductInstances
-                    .Any(pi => pi.Id == orderRecord.ProductInstanceId), cancellationToken);
-            ProductInstance productInstance = product?.ProductInstances
-                .Find(pi => pi.Id == orderRecord.ProductInstanceId)!;
+                .SelectMany(p => p.ProductInstances)
+                .FirstOrDefaultAsync(pi => pi.Id == orderRecord.ProductInstanceId, cancellationToken);
             if (newStatus == OrderStatuses.Cancelled)
             {
-                productInstance.StockQuantity += orderRecord.Quantity;
+                productInstance!.StockQuantity += orderRecord.Quantity;
             }
             else
             {
-                if (productInstance.StockQuantity < orderRecord.Quantity)
+                if (productInstance!.StockQuantity < orderRecord.Quantity)
                 {
                     orderRecord.Quantity = productInstance.StockQuantity;
                 }

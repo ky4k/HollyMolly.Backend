@@ -33,8 +33,9 @@ public class WishListIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        WishListDto? wishListDto = JsonSerializer.Deserialize<WishListDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        WishListDto? wishListDto = await JsonSerializer.DeserializeAsync<WishListDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(wishListDto);
     }
@@ -47,8 +48,9 @@ public class WishListIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        WishListDto? wishListDto = JsonSerializer.Deserialize<WishListDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        WishListDto? wishListDto = await JsonSerializer.DeserializeAsync<WishListDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(wishListDto);
     }
@@ -62,8 +64,9 @@ public class WishListIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        WishListDto? wishListDto = JsonSerializer.Deserialize<WishListDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        WishListDto? wishListDto = await JsonSerializer.DeserializeAsync<WishListDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(wishListDto);
         Assert.Single(wishListDto.Products);
@@ -87,8 +90,9 @@ public class WishListIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        WishListDto? wishListDto = JsonSerializer.Deserialize<WishListDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        WishListDto? wishListDto = await JsonSerializer.DeserializeAsync<WishListDto>(
+            stream, jsonSerializerOptions);
         WishList? wishList = null;
         using (var scope2 = _factory.CreateScope())
         {

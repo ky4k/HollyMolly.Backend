@@ -197,24 +197,42 @@ public class UserServiceTests
             Id = "1",
             UserName = "user1@example.com",
             Email = "user1@example.com",
-            FirstName = "First",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "First",
+                    LastName = "User"
+                }
+            ]
         },
         new()
         {
             Id = "2",
             UserName = "user2@example.com",
             Email = "user2@example.com",
-            FirstName = "Second",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "Second",
+                    LastName = "User"
+                }
+            ]
         },
         new()
         {
             Id = "3",
             UserName = "admin@example.com",
             Email = "admin@example.com",
-            FirstName = "Default",
-            LastName = "Administrator"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "Default",
+                    LastName = "Administrator"
+                }
+            ]
         }
     ];
 

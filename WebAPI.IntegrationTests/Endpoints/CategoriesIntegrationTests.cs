@@ -33,8 +33,9 @@ public class CategoriesIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<CategoryGroupDto>? categories = JsonSerializer.Deserialize<IEnumerable<CategoryGroupDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        IEnumerable<CategoryGroupDto>? categories = await JsonSerializer.DeserializeAsync<IEnumerable<CategoryGroupDto>>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(categories);
         Assert.NotEmpty(categories);
@@ -49,8 +50,9 @@ public class CategoriesIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        CategoryGroupDto? categoryGroup = JsonSerializer.Deserialize<CategoryGroupDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        CategoryGroupDto? categoryGroup = await JsonSerializer.DeserializeAsync<CategoryGroupDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(categoryGroup);
         Assert.Equal(2, categoryGroup.Categories.Count);
@@ -63,8 +65,9 @@ public class CategoriesIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<ProductDto>? products = JsonSerializer.Deserialize<IEnumerable<ProductDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        IEnumerable<ProductDto>? products = await JsonSerializer.DeserializeAsync<IEnumerable<ProductDto>>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(products);
         Assert.NotEmpty(products);
@@ -150,8 +153,9 @@ public class CategoriesIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        CategoryDto? category = JsonSerializer.Deserialize<CategoryDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        CategoryDto? category = await JsonSerializer.DeserializeAsync<CategoryDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(category);
         Assert.Equal("Category 1", category.Name);
@@ -165,8 +169,9 @@ public class CategoriesIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<ProductDto>? products = JsonSerializer.Deserialize<IEnumerable<ProductDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        IEnumerable<ProductDto>? products = await JsonSerializer.DeserializeAsync<IEnumerable<ProductDto>>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(products);
         Assert.NotEmpty(products);

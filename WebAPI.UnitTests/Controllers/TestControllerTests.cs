@@ -25,8 +25,8 @@ public class TestControllerTests
     [Fact]
     public void Test_ShouldReturnOkResult()
     {
-        ActionResult response = _testController.Test();
-        var result = response as OkObjectResult;
+        ActionResult<object> response = _testController.Test();
+        var result = response.Result as OkObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal(200, result.StatusCode);
@@ -35,8 +35,8 @@ public class TestControllerTests
     [Fact]
     public void TestAuthorize_ShouldReturnOkResult()
     {
-        ActionResult response = _testController.TestAuthorize();
-        var result = response as OkObjectResult;
+        ActionResult<object> response = _testController.TestAuthorize();
+        var result = response.Result as OkObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal(200, result.StatusCode);
@@ -46,8 +46,8 @@ public class TestControllerTests
     public void ImitateGetRedirectUrl_ShouldReturnOkResult()
     {
         ControllerHelper.MockHost(_testController);
-        ActionResult response = _testController.ImitateGetRedirectUrl("testUrl");
-        var result = response as OkObjectResult;
+        ActionResult<LinkDto> response = _testController.ImitateGetRedirectUrl("testUrl");
+        var result = response.Result as OkObjectResult;
 
         Assert.NotNull(result);
         Assert.Equal(200, result.StatusCode);

@@ -35,8 +35,9 @@ public class UserIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<UserDto>? users = JsonSerializer.Deserialize<IEnumerable<UserDto>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        IEnumerable<UserDto>? users = await JsonSerializer.DeserializeAsync<IEnumerable<UserDto>>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(users);
         Assert.NotEmpty(users);
@@ -52,8 +53,9 @@ public class UserIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        UserDto? user = JsonSerializer.Deserialize<UserDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        UserDto? user = await JsonSerializer.DeserializeAsync<UserDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(user);
         Assert.Equal("user1@example.com", user.Email);
@@ -71,11 +73,12 @@ public class UserIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        UserDto? user = JsonSerializer.Deserialize<UserDto>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        UserDto? user = await JsonSerializer.DeserializeAsync<UserDto>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(user);
-        Assert.Equal(2, user.Roles.Count());
+        Assert.Equal(2, user.Roles.Count);
         Assert.Contains(DefaultRoles.Manager, user.Roles);
     }
     [Fact]
@@ -102,8 +105,9 @@ public class UserIntegrationTests : IClassFixture<SharedWebAppFactory>
 
         HttpResponseMessage httpResponse = await _httpClient.SendAsync(requestMessage);
         httpResponse.EnsureSuccessStatusCode();
-        IEnumerable<string>? roles = JsonSerializer.Deserialize<IEnumerable<string>>(
-            httpResponse.Content.ReadAsStream(), jsonSerializerOptions);
+        using Stream stream = await httpResponse.Content.ReadAsStreamAsync();
+        IEnumerable<string>? roles = await JsonSerializer.DeserializeAsync<IEnumerable<string>>(
+            stream, jsonSerializerOptions);
 
         Assert.NotNull(roles);
         Assert.Contains(DefaultRoles.Administrator, roles);

@@ -2,6 +2,6 @@
 
 public class OrderCreateDto
 {
-    public CustomerDto Customer { get; set; } = null!;
+    public CustomerCreateDto Customer { get; set; } = null!;
     public List<OrderRecordCreateDto> OrderRecords { get; set; } = [];
 }

@@ -1,4 +1,5 @@
 ﻿using HM.DAL.Data;
+using HM.DAL.Entities;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -16,9 +17,14 @@ public class TokenRevocationMiddleware(HmDbContext dbContext) : IMiddleware
             && context.User.Identity!.IsAuthenticated)
         {
             string userId = context.User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
-            long? invalidBefore = (await dbContext.Users.FirstAsync(u => u.Id == userId)).InvalidateTokenBefore;
+            User? user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+            {
+                context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                return;
+            }
             long issuedAt = long.Parse(context.User.FindFirst("IssuedAt")!.Value);
-            if (invalidBefore != null && issuedAt < invalidBefore)
+            if (user.InvalidateTokenBefore != null && issuedAt < user.InvalidateTokenBefore)
             {
                 context.Response.StatusCode = StatusCodes.Status401Unauthorized;
                 return;

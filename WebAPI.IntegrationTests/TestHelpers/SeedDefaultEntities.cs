@@ -50,40 +50,70 @@ public static class SeedDefaultEntities
             Id = "1",
             Email = "user1@example.com",
             UserName = "user1@example.com",
-            FirstName = "First",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "First",
+                    LastName = "User"
+                }
+            ]
         },
         new()
         {
             Id = "2",
             UserName = "user2@example.com",
             Email = "user2@example.com",
-            FirstName = "Second",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "Second",
+                    LastName = "User"
+                }
+            ]
         },
         new()
         {
             Id = "3",
             UserName = "user3@example.com",
             Email = "user3@example.com",
-            FirstName = "Third",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "Third",
+                    LastName = "User"
+                }
+            ]
         },
         new()
         {
             Id = "4",
             UserName = "user4@example.com",
             Email = "user4@example.com",
-            FirstName = "Fourth",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "Fourth",
+                    LastName = "User"
+                }
+            ]
         },
         new()
         {
             Id = "5",
             UserName = "user5@example.com",
             Email = "user5@example.com",
-            FirstName = "Fifth",
-            LastName = "User"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "Fifth",
+                    LastName = "User"
+                }
+            ]
         },
     ];
     private static List<User> Admins =>
@@ -93,8 +123,14 @@ public static class SeedDefaultEntities
             Id = "51",
             UserName = "admin1@example.com",
             Email = "admin1@example.com",
-            FirstName = "Default",
-            LastName = "Administrator"
+            Profiles =
+            [
+                new()
+                {
+                    FirstName = "Default",
+                    LastName = "Administrator"
+                }
+            ]
         }
     ];
 

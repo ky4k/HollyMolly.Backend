@@ -16,12 +16,7 @@ public static class MappingExtensions
         {
             Id = user.Id,
             Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            DateOfBirth = user.DateOfBirth,
-            PhoneNumber = user.PhoneNumber,
-            City = user.City,
-            DeliveryAddress = user.DeliveryAddress,
+            Profiles = user.Profiles.Select(p => p.ToProfileDto()).ToList()
         };
     }
     public static UserDto ToUserDto(this User user, IEnumerable<string> roles)
@@ -30,7 +25,19 @@ public static class MappingExtensions
         userDto.Roles = roles.ToList();
         return userDto;
     }
-
+    public static ProfileDto ToProfileDto(this Profile profile)
+    {
+        return new ProfileDto()
+        {
+            Id = profile.Id,
+            FirstName = profile.FirstName,
+            LastName = profile.LastName,
+            DateOfBirth = profile.DateOfBirth,
+            PhoneNumber = profile.PhoneNumber,
+            City = profile.City,
+            DeliveryAddress = profile.DeliveryAddress
+        };
+    }
     public static ProductDto ToProductDto(this Product product)
     {
         return new ProductDto()
@@ -130,6 +137,7 @@ public static class MappingExtensions
             Customer = order.Customer.ToCustomerDto(),
             OrderDate = order.OrderDate,
             Status = order.Status,
+            StatusHistory = order.StatusHistory.Select(s => s.ToOrderStatusHistoryDto()).ToList(),
             PaymentReceived = order.PaymentReceived,
             Notes = order.Notes,
             OrderRecords = order.OrderRecords.Select(or => or.ToOrderRecordDto()).ToList()
@@ -149,11 +157,11 @@ public static class MappingExtensions
         };
     }
 
-    public static CustomerInfo ToCustomerInfo(this CustomerDto customer)
+    public static CustomerInfo ToCustomerInfo(this CustomerCreateDto customer, string email)
     {
         return new CustomerInfo()
         {
-            Email = customer.Email,
+            Email = email,
             FirstName = customer.FirstName,
             LastName = customer.LastName,
             PhoneNumber = customer.PhoneNumber,
@@ -161,7 +169,15 @@ public static class MappingExtensions
             DeliveryAddress = customer.DeliveryAddress,
         };
     }
-
+    public static OrderStatusHistoryDto ToOrderStatusHistoryDto(this OrderStatusHistory orderStatus)
+    {
+        return new OrderStatusHistoryDto()
+        {
+            Status = orderStatus.Status,
+            Date = orderStatus.Date,
+            Notes = orderStatus.Notes
+        };
+    }
     public static OrderRecordDto ToOrderRecordDto(this OrderRecord orderRecord)
     {
         return new OrderRecordDto()

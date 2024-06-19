@@ -20,7 +20,7 @@ public class NewPostControllerTests
     public async Task GetCities_ShouldReturnOkResult_WhenSucceeded()
     {
         _newPostService.GetCitiesAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
-            .Returns(new OperationResult<IEnumerable<NewPostCity>>(true, Array.Empty<NewPostCity>()));
+            .Returns(new OperationResult<IEnumerable<NewPostCity>>(true, []));
 
         ActionResult<IEnumerable<NewPostCity>> response = await _newPostController
             .GetCities("1", CancellationToken.None);
@@ -47,7 +47,7 @@ public class NewPostControllerTests
     public async Task GetWarehouses_ShouldReturnOkResult_WhenSucceeded()
     {
         _newPostService.GetWarehousesAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
-            .Returns(new OperationResult<IEnumerable<NewPostWarehouse>>(true, Array.Empty<NewPostWarehouse>()));
+            .Returns(new OperationResult<IEnumerable<NewPostWarehouse>>(true, []));
 
         ActionResult<IEnumerable<NewPostWarehouse>> response = await _newPostController
             .GetWarehouses("1", "1", CancellationToken.None);

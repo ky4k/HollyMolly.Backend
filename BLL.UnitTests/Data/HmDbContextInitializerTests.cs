@@ -51,20 +51,20 @@ public class HmDbContextInitializerTests
             .UseSqlServer(connection)
             .Options;
         var context = new HmDbContext(options);
-        context.Database.EnsureDeleted();
+        await context.Database.EnsureDeletedAsync();
 
         var initializer = new HmDbContextInitializer(context, _userManager, _roleManager, _logger);
 
         Exception? exception = await Record.ExceptionAsync(initializer.ApplyMigrationsAsync);
 
         Assert.Null(exception);
-        context.Database.EnsureDeleted();
+        await context.Database.EnsureDeletedAsync();
     }
     [Fact]
     public async Task ApplyMigrationsAsync_ShouldWork_WhenNoNewMigrations()
     {
         var connection = new SqliteConnection("Data Source=InMemorySample;Mode=Memory;Cache=Shared");
-        connection.Open();
+        await connection.OpenAsync();
         var options = new DbContextOptionsBuilder<HmDbContext>().UseSqlite(connection).Options;
         var dbContextMock = Substitute.ForPartsOf<HmDbContext>(options);
         var dbFacade = Substitute.ForPartsOf<DatabaseFacade>(dbContextMock);
@@ -74,7 +74,7 @@ public class HmDbContextInitializerTests
         Exception? exception = await Record.ExceptionAsync(initializer.ApplyMigrationsAsync);
 
         Assert.Null(exception);
-        connection.Close();
+        await connection.CloseAsync();
     }
     [Fact]
     public async Task ApplyMigrationsAsync_ShouldHandleErrors()
