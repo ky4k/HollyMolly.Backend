@@ -77,16 +77,25 @@ public class ImageService(
 
     private static string GetUniqueFileName(string fileName)
     {
-        int index = fileName.ToString().LastIndexOf('.');
-        string fileNameWithoutExtension = fileName.ToString()[..index];
-        return $"{fileNameWithoutExtension}-{Guid.NewGuid().ToString()[..4]}.jpg";
+        int index = fileName.LastIndexOf('.');
+        string fileNameWithoutExtension = fileName[..index];
+        string extension = fileName[index..];
+        return $"{fileNameWithoutExtension}-{Guid.NewGuid().ToString()[..4]}{extension}";
     }
 
     private static OperationResult ValidateImage(IFormFile image)
     {
-        return image.ContentType == "image/jpeg" &&
-            (image.FileName.EndsWith(".jpg") || image.FileName.EndsWith(".jpeg"))
+        return IsJpegFile(image) || IsPngFile(image)
                 ? new OperationResult(true)
                 : new OperationResult(false, $"Invalid file format of {image.FileName}");
+    }
+    private static bool IsJpegFile(IFormFile image)
+    {
+        return image.ContentType == "image/jpeg" &&
+            (image.FileName.EndsWith(".jpg") || image.FileName.EndsWith(".jpeg"));
+    }
+    private static bool IsPngFile(IFormFile image)
+    {
+        return image.ContentType == "image/png" && image.FileName.EndsWith(".png");
     }
 }

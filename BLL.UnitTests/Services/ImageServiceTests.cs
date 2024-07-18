@@ -33,6 +33,50 @@ public class ImageServiceTests
         Assert.True(File.Exists(result.Payload.FilePath));
     }
     [Fact]
+    public async Task UploadImageAsync_ShouldReturnTrueResult_WhenUploadedFileHasJpgFormat()
+    {
+        IFormFile formFile = GetFormFile("image1.jpg");
+
+        OperationResult<ImageDto> result = await _imageService
+            .UploadImageAsync(formFile, "http://test.com", "tests", CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+    }
+    [Fact]
+    public async Task UploadImageAsync_ShouldReturnTrueResult_WhenUploadedFileHasJpegFormat()
+    {
+        IFormFile formFile = GetFormFile("image1.jpeg");
+
+        OperationResult<ImageDto> result = await _imageService
+            .UploadImageAsync(formFile, "http://test.com", "tests", CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+    }
+    [Fact]
+    public async Task UploadImageAsync_ShouldReturnTrueResult_WhenUploadedFileHasPngFormat()
+    {
+        IFormFile formFile = GetFormFile("image1.png", "image/png");
+
+        OperationResult<ImageDto> result = await _imageService
+            .UploadImageAsync(formFile, "http://test.com", "tests", CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.True(result.Succeeded);
+    }
+    [Fact]
+    public async Task UploadImageAsync_ShouldReturnFalseResult_WhenFileHasInvalidExtension()
+    {
+        IFormFile formFile = GetFormFile("document.pdf");
+
+        OperationResult<ImageDto> result = await _imageService
+            .UploadImageAsync(formFile, "http://test.com", "tests", CancellationToken.None);
+
+        Assert.NotNull(result);
+        Assert.False(result.Succeeded);
+    }
+    [Fact]
     public async Task UploadImageAsync_ShouldReturnFalseResult_WhenFileHasInvalidContentType()
     {
         IFormFile formFile = GetFormFile("image1.jpg", "application/pdf");
