@@ -44,11 +44,41 @@ public partial class NewPostService(
         {
             var response = await _httpClient.PostAsJsonAsync("https://api.novaposhta.ua/v2.0/json/", request, cancellationToken);
             response.EnsureSuccessStatusCode();
-            return null;
+            var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+            var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostWarehouse>>(jsonResponse, _jsonSerializerOptions);
+
+            if (apiResponse == null)
+            {
+                _logger.LogError("Nova Poshta API response is null.");
+                return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Response is null.", null);
+            }
+            if (!apiResponse.Success)
+            {
+                _logger.LogError("Nova Poshta API response indicates failure.");
+                var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
+                return new OperationResult<IEnumerable<NewPostWarehouse>>(false, errorMessage, null);
+            }
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(true, string.Empty, apiResponse.Data);
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _logger.LogError(httpEx, "An error occurred while sending request to Nova Poshta API.");
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Request error.", null);
+        }
+        catch (TaskCanceledException taskEx)
+        {
+            _logger.LogError(taskEx, "The request to Nova Poshta API was canceled.");
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Request was canceled.", null);
+        }
+        catch (JsonException jsonEx)
+        {
+            _logger.LogError(jsonEx, "Error deserializing the response from Nova Poshta API.");
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Error parsing response.", null);
         }
         catch (Exception ex)
         {
-            return null;
+            _logger.LogError(ex, "An unexpected error occurred.");
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "An unexpected error occurred.", null);
         }
     }
 }
