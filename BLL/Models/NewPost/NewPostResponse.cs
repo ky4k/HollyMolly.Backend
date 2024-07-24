@@ -1,6 +1,15 @@
-﻿namespace HM.BLL.Models.NewPost;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-public class NewPostResponse<T>
+namespace HM.BLL.Models.NewPost
 {
-    public IEnumerable<T>? Results { get; set; }
+    public class NewPostResponse<T> where T : class
+    {
+        public bool Success { get; set; }
+        public List<NewPostWarehouse> Data { get; set; } = null!;
+        public List<string> Errors { get; set; } = null!;
+    }
 }
