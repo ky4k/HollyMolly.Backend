@@ -45,6 +45,7 @@ public partial class NewPostService(
             var response = await _httpClient.PostAsJsonAsync("https://api.novaposhta.ua/v2.0/json/", request, cancellationToken);
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
             var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostWarehouse>>(jsonResponse, _jsonSerializerOptions);
 
             if (apiResponse == null)
