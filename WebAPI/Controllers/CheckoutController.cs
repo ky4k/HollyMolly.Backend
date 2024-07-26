@@ -14,7 +14,7 @@ public class CheckoutController(
     IConfigurationHelper configurationHelper
     ) : ControllerBase
 {
-    private readonly string _paymentPage = configurationHelper.GetConfigurationValue("FrontendUrls:MainPage") ?? "";
+    private readonly string _paymentPage = configurationHelper.GetConfigurationValue("FrontendUrls:PaymentPage") ?? "";
     /// <summary>
     /// Allows registered users to get link to the Stripe payment page.
     /// </summary>
