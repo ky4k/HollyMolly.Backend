@@ -10,5 +10,7 @@ public interface INewPostService
     Task<OperationResult<IEnumerable<NewPostWarehouse>>> GetWarehousesAync(
         string? CityName,string? WarehouseId,string? FindByString, string? CityRef,string? Page, string? Limit,
         string? Language, string? TypeOfWarehouseRef, CancellationToken cancellationToken);
+    Task<bool> CheckIfCityIsValidAsync(string city, CancellationToken cancellationToken);
+    Task<bool> CheckIfAddressIsValidAsync(string city, string address, CancellationToken cancellationToken);
 
 }

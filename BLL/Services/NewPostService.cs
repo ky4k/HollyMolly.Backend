@@ -151,4 +151,16 @@ public partial class NewPostService(
             return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "An unexpected error occurred.", null);
         }
     }
+
+    public async Task<bool> CheckIfCityIsValidAsync(string city, CancellationToken cancellationToken)
+    {
+        var result = await GetCitiesAsync(city, null, null, null, cancellationToken);
+        return result.Payload?.Any(c => c.Description.Equals(city, StringComparison.OrdinalIgnoreCase)) ?? false;
+    }
+
+    public async Task<bool> CheckIfAddressIsValidAsync(string city, string address, CancellationToken cancellationToken)
+    {
+        var result = await GetWarehousesAync(city, null, address, null, null, null, null, null, cancellationToken);
+        return result.Payload?.Any(warehouse => warehouse.Description.Contains(address, StringComparison.OrdinalIgnoreCase)) ?? false;
+    }
 }
