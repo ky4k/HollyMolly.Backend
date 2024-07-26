@@ -683,7 +683,7 @@ public class ProductServiceTests
     {
         await SeedDbContextAsync();
         _imageService.UploadImagesAsync(Arg.Any<IFormFile[]>(), Arg.Any<string>(), Arg.Any<string>(),
-            Arg.Any<CancellationToken>()).Returns(new OperationResult<List<ImageDto>>(true, []));
+            Arg.Any<CancellationToken>()).Returns(new OperationResult<List<ImageDto>>(true));
 
         OperationResult<ProductInstanceDto> result = await _productService
             .UploadProductImagesAsync(1, 1, [], "", CancellationToken.None);
