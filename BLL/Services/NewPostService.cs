@@ -47,40 +47,40 @@ public partial class NewPostService(
             if (apiResponse == null)
             {
                 _logger.LogError("Nova Poshta API response is null.");
-                return new OperationResult<IEnumerable<NewPostCities>>(false, "Response is null.", null);
+                return new OperationResult<IEnumerable<NewPostCities>>(false, "Response is null.", []);
             }
             if (!apiResponse.Success)
             {
                 _logger.LogError("Nova Poshta API response indicates failure.");
                 var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
-                return new OperationResult<IEnumerable<NewPostCities>>(false, errorMessage, null);
+                return new OperationResult<IEnumerable<NewPostCities>>(false, errorMessage, []);
             }
             return new OperationResult<IEnumerable<NewPostCities>>(true, string.Empty, apiResponse.Data);
         }
         catch (HttpRequestException httpEx)
         {
             _logger.LogError("HTTP Request error: {Message}", httpEx.Message);
-            return new OperationResult<IEnumerable<NewPostCities>>(false, "HTTP Request error: " + httpEx.Message, null);
+            return new OperationResult<IEnumerable<NewPostCities>>(false, "HTTP Request error: " + httpEx.Message, []);
         }
         catch (TaskCanceledException taskCanceledEx)
         {
             if (cancellationToken.IsCancellationRequested)
             {
                 _logger.LogWarning("Request was canceled.");
-                return new OperationResult<IEnumerable<NewPostCities>>(false, "Request was canceled.", null);
+                return new OperationResult<IEnumerable<NewPostCities>>(false, "Request was canceled.", []);
             }
             _logger.LogError("Request timeout: {Message}", taskCanceledEx.Message);
-            return new OperationResult<IEnumerable<NewPostCities>>(false, "Request timeout: " + taskCanceledEx.Message, null);
+            return new OperationResult<IEnumerable<NewPostCities>>(false, "Request timeout: " + taskCanceledEx.Message, []);
         }
         catch (JsonException jsonEx)
         {
             _logger.LogError("JSON Serialization/Deserialization error: {Message}", jsonEx.Message);
-            return new OperationResult<IEnumerable<NewPostCities>>(false, "JSON error: " + jsonEx.Message, null);
+            return new OperationResult<IEnumerable<NewPostCities>>(false, "JSON error: " + jsonEx.Message, []);
         }
         catch (Exception ex)
         {
             _logger.LogError("An unexpected error occurred: {Message}", ex.Message);
-            return new OperationResult<IEnumerable<NewPostCities>>(false, "An unexpected error occurred: " + ex.Message, null);
+            return new OperationResult<IEnumerable<NewPostCities>>(false, "An unexpected error occurred: " + ex.Message, []);
         }
     }
 
@@ -120,35 +120,35 @@ public partial class NewPostService(
             if (apiResponse == null)
             {
                 _logger.LogError("Nova Poshta API response is null.");
-                return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Response is null.", null);
+                return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Response is null.", []);
             }
             if (!apiResponse.Success)
             {
                 _logger.LogError("Nova Poshta API response indicates failure.");
                 var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
-                return new OperationResult<IEnumerable<NewPostWarehouse>>(false, errorMessage, null);
+                return new OperationResult<IEnumerable<NewPostWarehouse>>(false, errorMessage, []);
             }
             return new OperationResult<IEnumerable<NewPostWarehouse>>(true, string.Empty, apiResponse.Data);
         }
         catch (HttpRequestException httpEx)
         {
             _logger.LogError(httpEx, "An error occurred while sending request to Nova Poshta API.");
-            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Request error.", null);
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Request error.", []);
         }
         catch (TaskCanceledException taskEx)
         {
             _logger.LogError(taskEx, "The request to Nova Poshta API was canceled.");
-            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Request was canceled.", null);
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Request was canceled.", []);
         }
         catch (JsonException jsonEx)
         {
             _logger.LogError(jsonEx, "Error deserializing the response from Nova Poshta API.");
-            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Error parsing response.", null);
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Error parsing response.", []);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unexpected error occurred.");
-            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "An unexpected error occurred.", null);
+            return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "An unexpected error occurred.", []);
         }
     }
 
