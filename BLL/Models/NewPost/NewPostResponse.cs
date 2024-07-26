@@ -21,7 +21,7 @@ namespace HM.BLL.Models.NewPost
         [JsonPropertyName("warnings")]
         public List<string> Warnings { get; set; } = null!;
         [JsonPropertyName("info")]
-        public InfoModel Info { get; set; } = null!;//Changed from List<string> on JsonElement
+        public InfoModel Info { get; set; } = null!;
         [JsonPropertyName("messageCodes")]
         public List<string> MessageCodes { get; set; } = null!;
         [JsonPropertyName("errorCodes")]
@@ -34,6 +34,6 @@ namespace HM.BLL.Models.NewPost
     public class InfoModel
     {
         [JsonPropertyName("totalCount")]
-        public int TotalCount { get; set; }
+        public int? TotalCount { get; set; }
     }
 }
