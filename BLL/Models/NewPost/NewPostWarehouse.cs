@@ -41,9 +41,9 @@ public class NewPostWarehouse
     [JsonPropertyName("SettlementTypeDescriptionRu")]
     public string SettlementTypeDescriptionRu { get; set; } = null!;
     [JsonPropertyName("Longitude")]
-    public string Longitude { get; set; }
+    public string Longitude { get; set; } = null!;
     [JsonPropertyName("Latitude")]
-    public string Latitude { get; set; }
+    public string Latitude { get; set; } = null!;
     [JsonPropertyName("PostFinance")]
     public string PostFinance { get; set; } = null!;
     [JsonPropertyName("BicycleParking")]

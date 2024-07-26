@@ -13,6 +13,37 @@ public class NewPostController(
     ) : ControllerBase
 {
     /// <summary>
+    /// Allows to get a list of cities from the New Post.
+    /// </summary>
+    /// <param name="findByString">Optional. Part of the city name to search for.</param>
+    /// <param name="ref">Optional. Reference of the city.</param>
+    /// <param name="page">Optional. Page number of cities. Defaults to 1.</param>
+    /// <param name="limit">Optional. Number of items per page. Defaults to 100.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the page that contains a list of cities.</response>
+    /// <response code="400">Indicates that cities cannot be obtained and returns the error message.</response>
+    [Route("cities")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IEnumerable<NewPostCities>>> GetCities(
+        string? findByString = null,
+        string? @ref = null,
+        int page = 1,
+        int limit = 100,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await newPostService.GetCitiesAsync(
+            FindByString: findByString,
+            Ref: @ref,
+            Page: page.ToString(),
+            Limit: limit.ToString(),
+            cancellationToken: cancellationToken);
+
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
+
+    /// <summary>
     /// Allows to get a list of warehouses from the New Post in the specified city.
     /// </summary>
     /// <param name="cityName">Optional. Name of the city to search within.</param>

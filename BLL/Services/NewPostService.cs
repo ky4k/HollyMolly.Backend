@@ -20,6 +20,70 @@ public partial class NewPostService(
     private readonly string? _apiKey = configurationHelper.GetConfigurationValue("NewPost:APIKey");
     private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
+    public async Task<OperationResult<IEnumerable<NewPostCities>>> GetCitiesAsync(string? FindByString, string? Ref, string? Page, string? Limit, CancellationToken cancellationToken)
+    {
+        var request = new
+        {
+            apiKey = _apiKey,
+            modelName = "AddressGeneral",
+            calledMethod = "getCities",
+            methodProperties = new
+            {
+                FindByString = FindByString ?? string.Empty,
+                Ref = Ref ?? string.Empty,
+                Page = Page ?? "1",
+                Limit = Limit ?? "50",
+            }
+        };
+        var jsonRequestBody = JsonSerializer.Serialize(request, _jsonSerializerOptions);
+        var content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
+        try
+        {
+            var response = await _httpClient.PostAsync("https://api.novaposhta.ua/v2.0/json/", content, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
+            var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostCities>>(jsonResponse, _jsonSerializerOptions);
+            if (apiResponse == null)
+            {
+                _logger.LogError("Nova Poshta API response is null.");
+                return new OperationResult<IEnumerable<NewPostCities>>(false, "Response is null.", null);
+            }
+            if (!apiResponse.Success)
+            {
+                _logger.LogError("Nova Poshta API response indicates failure.");
+                var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
+                return new OperationResult<IEnumerable<NewPostCities>>(false, errorMessage, null);
+            }
+            return new OperationResult<IEnumerable<NewPostCities>>(true, string.Empty, apiResponse.Data);
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _logger.LogError("HTTP Request error: {Message}", httpEx.Message);
+            return new OperationResult<IEnumerable<NewPostCities>>(false, "HTTP Request error: " + httpEx.Message, null);
+        }
+        catch (TaskCanceledException taskCanceledEx)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Request was canceled.");
+                return new OperationResult<IEnumerable<NewPostCities>>(false, "Request was canceled.", null);
+            }
+            _logger.LogError("Request timeout: {Message}", taskCanceledEx.Message);
+            return new OperationResult<IEnumerable<NewPostCities>>(false, "Request timeout: " + taskCanceledEx.Message, null);
+        }
+        catch (JsonException jsonEx)
+        {
+            _logger.LogError("JSON Serialization/Deserialization error: {Message}", jsonEx.Message);
+            return new OperationResult<IEnumerable<NewPostCities>>(false, "JSON error: " + jsonEx.Message, null);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError("An unexpected error occurred: {Message}", ex.Message);
+            return new OperationResult<IEnumerable<NewPostCities>>(false, "An unexpected error occurred: " + ex.Message, null);
+        }
+    }
+
     public async Task<OperationResult<IEnumerable<NewPostWarehouse>>> GetWarehousesAync(string? CityName,
         string? WarehouseId, string? FindByString, string? CityRef, string? Page, string? Limit,
         string? Language, string? TypeOfWarehouseRef, CancellationToken cancellationToken)
