@@ -184,6 +184,8 @@ public static class MappingExtensions
         {
             ProductInstanceId = orderRecord.ProductInstanceId,
             ProductName = orderRecord.ProductName,
+            Size = orderRecord.ProductInstance.Size,
+            Color = orderRecord.ProductInstance.Color,
             Quantity = orderRecord.Quantity,
             Price = orderRecord.Price,
             Discount = orderRecord.Discount

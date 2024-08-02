@@ -21,6 +21,7 @@ public class OrderService(
         IQueryable<Order> orders = context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+                .ThenInclude(or => or.ProductInstance)
             .Include(o => o.StatusHistory)
             .AsNoTracking();
         if (userId != null)
@@ -47,6 +48,7 @@ public class OrderService(
         Order? order = await context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+                .ThenInclude(or => or.ProductInstance)
             .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         return order?.ToOrderDto();
@@ -150,6 +152,7 @@ public class OrderService(
         Order? order = await context.Orders
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
+                .ThenInclude(or => or.ProductInstance)
             .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         if (order == null)
