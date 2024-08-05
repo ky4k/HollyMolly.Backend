@@ -22,6 +22,7 @@ public class OrderService(
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
                 .ThenInclude(or => or.ProductInstance)
+                    .ThenInclude(pi => pi.Images)
             .Include(o => o.StatusHistory)
             .AsNoTracking();
         if (userId != null)
@@ -49,6 +50,7 @@ public class OrderService(
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
                 .ThenInclude(or => or.ProductInstance)
+                    .ThenInclude(pi => pi.Images)
             .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         return order?.ToOrderDto();
@@ -118,6 +120,7 @@ public class OrderService(
     {
         Product? product = await context.Products
                 .Include(p => p.ProductInstances)
+                    .ThenInclude(pi => pi.Images)
                 .FirstOrDefaultAsync(p =>
                     p.ProductInstances.Select(pi => pi.Id).Contains(orderRecordDto.ProductInstanceId),
                     cancellationToken);
@@ -153,6 +156,7 @@ public class OrderService(
             .Include(o => o.Customer)
             .Include(o => o.OrderRecords)
                 .ThenInclude(or => or.ProductInstance)
+                    .ThenInclude(pi => pi.Images)
             .Include(o => o.StatusHistory)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         if (order == null)
