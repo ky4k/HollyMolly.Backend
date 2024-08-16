@@ -1,4 +1,5 @@
 ﻿using HM.DAL.Entities;
+using HM.DAL.Entities.NewPost;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System.Reflection;
@@ -19,6 +20,8 @@ public class HmDbContext(DbContextOptions<HmDbContext> options)
     public DbSet<ProductStatistics> ProductStatistics => Set<ProductStatistics>();
     public DbSet<Support> Supports => Set<Support>();
     public DbSet<TokenRecord> Tokens => Set<TokenRecord>();
+    public DbSet<NewPostCounterAgent> NewPostCounterAgents => Set<NewPostCounterAgent>();
+    public DbSet<NewPostContactPerson> NewPostContactPersons => Set<NewPostContactPerson>(); 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
