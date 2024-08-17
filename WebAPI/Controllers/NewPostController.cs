@@ -1,7 +1,9 @@
 ﻿using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
+using HM.BLL.Models.Orders;
 using HM.BLL.Services;
+using HM.BLL.Services.NewPost;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HM.WebAPI.Controllers;
@@ -9,7 +11,8 @@ namespace HM.WebAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class NewPostController(
-    INewPostCityesService newPostService
+    INewPostCityesService newPostService,
+    INewPostCounerAgentService newPostCounterAgentService
     ) : ControllerBase
 {
     /// <summary>
@@ -82,6 +85,26 @@ public class NewPostController(
             Language: language,
             TypeOfWarehouseRef: typeOfWarehouseRef,
             cancellationToken: cancellationToken);
+
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
+
+    /// <summary>
+    /// Allows to create a counterparty in the New Post service.
+    /// </summary>
+    /// <param name="customerDto">The customer data used to create the counterparty.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the created counterparty.</response>
+    /// <response code="400">Indicates that the counterparty could not be created and returns the error message.</response>
+    [Route("counteragents")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<NewPostCounterAgentDto>> CreateCounterparty(
+        [FromBody] CustomerDto customerDto,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await newPostCounterAgentService.CreateCounterpartyAsync(customerDto, cancellationToken);
 
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }

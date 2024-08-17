@@ -1,7 +1,7 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
-using HM.BLL.Services;
+using HM.BLL.Services.NewPost;
 using HM.BLL.UnitTests.TestHelpers;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
@@ -14,17 +14,17 @@ public class NewPostServiceTests
     private readonly IConfigurationHelper _configurationHelper;
     private readonly MockHttpMessageHandler _httpMessageHandler;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<NewPostService> _logger;
-    private readonly NewPostService _newPostService;
+    private readonly ILogger<NewPosCitiestService> _logger;
+    private readonly NewPosCitiestService _newPostService;
     public NewPostServiceTests()
     {
         _configurationHelper = Substitute.For<IConfigurationHelper>();
         _configurationHelper.GetConfigurationValue("NewPost:BaseUrl").Returns("https://test.com/newpost");
         _httpClientFactory = Substitute.For<IHttpClientFactory>();
-        _logger = Substitute.For<ILogger<NewPostService>>();
+        _logger = Substitute.For<ILogger<NewPosCitiestService>>();
         _httpMessageHandler = new(HttpStatusCode.OK);
         _httpClientFactory.CreateClient().Returns(new HttpClient(_httpMessageHandler));
-        _newPostService = new NewPostService(_configurationHelper, _httpClientFactory, _logger);
+        _newPostService = new NewPosCitiestService(_configurationHelper, _httpClientFactory, _logger);
     }
     [Fact]
     public async Task GetCitiesAsync_ShouldSendRequest_WhenNoCitySpecified()
@@ -208,7 +208,7 @@ public class NewPostServiceTests
             ]
         };
         _httpClientFactory.CreateClient().Returns(new HttpClient(multipleHttpMessageHandler));
-        var newPostService = new NewPostService(_configurationHelper, _httpClientFactory, _logger);
+        var newPostService = new NewPosCitiestService(_configurationHelper, _httpClientFactory, _logger);
 
         bool isValid = await newPostService.CheckIfAddressIsValidAsync("1", "1", CancellationToken.None);
 
@@ -229,7 +229,7 @@ public class NewPostServiceTests
             ]
         };
         _httpClientFactory.CreateClient().Returns(new HttpClient(multipleHttpMessageHandler));
-        var newPostService = new NewPostService(_configurationHelper, _httpClientFactory, _logger);
+        var newPostService = new NewPosCitiestService(_configurationHelper, _httpClientFactory, _logger);
 
         bool isValid = await newPostService.CheckIfAddressIsValidAsync("1", "1", CancellationToken.None);
 
@@ -256,7 +256,7 @@ public class NewPostServiceTests
             ]
         };
         _httpClientFactory.CreateClient().Returns(new HttpClient(multipleHttpMessageHandler));
-        var newPostService = new NewPostService(_configurationHelper, _httpClientFactory, _logger);
+        var newPostService = new NewPosCitiestService(_configurationHelper, _httpClientFactory, _logger);
 
         bool isValid = await newPostService.CheckIfAddressIsValidAsync("1", "1", CancellationToken.None);
 
@@ -283,7 +283,7 @@ public class NewPostServiceTests
             ]
         };
         _httpClientFactory.CreateClient().Returns(new HttpClient(multipleHttpMessageHandler));
-        var newPostService = new NewPostService(_configurationHelper, _httpClientFactory, _logger);
+        var newPostService = new NewPosCitiestService(_configurationHelper, _httpClientFactory, _logger);
 
         bool isValid = await newPostService.CheckIfAddressIsValidAsync("1", "1", CancellationToken.None);
 
@@ -304,7 +304,7 @@ public class NewPostServiceTests
         multipleHttpMessageHandler.StatusCodes[1] = HttpStatusCode.OK;
         multipleHttpMessageHandler.ResponseContent[1] = new byte[32];
         _httpClientFactory.CreateClient().Returns(new HttpClient(multipleHttpMessageHandler));
-        var newPostService = new NewPostService(_configurationHelper, _httpClientFactory, _logger);
+        var newPostService = new NewPosCitiestService(_configurationHelper, _httpClientFactory, _logger);
 
         bool isValid = await newPostService.CheckIfAddressIsValidAsync("1", "1", CancellationToken.None);
 

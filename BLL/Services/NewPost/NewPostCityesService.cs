@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 
 namespace HM.BLL.Services;
 
-public partial class NewPostService(
+public class NewPostService(
     IConfigurationHelper configurationHelper,
     IHttpClientFactory httpClientFactory,
     ILogger<NewPostService> logger

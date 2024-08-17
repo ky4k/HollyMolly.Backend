@@ -1,4 +1,6 @@
-﻿using HM.BLL.Models.NewPost;
+﻿using HM.BLL.Models.Common;
+using HM.BLL.Models.NewPost;
+using HM.BLL.Models.Orders;
 using HM.DAL.Entities.NewPost;
 using System;
 using System.Collections.Generic;
@@ -10,6 +12,6 @@ namespace HM.BLL.Interfaces.NewPost
 {
     public interface INewPostCounerAgentService
     {
-        Task<NewPostResponse<NewPostCounterAgentDto>> CreateCounterpartyAsync(NewPostCounterAgentDto counterAgent);
+        Task<OperationResult<IEnumerable<NewPostCounterAgentDto>>>CreateCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken);
     }
 }
