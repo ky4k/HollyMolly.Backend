@@ -1,5 +1,6 @@
 ﻿using HM.BLL.Helpers;
 using HM.BLL.Interfaces;
+using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Services;
 using HM.DAL.Data;
 using HM.WebAPI.Middleware;
@@ -34,6 +35,6 @@ public static class BuilderExtensions
         builder.Services.AddScoped<ICheckoutService, CheckoutService>();
         builder.Services.AddScoped<Stripe.Checkout.SessionService>();
         builder.Services.AddScoped<ISupportService, SupportService>();
-        builder.Services.AddScoped<INewPostService, NewPostService>();
+        builder.Services.AddScoped<INewPostCityesService, NewPostService>();
     }
 }

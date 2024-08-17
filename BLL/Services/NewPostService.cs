@@ -1,4 +1,5 @@
 ﻿using HM.BLL.Interfaces;
+using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
 using Microsoft.Extensions.Logging;
@@ -13,7 +14,7 @@ public partial class NewPostService(
     IConfigurationHelper configurationHelper,
     IHttpClientFactory httpClientFactory,
     ILogger<NewPostService> logger
-        ) : INewPostService
+        ) : INewPostCityesService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
     private readonly ILogger<NewPostService> _logger = logger;

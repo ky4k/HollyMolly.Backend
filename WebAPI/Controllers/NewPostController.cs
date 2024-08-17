@@ -1,4 +1,4 @@
-﻿using HM.BLL.Interfaces;
+﻿using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
 using HM.BLL.Services;
@@ -9,7 +9,7 @@ namespace HM.WebAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class NewPostController(
-    INewPostService newPostService
+    INewPostCityesService newPostService
     ) : ControllerBase
 {
     /// <summary>

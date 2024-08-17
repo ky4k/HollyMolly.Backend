@@ -1,10 +1,12 @@
 ﻿using HM.BLL.Models.Categories;
+using HM.BLL.Models.NewPost;
 using HM.BLL.Models.Orders;
 using HM.BLL.Models.Products;
 using HM.BLL.Models.Supports;
 using HM.BLL.Models.Users;
 using HM.BLL.Models.WishLists;
 using HM.DAL.Entities;
+using HM.DAL.Entities.NewPost;
 
 namespace HM.BLL.Extensions;
 
@@ -232,6 +234,67 @@ public static class MappingExtensions
             Description = supportDto.Description,
             OrderId = supportDto.OrderId,
             ReceivedAt = DateTimeOffset.UtcNow
+        };
+    }
+    public static NewPostContactPersonDto ToNewPostContactPersonDto(this NewPostContactPerson contactPerson)
+    {
+        return new NewPostContactPersonDto()
+        {
+            FirstName = contactPerson.FirstName,
+            LastName = contactPerson.LastName,
+            MiddleName = contactPerson.MiddleName,
+            Email = contactPerson.Email,
+            Phone = contactPerson.Phone,
+            CounterpartyRef = contactPerson.CounterpartyRef
+        };
+    }
+
+    public static NewPostCounterAgentDto ToNewPostCounterAgentDto(this NewPostCounterAgent counterAgent)
+    {
+        return new NewPostCounterAgentDto()
+        {
+            Ref = counterAgent.Ref,
+            Description = counterAgent.Description,
+            FirstName = counterAgent.FirstName,
+            MiddleName = counterAgent.MiddleName,
+            LastName = counterAgent.LastName,
+            CounterpartyId = counterAgent.CounterpartyId,
+            OwnershipFormId = counterAgent.OwnershipFormId,
+            OwnershipFormDescription = counterAgent.OwnershipFormDescription,
+            EDRPOU = counterAgent.EDRPOU,
+            CounterpartyType = counterAgent.CounterpartyType,
+            ContactPersons = counterAgent.ContactPersons.Select(cp => cp.ToNewPostContactPersonDto()).ToList()
+        };
+    }
+
+    public static NewPostContactPerson ToNewPostContactPerson(this NewPostContactPersonDto contactPersonDto)
+    {
+        return new NewPostContactPerson()
+        {
+            FirstName = contactPersonDto.FirstName,
+            LastName = contactPersonDto.LastName,
+            MiddleName = contactPersonDto.MiddleName,
+            Email = contactPersonDto.Email,
+            Phone = contactPersonDto.Phone,
+            CounterpartyRef = contactPersonDto.CounterpartyRef
+        };
+    }
+
+    public static NewPostCounterAgent ToNewPostCounterAgent(this NewPostCounterAgentDto counterAgentDto)
+    {
+        return new NewPostCounterAgent()
+        {
+            Ref = counterAgentDto.Ref,
+            Description = counterAgentDto.Description,
+            FirstName = counterAgentDto.FirstName,
+            MiddleName = counterAgentDto.MiddleName,
+            LastName = counterAgentDto.LastName,
+            CounterpartyId = counterAgentDto.CounterpartyId,
+            OwnershipFormId = counterAgentDto.OwnershipFormId,
+            OwnershipFormDescription = counterAgentDto.OwnershipFormDescription,
+            EDRPOU = counterAgentDto.EDRPOU,
+            CounterpartyType = counterAgentDto.CounterpartyType,
+            ContactPersons = counterAgentDto.ContactPersons.Select(cp => cp.ToNewPostContactPerson()).ToList()
         };
     }
 }

@@ -1,10 +1,10 @@
-﻿using HM.BLL.Interfaces;
+﻿using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
 
 namespace WebAPI.IntegrationTests.Mocks;
 
-public class MockNewPostService : INewPostService
+public class MockNewPostService : INewPostCityesService
 {
     public Task<bool> CheckIfAddressIsValidAsync(string city, string address, CancellationToken cancellationToken)
     {

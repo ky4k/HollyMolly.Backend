@@ -1,4 +1,4 @@
-﻿using HM.BLL.Interfaces;
+﻿using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
 using HM.WebAPI.Controllers;
@@ -9,11 +9,11 @@ namespace WebAPI.UnitTests.Controllers;
 
 public class NewPostControllerTests
 {
-    private readonly INewPostService _newPostService;
+    private readonly INewPostCityesService _newPostService;
     private readonly NewPostController _newPostController;
     public NewPostControllerTests()
     {
-        _newPostService = Substitute.For<INewPostService>();
+        _newPostService = Substitute.For<INewPostCityesService>();
         _newPostController = new NewPostController(_newPostService);
     }
     [Fact]

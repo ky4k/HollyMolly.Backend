@@ -1,12 +1,12 @@
 ﻿using FluentValidation;
-using HM.BLL.Interfaces;
+using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Orders;
 
 namespace HM.BLL.Validators;
 
 public class CustomerCreateDtoValidator : AbstractValidator<CustomerCreateDto>
 {
-    public CustomerCreateDtoValidator(INewPostService newPostService)
+    public CustomerCreateDtoValidator(INewPostCityesService newPostService)
     {
         RuleFor(c => c.FirstName)
             .NotEmpty()
