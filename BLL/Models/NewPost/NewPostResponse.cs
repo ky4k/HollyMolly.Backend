@@ -21,7 +21,8 @@ namespace HM.BLL.Models.NewPost
         [JsonPropertyName("warnings")]
         public List<string> Warnings { get; set; } = null!;
         [JsonPropertyName("info")]
-        public InfoModel Info { get; set; } = null!;
+        public List<InfoModel> Info { get; set; } = new();
+        //public InfoModel Info { get; set; } = null!;
         [JsonPropertyName("messageCodes")]
         public List<string> MessageCodes { get; set; } = null!;
         [JsonPropertyName("errorCodes")]

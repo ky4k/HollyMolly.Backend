@@ -6,6 +6,7 @@ using HM.BLL.Models.NewPost;
 using HM.BLL.Models.Orders;
 using HM.DAL.Data;
 using HM.DAL.Entities.NewPost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -29,6 +30,36 @@ namespace HM.BLL.Services.NewPost
         private readonly ILogger<NewPostCounterAgentService> _logger = logger;
         private readonly string? _apiKey = configurationHelper.GetConfigurationValue("NewPost:APIKey");
         private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
+
+        private async Task SaveCounterAgentsAsync(IEnumerable<NewPostCounterAgentDto> counterAgents, CancellationToken cancellationToken)
+        {
+            foreach (var counterAgentDto in counterAgents)
+            {
+                // Створюємо контрагента
+                var counterAgentEntity = counterAgentDto.ToNewPostCounterAgent();
+
+                // Якщо у контрагента є контактні особи, додаємо їх до контрагента
+                if (counterAgentDto.ContactPersons != null && counterAgentDto.ContactPersons.Any())
+                {
+                    var newContactPersons = counterAgentDto.ContactPersons
+                        .Select(dto => {
+                            var contactPersonEntity = dto.ToNewPostContactPerson();
+                            contactPersonEntity.CounterpartyRef = counterAgentEntity.Id; // присвоюємо Ref
+                            return contactPersonEntity;
+                        })
+                        .ToList();
+
+                    counterAgentEntity.ContactPersons = newContactPersons;
+                }
+
+                // Додаємо контрагента та його контактні особи до контексту
+                _dbContext.NewPostCounterAgents.Add(counterAgentEntity);
+
+                // Виконуємо збереження змін у базі даних
+                await _dbContext.SaveChangesAsync(cancellationToken);
+            }
+        }
+
         public async Task<OperationResult<IEnumerable<NewPostCounterAgentDto>>> CreateCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
         {
             var requestBody = new
@@ -70,14 +101,30 @@ namespace HM.BLL.Services.NewPost
                     var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
                     return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(false, errorMessage, new List<NewPostCounterAgentDto>());
                 }
-                var counterAgents = apiResponse.Data.Select(agent => agent.ToNewPostCounterAgentDto()).ToList();
-
-                foreach (var counterAgentDto in counterAgents)
+                var counterAgents = apiResponse.Data.Select(agent => new NewPostCounterAgentDto
                 {
-                    var counterAgentEntity = counterAgentDto.ToNewPostCounterAgent();
-                    _dbContext.NewPostCounterAgents.Add(counterAgentEntity);
-                }
-                await _dbContext.SaveChangesAsync(cancellationToken);
+                    Ref = agent.Ref,
+                    Description = agent.Description,
+                    FirstName = agent.FirstName,
+                    MiddleName = agent.MiddleName,
+                    LastName = agent.LastName,
+                    CounterpartyId = agent.CounterpartyId,
+                    OwnershipFormId = agent.OwnershipFormId,
+                    OwnershipFormDescription = agent.OwnershipFormDescription,
+                    EDRPOU = agent.EDRPOU,
+                    CounterpartyType = agent.CounterpartyType,
+                    ContactPersons = agent.ContactPersons != null ? agent.ContactPersons.Select(cp => new NewPostContactPersonDto
+                    {
+                        FirstName = cp.FirstName,
+                        LastName = cp.LastName,
+                        MiddleName = cp.MiddleName,
+                        Email = cp.Email,
+                        Phone = cp.Phone,
+                        CounterpartyRef = cp.CounterpartyRef
+                    }).ToList() : new List<NewPostContactPersonDto>()
+                }).ToList();
+
+                await SaveCounterAgentsAsync(counterAgents, cancellationToken);
 
                 return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(true, string.Empty, counterAgents);
             }
