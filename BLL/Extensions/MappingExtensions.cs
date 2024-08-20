@@ -236,65 +236,65 @@ public static class MappingExtensions
             ReceivedAt = DateTimeOffset.UtcNow
         };
     }
-    public static NewPostContactPersonDto ToNewPostContactPersonDto(this NewPostContactPerson contactPerson)
-    {
-        return new NewPostContactPersonDto()
-        {
-            FirstName = contactPerson.FirstName,
-            LastName = contactPerson.LastName,
-            MiddleName = contactPerson.MiddleName,
-            Email = contactPerson.Email,
-            Phone = contactPerson.Phone,
-            CounterpartyRef = contactPerson.CounterpartyRef
-        };
-    }
-
     public static NewPostCounterAgentDto ToNewPostCounterAgentDto(this NewPostCounterAgent counterAgent)
     {
-        return new NewPostCounterAgentDto()
+        return new NewPostCounterAgentDto
         {
             Ref = counterAgent.Ref,
             Description = counterAgent.Description,
             FirstName = counterAgent.FirstName,
             MiddleName = counterAgent.MiddleName,
             LastName = counterAgent.LastName,
-            CounterpartyId = counterAgent.CounterpartyId,
-            OwnershipFormId = counterAgent.OwnershipFormId,
+            Counterparty = counterAgent.Counterparty,
+            OwnershipForm = counterAgent.OwnershipForm,
             OwnershipFormDescription = counterAgent.OwnershipFormDescription,
             EDRPOU = counterAgent.EDRPOU,
             CounterpartyType = counterAgent.CounterpartyType,
-            ContactPersons = counterAgent.ContactPersons.Select(cp => cp.ToNewPostContactPersonDto()).ToList()
+            ContactPerson = new NewPostResponse<NewPostContactPersonDto>
+            {
+                Data = counterAgent.ContactPersons.Select(cp => cp.ToNewPostContactPersonDto()).ToList()
+            }
         };
     }
-
-    public static NewPostContactPerson ToNewPostContactPerson(this NewPostContactPersonDto contactPersonDto)
-    {
-        return new NewPostContactPerson()
-        {
-            FirstName = contactPersonDto.FirstName,
-            LastName = contactPersonDto.LastName,
-            MiddleName = contactPersonDto.MiddleName,
-            Email = contactPersonDto.Email,
-            Phone = contactPersonDto.Phone,
-            CounterpartyRef = contactPersonDto.CounterpartyRef
-        };
-    }
-
     public static NewPostCounterAgent ToNewPostCounterAgent(this NewPostCounterAgentDto counterAgentDto)
     {
-        return new NewPostCounterAgent()
+        return new NewPostCounterAgent
         {
             Ref = counterAgentDto.Ref,
             Description = counterAgentDto.Description,
             FirstName = counterAgentDto.FirstName,
             MiddleName = counterAgentDto.MiddleName,
             LastName = counterAgentDto.LastName,
-            CounterpartyId = counterAgentDto.CounterpartyId,
-            OwnershipFormId = counterAgentDto.OwnershipFormId,
+            Counterparty = counterAgentDto.Counterparty,
+            OwnershipForm = counterAgentDto.OwnershipForm,
             OwnershipFormDescription = counterAgentDto.OwnershipFormDescription,
             EDRPOU = counterAgentDto.EDRPOU,
             CounterpartyType = counterAgentDto.CounterpartyType,
-            ContactPersons = counterAgentDto.ContactPersons.Select(cp => cp.ToNewPostContactPerson()).ToList()
+            ContactPersons = counterAgentDto.ContactPerson.Data
+                .Select(cp => cp.ToNewPostContactPerson())
+                .ToList()
+        };
+    }
+    public static NewPostContactPersonDto ToNewPostContactPersonDto(this NewPostContactPerson contactPerson)
+    {
+        return new NewPostContactPersonDto
+        {
+            Ref = contactPerson.Ref,
+            Description = contactPerson.Description,
+            LastName = contactPerson.LastName,
+            FirstName = contactPerson.FirstName,
+            MiddleName = contactPerson.MiddleName
+        };
+    }
+    public static NewPostContactPerson ToNewPostContactPerson(this NewPostContactPersonDto contactPersonDto)
+    {
+        return new NewPostContactPerson
+        {
+            Ref = contactPersonDto.Ref,
+            Description = contactPersonDto.Description,
+            LastName = contactPersonDto.LastName,
+            FirstName = contactPersonDto.FirstName,
+            MiddleName = contactPersonDto.MiddleName
         };
     }
 }

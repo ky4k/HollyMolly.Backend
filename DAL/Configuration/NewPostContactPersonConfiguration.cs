@@ -17,7 +17,7 @@ namespace HM.DAL.Configuration
 
             builder.HasOne(cp => cp.CounterAgent)
                 .WithMany(ca => ca.ContactPersons)
-                .HasForeignKey(cp => cp.CounterpartyRef);
+                .HasForeignKey(cp => cp.CounterAgentId);
         }
     }
 }

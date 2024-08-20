@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HM.DAL.Entities.NewPost;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,11 +9,11 @@ namespace HM.BLL.Models.NewPost
 {
     public class NewPostContactPersonDto
     {
-        public string FirstName { get; set; } = null!;
+        public string Ref {  get; set; } = null!;
+        public string? Description { get; set; }
         public string LastName { get; set; } = null!;
+        public string FirstName { get; set; } = null!;
         public string? MiddleName { get; set; }
-        public string? Email { get; set; }
-        public string? Phone { get; set; }
-        public int CounterpartyRef { get; set; }
+
     }
 }

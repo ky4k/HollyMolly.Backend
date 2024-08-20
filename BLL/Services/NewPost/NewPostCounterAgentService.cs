@@ -1,4 +1,5 @@
-﻿using HM.BLL.Extensions;
+﻿using DocumentFormat.OpenXml.InkML;
+using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
 using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
@@ -17,6 +18,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace HM.BLL.Services.NewPost
 {
@@ -31,35 +33,7 @@ namespace HM.BLL.Services.NewPost
         private readonly string? _apiKey = configurationHelper.GetConfigurationValue("NewPost:APIKey");
         private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
-        private async Task SaveCounterAgentsAsync(IEnumerable<NewPostCounterAgentDto> counterAgents, CancellationToken cancellationToken)
-        {
-            foreach (var counterAgentDto in counterAgents)
-            {
-                // Створюємо контрагента
-                var counterAgentEntity = counterAgentDto.ToNewPostCounterAgent();
-
-                // Якщо у контрагента є контактні особи, додаємо їх до контрагента
-                if (counterAgentDto.ContactPersons != null && counterAgentDto.ContactPersons.Any())
-                {
-                    var newContactPersons = counterAgentDto.ContactPersons
-                        .Select(dto => {
-                            var contactPersonEntity = dto.ToNewPostContactPerson();
-                            contactPersonEntity.CounterpartyRef = counterAgentEntity.Id; // присвоюємо Ref
-                            return contactPersonEntity;
-                        })
-                        .ToList();
-
-                    counterAgentEntity.ContactPersons = newContactPersons;
-                }
-
-                // Додаємо контрагента та його контактні особи до контексту
-                _dbContext.NewPostCounterAgents.Add(counterAgentEntity);
-
-                // Виконуємо збереження змін у базі даних
-                await _dbContext.SaveChangesAsync(cancellationToken);
-            }
-        }
-
+        
         public async Task<OperationResult<IEnumerable<NewPostCounterAgentDto>>> CreateCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
         {
             var requestBody = new
@@ -87,7 +61,7 @@ namespace HM.BLL.Services.NewPost
                 var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
                 _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
 
-                var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostCounterAgent>>(jsonResponse, _jsonSerializerOptions);
+                var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostCounterAgentDto>>(jsonResponse, _jsonSerializerOptions);
 
                 if (apiResponse == null)
                 {
@@ -101,32 +75,20 @@ namespace HM.BLL.Services.NewPost
                     var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
                     return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(false, errorMessage, new List<NewPostCounterAgentDto>());
                 }
-                var counterAgents = apiResponse.Data.Select(agent => new NewPostCounterAgentDto
+
+                foreach (var counterAgentDto in apiResponse.Data)
                 {
-                    Ref = agent.Ref,
-                    Description = agent.Description,
-                    FirstName = agent.FirstName,
-                    MiddleName = agent.MiddleName,
-                    LastName = agent.LastName,
-                    CounterpartyId = agent.CounterpartyId,
-                    OwnershipFormId = agent.OwnershipFormId,
-                    OwnershipFormDescription = agent.OwnershipFormDescription,
-                    EDRPOU = agent.EDRPOU,
-                    CounterpartyType = agent.CounterpartyType,
-                    ContactPersons = agent.ContactPersons != null ? agent.ContactPersons.Select(cp => new NewPostContactPersonDto
-                    {
-                        FirstName = cp.FirstName,
-                        LastName = cp.LastName,
-                        MiddleName = cp.MiddleName,
-                        Email = cp.Email,
-                        Phone = cp.Phone,
-                        CounterpartyRef = cp.CounterpartyRef
-                    }).ToList() : new List<NewPostContactPersonDto>()
-                }).ToList();
+                    var counterAgent = counterAgentDto.ToNewPostCounterAgent();
 
-                await SaveCounterAgentsAsync(counterAgents, cancellationToken);
+                    counterAgent.ContactPersons = counterAgentDto.ContactPerson.Data
+                        .Select(contactPersonDto => contactPersonDto.ToNewPostContactPerson())
+                        .ToList();
 
-                return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(true, string.Empty, counterAgents);
+                    _dbContext.NewPostCounterAgents.Add(counterAgent);
+                }
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(true, string.Empty, apiResponse.Data);
             }
             catch (HttpRequestException httpEx)
             {
