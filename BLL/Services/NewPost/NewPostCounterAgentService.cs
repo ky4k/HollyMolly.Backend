@@ -111,5 +111,31 @@ namespace HM.BLL.Services.NewPost
                 return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(false, "An unexpected error occurred.", Enumerable.Empty<NewPostCounterAgentDto>());
             }
         }
+
+        public async Task<OperationResult<NewPostCounterAgentDto>> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
+        {
+            try
+            {
+                var counterAgent = await _dbContext.NewPostCounterAgents
+                    .Include(cp=>cp.ContactPersons)
+                    .FirstOrDefaultAsync(ca =>
+                        ca.FirstName == customerDto.FirstName &&
+                        ca.LastName == customerDto.LastName,
+                        cancellationToken);
+                if (counterAgent == null)
+                {
+                    _logger.LogWarning("Counteragent not found for customer: {Customer}", customerDto);
+                    return new OperationResult<NewPostCounterAgentDto>(false, "Counteragent not found.");
+                }
+                var counterAgentDto = counterAgent.ToNewPostCounterAgentDto();
+
+                return new OperationResult<NewPostCounterAgentDto>(true, string.Empty, counterAgentDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving the counteragent.");
+                return new OperationResult<NewPostCounterAgentDto>(false, "An error occurred.");
+            }
+        }
     }
 }

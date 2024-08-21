@@ -108,4 +108,23 @@ public class NewPostController(
 
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
+    /// <summary>
+    /// Allows to retrieve a counterparty by customer data.
+    /// </summary>
+    /// <param name="customerDto">The customer data used to find the counterparty.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the counterparty.</response>
+    /// <response code="404">Indicates that the counterparty was not found and returns the error message.</response>
+    [Route("counterparties/get")]
+    [HttpPost]
+    public async Task<IActionResult> GetCounterpartyAsync([FromBody] CustomerDto customerDto, CancellationToken cancellationToken)
+    {
+        var result = await newPostCounterAgentService.GetCounterpartyAsync(customerDto, cancellationToken);
+        if (!result.Succeeded)
+        {
+            return NotFound(result.Errors);
+        }
+
+        return Ok(result.Payload);
+    }
 }
