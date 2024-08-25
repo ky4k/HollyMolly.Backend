@@ -250,7 +250,7 @@ public static class MappingExtensions
             OwnershipFormDescription = counterAgent.OwnershipFormDescription,
             EDRPOU = counterAgent.EDRPOU,
             CounterpartyType = counterAgent.CounterpartyType,
-            ContactPerson = new NewPostResponse<NewPostContactPersonDto>
+            ContactPerson = new NewPostResponseData<NewPostContactPersonDto>
             {
                 Data = counterAgent.ContactPersons.Select(cp => cp.ToNewPostContactPersonDto()).ToList()
             }

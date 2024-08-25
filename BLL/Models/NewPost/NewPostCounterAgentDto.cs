@@ -18,6 +18,7 @@ namespace HM.BLL.Models.NewPost
         public string? OwnershipFormDescription { get; set; }
         public string? EDRPOU { get; set; }
         public string? CounterpartyType { get; set; }
-        public NewPostResponse<NewPostContactPersonDto> ContactPerson { get; set; } = new NewPostResponse<NewPostContactPersonDto>();
+        //public NewPostResponse<NewPostContactPersonDto> ContactPerson { get; set; } = new NewPostResponse<NewPostContactPersonDto>();
+        public NewPostResponseData<NewPostContactPersonDto> ContactPerson { get; set; } = new NewPostResponseData<NewPostContactPersonDto>();
     }
 }

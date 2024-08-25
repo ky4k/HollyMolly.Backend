@@ -127,4 +127,35 @@ public class NewPostController(
 
         return Ok(result.Payload);
     }
+
+    /// <summary>
+    /// Allows to get a list of streets from the New Post based on the city reference.
+    /// </summary>
+    /// <param name="cityRef">Reference of the city obtained from NewPost/cities endpoint.</param>
+    /// <param name="findByString">Optional. Part of the street name to search for.</param>
+    /// <param name="page">Optional. Page number of streets. Defaults to 1.</param>
+    /// <param name="limit">Optional. Number of items per page. Defaults to 50.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the page that contains a list of streets.</response>
+    /// <response code="400">Indicates that streets cannot be obtained and returns the error message.</response>
+    [Route("streets")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IEnumerable<NewPostStreets>>> GetStreets(
+        string cityRef,
+        string? findByString = null,
+        int page = 1,
+        int limit = 50,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await newPostService.GetStreetsAync(
+            CityRef: cityRef,
+            FindByString: findByString ?? string.Empty,
+            Page: page.ToString(),
+            Limit: limit.ToString(),
+            cancellationToken: cancellationToken);
+
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
 }

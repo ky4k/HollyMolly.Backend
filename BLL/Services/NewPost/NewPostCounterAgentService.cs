@@ -61,19 +61,12 @@ namespace HM.BLL.Services.NewPost
                 var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
                 _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
 
-                var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostCounterAgentDto>>(jsonResponse, _jsonSerializerOptions);
+                var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostCounterAgentDto>>(jsonResponse, _jsonSerializerOptions);
 
                 if (apiResponse == null)
                 {
                     _logger.LogError("Nova Poshta API response is null.");
                     return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(false, "Response is null.", new List<NewPostCounterAgentDto>());
-                }
-
-                if (!apiResponse.Success)
-                {
-                    _logger.LogError("Nova Poshta API response indicates failure.");
-                    var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
-                    return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(false, errorMessage, new List<NewPostCounterAgentDto>());
                 }
 
                 foreach (var counterAgentDto in apiResponse.Data)

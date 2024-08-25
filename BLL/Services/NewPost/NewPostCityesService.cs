@@ -164,4 +164,68 @@ public class NewPostService(
         var result = await GetWarehousesAync(city, null, address, null, null, null, null, null, cancellationToken);
         return result.Payload?.Any(warehouse => warehouse.Description.Contains(address, StringComparison.OrdinalIgnoreCase)) ?? false;
     }
+
+    public async Task<OperationResult<IEnumerable<NewPostStreets>>> GetStreetsAync(string CityRef, string FindByString, string? Page,
+        string? Limit, CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Request parameters: CityRef={CityRef}, FindByString={FindByString}, Page={Page}, Limit={Limit}",
+       CityRef, FindByString, Page, Limit);
+
+        var request = new
+        {
+            apiKey = _apiKey,
+            modelName = "AddressGeneral",
+            calledMethod = "getStreet",
+            methodProperties = new
+            {
+                CityRef = CityRef,
+                FindByString = FindByString ?? string.Empty,
+                Page = Page ?? "1",
+                Limit = Limit ?? "50"
+            }
+        };
+
+        var jsonRequestBody = JsonSerializer.Serialize(request, _jsonSerializerOptions);
+        var content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
+
+        try
+        {
+            var response = await _httpClient.PostAsync("https://api.novaposhta.ua/v2.0/json/", content, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
+
+            //var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostStreets>>(jsonResponse, _jsonSerializerOptions);
+            var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostStreets>>(jsonResponse, _jsonSerializerOptions);
+
+            if (apiResponse == null)
+            {
+                _logger.LogError("Nova Poshta API response is null.");
+                return new OperationResult<IEnumerable<NewPostStreets>>(false, "Response is null.", Enumerable.Empty<NewPostStreets>());
+            }
+
+            return new OperationResult<IEnumerable<NewPostStreets>>(true, string.Empty, apiResponse.Data);
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _logger.LogError(httpEx, "An error occurred while sending a request to Nova Poshta API.");
+            return new OperationResult<IEnumerable<NewPostStreets>>(false, "Request error.", Enumerable.Empty<NewPostStreets>());
+        }
+        catch (TaskCanceledException taskEx)
+        {
+            _logger.LogError(taskEx, "The request to Nova Poshta API was canceled.");
+            return new OperationResult<IEnumerable<NewPostStreets>>(false, "Request was canceled.", Enumerable.Empty<NewPostStreets>());
+        }
+        catch (JsonException jsonEx)
+        {
+            _logger.LogError(jsonEx, "Error deserializing the response from Nova Poshta API.");
+            return new OperationResult<IEnumerable<NewPostStreets>>(false, "Error parsing response.", Enumerable.Empty<NewPostStreets>());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred.");
+            return new OperationResult<IEnumerable<NewPostStreets>>(false, "An unexpected error occurred.", Enumerable.Empty<NewPostStreets>());
+        }
+    }
 }
