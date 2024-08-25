@@ -44,17 +44,11 @@ public class NewPostService(
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
-            var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostCities>>(jsonResponse, _jsonSerializerOptions);
+            var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostCities>>(jsonResponse, _jsonSerializerOptions);
             if (apiResponse == null)
             {
                 _logger.LogError("Nova Poshta API response is null.");
                 return new OperationResult<IEnumerable<NewPostCities>>(false, "Response is null.", []);
-            }
-            if (!apiResponse.Success)
-            {
-                _logger.LogError("Nova Poshta API response indicates failure.");
-                var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
-                return new OperationResult<IEnumerable<NewPostCities>>(false, errorMessage, []);
             }
             return new OperationResult<IEnumerable<NewPostCities>>(true, string.Empty, apiResponse.Data);
         }
@@ -116,18 +110,12 @@ public class NewPostService(
             response.EnsureSuccessStatusCode();
             var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
-            var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostWarehouse>>(jsonResponse, _jsonSerializerOptions);
+            var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostWarehouse>>(jsonResponse, _jsonSerializerOptions);
 
             if (apiResponse == null)
             {
                 _logger.LogError("Nova Poshta API response is null.");
                 return new OperationResult<IEnumerable<NewPostWarehouse>>(false, "Response is null.", []);
-            }
-            if (!apiResponse.Success)
-            {
-                _logger.LogError("Nova Poshta API response indicates failure.");
-                var errorMessage = apiResponse.Errors.Count > 0 ? string.Join(", ", apiResponse.Errors) : "Unknown error";
-                return new OperationResult<IEnumerable<NewPostWarehouse>>(false, errorMessage, []);
             }
             return new OperationResult<IEnumerable<NewPostWarehouse>>(true, string.Empty, apiResponse.Data);
         }
@@ -195,8 +183,6 @@ public class NewPostService(
 
             var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
-
-            //var apiResponse = JsonSerializer.Deserialize<NewPostResponse<NewPostStreets>>(jsonResponse, _jsonSerializerOptions);
             var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostStreets>>(jsonResponse, _jsonSerializerOptions);
 
             if (apiResponse == null)
