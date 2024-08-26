@@ -1,4 +1,6 @@
-﻿namespace HM.BLL.Models.Orders;
+﻿using HM.BLL.Models.NewPost;
+
+namespace HM.BLL.Models.Orders;
 
 public class OrderDto
 {
@@ -22,4 +24,5 @@ public class OrderDto
     public List<OrderStatusHistoryDto> StatusHistory { get; set; } = [];
     public bool PaymentReceived { get; set; }
     public string Notes { get; set; } = null!;
+    public NewPostInternetDocumentDto? NewPostInternetDocument { get; set; }
 }

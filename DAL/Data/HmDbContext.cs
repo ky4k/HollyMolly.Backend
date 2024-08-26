@@ -22,6 +22,7 @@ public class HmDbContext(DbContextOptions<HmDbContext> options)
     public DbSet<TokenRecord> Tokens => Set<TokenRecord>();
     public DbSet<NewPostCounterAgent> NewPostCounterAgents => Set<NewPostCounterAgent>();
     public DbSet<NewPostContactPerson> NewPostContactPersons => Set<NewPostContactPerson>(); 
+    public DbSet<NewPostInternetDocument> NewPostInternetDocuments => Set<NewPostInternetDocument>();
     protected override void OnModelCreating(ModelBuilder builder)
     {
         builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
