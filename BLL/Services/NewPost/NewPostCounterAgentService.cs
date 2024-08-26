@@ -105,6 +105,89 @@ namespace HM.BLL.Services.NewPost
             }
         }
 
+        public async Task<OperationResult<IEnumerable<NewPostCounterAgentAdress>>> GetCounterpartyAdressAsync(string counterPartyRef,
+            CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(counterPartyRef))
+            {
+                _logger.LogWarning("CounterPartyRef is null or empty.");
+                return new OperationResult<IEnumerable<NewPostCounterAgentAdress>>(
+                    false,
+                    "CounterPartyRef is required.",
+                    Enumerable.Empty<NewPostCounterAgentAdress>());
+            }
+
+            var requestBody = new
+            {
+                apiKey = _apiKey,
+                modelName = "CounterpartyGeneral",
+                calledMethod = "getCounterpartyAddresses",
+                methodProperties = new
+                {
+                    Ref = counterPartyRef,
+                    CounterpartyProperty = string.Empty
+                }
+            };
+            var jsonRequestBody = JsonSerializer.Serialize(requestBody, _jsonSerializerOptions);
+            var content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await _httpClient.PostAsync("https://api.novaposhta.ua/v2.0/json/", content, cancellationToken);
+                response.EnsureSuccessStatusCode(); 
+                var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
+
+                var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostCounterAgentAdress>>(jsonResponse, _jsonSerializerOptions);
+
+                if (apiResponse == null)
+                {
+                    _logger.LogError("Nova Poshta API response is null.");
+                    return new OperationResult<IEnumerable<NewPostCounterAgentAdress>>(
+                        false,
+                        "Response is null.",
+                        Enumerable.Empty<NewPostCounterAgentAdress>());
+                }
+
+                return new OperationResult<IEnumerable<NewPostCounterAgentAdress>>(
+                    true,
+                    string.Empty,
+                    apiResponse.Data ?? Enumerable.Empty<NewPostCounterAgentAdress>());
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "An error occurred while sending a request to Nova Poshta API.");
+                return new OperationResult<IEnumerable<NewPostCounterAgentAdress>>(
+                    false,
+                    "Request error.",
+                    Enumerable.Empty<NewPostCounterAgentAdress>());
+            }
+            catch (TaskCanceledException taskEx)
+            {
+                _logger.LogError(taskEx, "The request to Nova Poshta API was canceled.");
+                return new OperationResult<IEnumerable<NewPostCounterAgentAdress>>(
+                    false,
+                    "Request was canceled.",
+                    Enumerable.Empty<NewPostCounterAgentAdress>());
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "Error deserializing the response from Nova Poshta API.");
+                return new OperationResult<IEnumerable<NewPostCounterAgentAdress>>(
+                    false,
+                    "Error parsing response.",
+                    Enumerable.Empty<NewPostCounterAgentAdress>());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred.");
+                return new OperationResult<IEnumerable<NewPostCounterAgentAdress>>(
+                    false,
+                    "An unexpected error occurred.",
+                    Enumerable.Empty<NewPostCounterAgentAdress>());
+            }
+        }
+
         public async Task<OperationResult<NewPostCounterAgentDto>> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
         {
             try

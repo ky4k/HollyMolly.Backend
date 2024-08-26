@@ -12,6 +12,8 @@ public interface INewPostCityesService
         string? Language, string? TypeOfWarehouseRef, CancellationToken cancellationToken);
     Task<OperationResult<IEnumerable<NewPostStreets>>> GetStreetsAync(string CityRef, string FindByString, string? Page, 
         string? Limit, CancellationToken cancellationToken);
+    Task<OperationResult> UpadateCounterPartyAdress(string CounterPartyRef,string AdressRef, string StreetRef, string? BuildingNumber, string? Flat,
+       string? Note, CancellationToken cancellationToken);
     Task<bool> CheckIfCityIsValidAsync(string city, CancellationToken cancellationToken);
     Task<bool> CheckIfAddressIsValidAsync(string city, string address, CancellationToken cancellationToken);
 

@@ -158,4 +158,25 @@ public class NewPostController(
 
         return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
     }
+
+    /// <summary>
+    /// Allows to get a list of counterparty addresses from the New Post based on the counterparty reference and property.
+    /// </summary>
+    /// <param name="counterPartyRef">Reference of the counterparty obtained from Nova Poshta API.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the page that contains a list of counterparty addresses.</response>
+    /// <response code="400">Indicates that counterparty addresses cannot be obtained and returns the error message.</response>
+    [Route("counterpartyaddresses")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IEnumerable<NewPostCounterAgentAdress>>> GetCounterpartyAddresses(
+        string counterPartyRef, CancellationToken cancellationToken = default)
+    {
+        var result = await newPostCounterAgentService.GetCounterpartyAdressAsync(
+            counterPartyRef,
+            cancellationToken);
+
+        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+    }
 }

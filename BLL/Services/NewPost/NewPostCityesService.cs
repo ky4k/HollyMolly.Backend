@@ -3,6 +3,7 @@ using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
 using Microsoft.Extensions.Logging;
+using System.Net.Http;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -212,6 +213,67 @@ public class NewPostService(
         {
             _logger.LogError(ex, "An unexpected error occurred.");
             return new OperationResult<IEnumerable<NewPostStreets>>(false, "An unexpected error occurred.", Enumerable.Empty<NewPostStreets>());
+        }
+    }
+
+    public async Task<OperationResult> UpadateCounterPartyAdress(string CounterPartyRef, string AdressRef, string StreetRef, string? BuildingNumber, string? Flat, string? Note, CancellationToken cancellationToken)
+    {
+        var requestPayload = new
+        {
+            apiKey = _apiKey,
+            modelName = "AddressGeneral",
+            calledMethod = "update",
+            methodProperties = new
+            {
+                CounterpartyRef = CounterPartyRef,
+                StreetRef = StreetRef,
+                BuildingNumber = BuildingNumber,
+                Flat = Flat,
+                Note = Note,
+                Ref = AdressRef
+            }
+        };
+
+        var jsonRequestBody = JsonSerializer.Serialize(requestPayload, _jsonSerializerOptions);
+        var content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
+
+        try
+        {
+            _logger.LogInformation("Sending request to Nova Poshta API to update address with payload: {Payload}", jsonRequestBody);
+
+            var response = await _httpClient.PostAsync("https://api.novaposhta.ua/v2.0/json/", content, cancellationToken);
+            response.EnsureSuccessStatusCode();
+
+            var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
+
+            if (jsonResponse.Contains("\"success\": true"))
+            {
+                return new OperationResult(true, "Address updated successfully.");
+            }
+
+            _logger.LogError("Failed to update address. Response did not indicate success.");
+            return new OperationResult(false, "Failed to update address.");
+        }
+        catch (HttpRequestException httpEx)
+        {
+            _logger.LogError(httpEx, "HTTP request error occurred while updating the address.");
+            return new OperationResult(false, "HTTP request error: " + httpEx.Message);
+        }
+        catch (TaskCanceledException taskCanceledEx)
+        {
+            if (cancellationToken.IsCancellationRequested)
+            {
+                _logger.LogWarning("Address update request was canceled.");
+                return new OperationResult(false, "Request was canceled.");
+            }
+            _logger.LogError(taskCanceledEx, "Request timeout occurred while updating the address.");
+            return new OperationResult(false, "Request timeout: " + taskCanceledEx.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while updating the address.");
+            return new OperationResult(false, "An unexpected error occurred: " + ex.Message);
         }
     }
 }
