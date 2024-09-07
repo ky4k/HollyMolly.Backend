@@ -5,12 +5,12 @@ namespace HM.BLL.Interfaces.NewPost;
 
 public interface INewPostCityesService
 {
-    Task<OperationResult<IEnumerable<NewPostCities>>> GetCitiesAsync(
+    Task<IEnumerable<NewPostCities>> GetCitiesAsync(
         string? FindByString, string? Ref, string? Page, string? Limit, CancellationToken cancellationToken);
-    Task<OperationResult<IEnumerable<NewPostWarehouse>>> GetWarehousesAync(
+    Task<IEnumerable<NewPostWarehouse>> GetWarehousesAync(
         string? CityName, string? WarehouseId, string? FindByString, string? CityRef, string? Page, string? Limit,
         string? Language, string? TypeOfWarehouseRef, CancellationToken cancellationToken);
-    Task<OperationResult<IEnumerable<NewPostStreets>>> GetStreetsAync(string CityRef, string FindByString, string? Page, 
+    Task<IEnumerable<NewPostStreets>> GetStreetsAync(string CityRef, string FindByString, string? Page, 
         string? Limit, CancellationToken cancellationToken);
     Task<OperationResult> UpadateCounterPartyAdress(string CounterPartyRef,string AdressRef, string StreetRef, string? BuildingNumber, string? Flat,
        string? Note, CancellationToken cancellationToken);

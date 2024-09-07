@@ -12,8 +12,11 @@ namespace HM.BLL.Interfaces.NewPost
 {
     public interface INewPostCounerAgentService
     {
-        Task<OperationResult<IEnumerable<NewPostCounterAgentDto>>>CreateCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken);
-        Task<OperationResult<NewPostCounterAgentDto>> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken);
-        Task<OperationResult<IEnumerable<NewPostCounterAgentAdress>>>GetCounterpartyAdressAsync(string counterPartyRef, CancellationToken cancellationToken);
+        Task<OperationResult<IEnumerable<NewPostCounterAgentDto>>>CreateCounterpartyAsync(CustomerDto customerDto,
+            CancellationToken cancellationToken);
+        Task<NewPostCounterAgentDto> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken);
+        Task<IEnumerable<NewPostCounterAgentAdress>>GetCounterpartyAdressAsync(string counterPartyRef, 
+            CancellationToken cancellationToken);
+
     }
 }

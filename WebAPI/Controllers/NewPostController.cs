@@ -36,14 +36,23 @@ public class NewPostController(
         int limit = 100,
         CancellationToken cancellationToken = default)
     {
-        var result = await newPostService.GetCitiesAsync(
+        try
+        {
+            var result = await newPostService.GetCitiesAsync(
             FindByString: findByString,
             Ref: @ref,
             Page: page.ToString(),
             Limit: limit.ToString(),
             cancellationToken: cancellationToken);
 
-        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+            if (result == null || !result.Any())
+            {
+                return BadRequest("Cities cannot be obtained.");
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex) { return BadRequest($"Error: {ex.Message}"); }
     }
 
     /// <summary>
@@ -75,7 +84,9 @@ public class NewPostController(
         string? typeOfWarehouseRef = null,
         CancellationToken cancellationToken = default)
     {
-        var result = await newPostService.GetWarehousesAync(
+        try
+        {
+            var result = await newPostService.GetWarehousesAync(
             CityName: cityName,
             WarehouseId: warehouseId,
             FindByString: findByString,
@@ -86,7 +97,15 @@ public class NewPostController(
             TypeOfWarehouseRef: typeOfWarehouseRef,
             cancellationToken: cancellationToken);
 
-        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+            if (result == null || !result.Any())
+            {
+                return BadRequest("Cities cannot be obtained.");
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex) { return BadRequest($"Error: {ex.Message}"); }
+        
     }
 
     /// <summary>
@@ -119,13 +138,19 @@ public class NewPostController(
     [HttpPost]
     public async Task<IActionResult> GetCounterpartyAsync([FromBody] CustomerDto customerDto, CancellationToken cancellationToken)
     {
-        var result = await newPostCounterAgentService.GetCounterpartyAsync(customerDto, cancellationToken);
-        if (!result.Succeeded)
+        try
         {
-            return NotFound(result.Errors);
+            var counterpartyDto = await newPostCounterAgentService.GetCounterpartyAsync(customerDto, cancellationToken);
+            return Ok(counterpartyDto);
         }
-
-        return Ok(result.Payload);
+        catch (InvalidOperationException ex)
+        {
+            return NotFound(new { message = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred.", details = ex.Message });
+        }
     }
 
     /// <summary>
@@ -149,14 +174,23 @@ public class NewPostController(
         int limit = 50,
         CancellationToken cancellationToken = default)
     {
-        var result = await newPostService.GetStreetsAync(
+        try
+        {
+            var result = await newPostService.GetStreetsAync(
             CityRef: cityRef,
             FindByString: findByString ?? string.Empty,
             Page: page.ToString(),
             Limit: limit.ToString(),
             cancellationToken: cancellationToken);
 
-        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+            if (result == null || !result.Any())
+            {
+                return BadRequest("Streets cannot be obtained.");
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex) { return BadRequest($"Error: {ex.Message}"); }
     }
 
     /// <summary>
@@ -173,10 +207,26 @@ public class NewPostController(
     public async Task<ActionResult<IEnumerable<NewPostCounterAgentAdress>>> GetCounterpartyAddresses(
         string counterPartyRef, CancellationToken cancellationToken = default)
     {
-        var result = await newPostCounterAgentService.GetCounterpartyAdressAsync(
-            counterPartyRef,
-            cancellationToken);
+        if (string.IsNullOrWhiteSpace(counterPartyRef))
+        {
+            return BadRequest("CounterPartyRef is required.");
+        }
 
-        return result.Succeeded ? Ok(result.Payload) : BadRequest(result.Message);
+        try
+        {
+            var addresses = await newPostCounterAgentService.GetCounterpartyAdressAsync(counterPartyRef, cancellationToken);
+
+            if (addresses == null || !addresses.Any())
+            {
+                // Якщо результат порожній, повертаємо NotFound
+                return NotFound("No addresses found for the provided counterPartyRef.");
+            }
+
+            return Ok(addresses);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
+        }
     }
 }
