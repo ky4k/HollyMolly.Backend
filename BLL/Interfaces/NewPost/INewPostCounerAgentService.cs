@@ -17,6 +17,8 @@ namespace HM.BLL.Interfaces.NewPost
         Task<NewPostCounterAgentDto> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken);
         Task<IEnumerable<NewPostCounterAgentAdress>>GetCounterpartyAdressAsync(string counterPartyRef, 
             CancellationToken cancellationToken);
-
+        Task<IEnumerable<NewPostContactPersonDto>> GetContactPersonsAsync(string counterPartyRef, string Page,
+            CancellationToken cancellationToken);
+        Task<IEnumerable<NewPostCounterAgents>> GetSendersListAsync(string Page, CancellationToken cancellationToken);
     }
 }

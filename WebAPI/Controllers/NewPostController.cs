@@ -229,4 +229,76 @@ public class NewPostController(
             return StatusCode(StatusCodes.Status500InternalServerError, "An unexpected error occurred.");
         }
     }
+    /// <summary>
+    /// Allows to create a list of counterparties from the New Post service based on the specified counterparty property.
+    /// </summary>
+    /// <param name="counterpartyProperty">The counterparty property to filter by (e.g., "Sender", "Recipient").</param>
+    /// <param name="page">Optional. The page number of counterparties to retrieve. Defaults to 1.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns a list of counterparties based on the specified criteria.</response>
+    /// <response code="400">Indicates that counterparties cannot be obtained and returns the error message.</response>
+    [Route("counterparties/list")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IEnumerable<NewPostCounterAgents>>> GetSendersList(
+        int page = 1,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var result = await newPostCounterAgentService.GetSendersListAsync(
+                Page: page.ToString(),
+                cancellationToken: cancellationToken);
+
+            if (result == null || !result.Any())
+            {
+                return BadRequest("Counterparties cannot be obtained.");
+            }
+
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
+    /// <summary>
+    /// Retrieves a list of contact persons associated with a specific counterparty.
+    /// </summary>
+    /// <param name="counterPartyRef">Reference of the counterparty obtained from Nova Poshta API.</param>
+    /// <param name="page">Optional. Page number of contact persons. Defaults to 1.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
+    /// <response code="200">Returns the list of contact persons associated with the counterparty.</response>
+    /// <response code="400">Indicates that contact persons cannot be obtained and returns the error message.</response>
+    [Route("contactpersons")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IEnumerable<NewPostContactPersonDto>>> GetContactPersons(
+        string counterPartyRef,
+        string page = "1",
+        CancellationToken cancellationToken = default)
+    {
+        if (string.IsNullOrWhiteSpace(counterPartyRef))
+        {
+            return BadRequest("CounterPartyRef is required.");
+        }
+
+        try
+        {
+            var contactPersons = await newPostCounterAgentService.GetContactPersonsAsync(counterPartyRef, page, cancellationToken);
+
+            if (contactPersons == null || !contactPersons.Any())
+            {
+                return NotFound("No contact persons found for the provided counterPartyRef.");
+            }
+
+            return Ok(contactPersons);
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred.", details = ex.Message });
+        }
+    }
 }

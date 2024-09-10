@@ -71,17 +71,24 @@ namespace HM.BLL.Services.NewPost
 
                 foreach (var counterAgentDto in apiResponse.Data)
                 {
+                    var contactPersons = await GetContactPersonsAsync(counterAgentDto.Ref, "1", cancellationToken);
+                    var filteredContactPersons = contactPersons.Where(contactPerson =>
+                        string.Equals(contactPerson.FirstName, counterAgentDto.FirstName, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(contactPerson.LastName, counterAgentDto.LastName, StringComparison.OrdinalIgnoreCase) &&
+                        (string.IsNullOrEmpty(counterAgentDto.MiddleName) || string.Equals(contactPerson.MiddleName, counterAgentDto.MiddleName, StringComparison.OrdinalIgnoreCase)))
+                    .Select(contactPerson => contactPerson.ToNewPostContactPerson())
+                    .ToList();
+
                     var counterAgent = counterAgentDto.ToNewPostCounterAgent();
 
-                    counterAgent.ContactPersons = counterAgentDto.ContactPerson.Data
-                        .Select(contactPersonDto => contactPersonDto.ToNewPostContactPerson())
-                        .ToList();
+                    counterAgent.ContactPersons = filteredContactPersons;
 
                     _dbContext.NewPostCounterAgents.Add(counterAgent);
                 }
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
-                return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(true, string.Empty, apiResponse.Data);
+                var savedCounterAgentDto = await GetCounterpartyAsync(customerDto, cancellationToken);
+                return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(true, string.Empty, new List<NewPostCounterAgentDto> { savedCounterAgentDto });
             }
             catch (HttpRequestException httpEx)
             {
@@ -102,6 +109,60 @@ namespace HM.BLL.Services.NewPost
             {
                 _logger.LogError(ex, "An unexpected error occurred.");
                 return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(false, "An unexpected error occurred.", Enumerable.Empty<NewPostCounterAgentDto>());
+            }
+        }
+
+        public async Task<IEnumerable<NewPostCounterAgents>> GetSendersListAsync(string Page, CancellationToken cancellationToken)
+        {
+            var requestBody = new
+            {
+                apiKey = _apiKey,
+                modelName = "CounterpartyGeneral",
+                calledMethod = "getCounterparties",
+                methodProperties = new
+                {
+                    CounterpartyProperty = "Sender",
+                    Page = Page
+                }
+            };
+
+            var jsonRequestBody = JsonSerializer.Serialize(requestBody, _jsonSerializerOptions);
+            var content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
+            try
+            {
+                var response = await _httpClient.PostAsync("https://api.novaposhta.ua/v2.0/json/", content, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
+
+                var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostCounterAgents>>(jsonResponse, _jsonSerializerOptions);
+
+                if (apiResponse == null)
+                {
+                    _logger.LogError("Failed to retrieve data.");
+                    return Enumerable.Empty<NewPostCounterAgents>();
+                }
+                return apiResponse.Data;
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "An error occurred while sending a request to Nova Poshta API.");
+                return Enumerable.Empty<NewPostCounterAgents>();
+            }
+            catch (TaskCanceledException taskEx)
+            {
+                _logger.LogError(taskEx, "The request to Nova Poshta API was canceled.");
+                return Enumerable.Empty<NewPostCounterAgents>();
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "Error deserializing the response from Nova Poshta API.");
+                return Enumerable.Empty<NewPostCounterAgents>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred.");
+                return Enumerable.Empty<NewPostCounterAgents>();
             }
         }
 
@@ -196,6 +257,65 @@ namespace HM.BLL.Services.NewPost
             {
                 _logger.LogError(ex, "An error occurred while retrieving the counteragent.");
                 throw;
+            }
+        }
+
+        public async Task<IEnumerable<NewPostContactPersonDto>> GetContactPersonsAsync(string counterPartyRef, string Page, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(counterPartyRef))
+            {
+                _logger.LogWarning("CounterPartyRef is null or empty.");
+                return Enumerable.Empty<NewPostContactPersonDto>();
+            }
+            var requestBody = new
+            {
+                apiKey = _apiKey,
+                modelName = "CounterpartyGeneral",
+                calledMethod = "getCounterpartyContactPersons",
+                methodProperties = new
+                {
+                    Ref = counterPartyRef,
+                    Page = Page
+                }
+            };
+            var jsonRequestBody = JsonSerializer.Serialize(requestBody, _jsonSerializerOptions);
+            var content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
+            try
+            {
+                var response = await _httpClient.PostAsync("https://api.novaposhta.ua/v2.0/json/", content, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
+
+                var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostContactPersonDto>>(jsonResponse, _jsonSerializerOptions);
+
+                if (apiResponse == null || apiResponse.Data == null || !apiResponse.Data.Any())
+                {
+                    _logger.LogError("Nova Poshta API returned an empty or null data.");
+                    return Enumerable.Empty<NewPostContactPersonDto>();
+                }
+
+                return apiResponse.Data;
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "An error occurred while sending a request to Nova Poshta API.");
+                return Enumerable.Empty<NewPostContactPersonDto>();
+            }
+            catch (TaskCanceledException taskEx)
+            {
+                _logger.LogError(taskEx, "The request to Nova Poshta API was canceled.");
+                return Enumerable.Empty<NewPostContactPersonDto>();
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "Error deserializing the response from Nova Poshta API.");
+                return Enumerable.Empty<NewPostContactPersonDto>();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An unexpected error occurred.");
+                return Enumerable.Empty<NewPostContactPersonDto>();
             }
         }
     }

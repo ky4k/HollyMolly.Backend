@@ -284,7 +284,9 @@ public static class MappingExtensions
             Description = contactPerson.Description,
             LastName = contactPerson.LastName,
             FirstName = contactPerson.FirstName,
-            MiddleName = contactPerson.MiddleName
+            MiddleName = contactPerson.MiddleName,
+            Email = contactPerson.Email,
+            Phones = contactPerson.Phones
         };
     }
     public static NewPostContactPerson ToNewPostContactPerson(this NewPostContactPersonDto contactPersonDto)
@@ -295,7 +297,9 @@ public static class MappingExtensions
             Description = contactPersonDto.Description,
             LastName = contactPersonDto.LastName,
             FirstName = contactPersonDto.FirstName,
-            MiddleName = contactPersonDto.MiddleName
+            MiddleName = contactPersonDto.MiddleName,
+            Email = contactPersonDto.Email,
+            Phones = contactPersonDto.Phones
         };
     }
     public static NewPostInternetDocumentDto ToNewPostInternetDocumentDto(this NewPostInternetDocument internetDocument)

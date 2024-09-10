@@ -86,27 +86,28 @@ namespace HM.BLL.Services.NewPost
 
             if (updetedCounterAgent.IsFaulted) { return new OperationResult<NewPostInternetDocumentDto>(false, "Counteragent update exception"); }
 
-            var requestbody = new
-            {
-                apiKey = _apiKey,
-                modelName = "InternetDocument",
-                calledMethod = "save",
-                methodProperties = new
-                {
-                    SenderWarehouseIndex = "",// не обовязково
-                    RecipientWarehouseIndex = address.WarehouseIndex,
-                    PayerType = typeOfSender,
-                    PaymentMethod = "Cash",
-                    DateTime = date.ToString(),
-                    CargoType = order.OrderRecords.FirstOrDefault()?.ProductName ?? "Мода та краса",
-                    Weight = weight,
-                    ServiceType =  serviceType,
-                    SeatsAmount = "1",
-                    description = description,
-                    cost = cost,
-                    CitySender = 
-                }
-            };
+            //var requestbody = new
+            //{
+            //    apiKey = _apiKey,
+            //    modelName = "InternetDocument",
+            //    calledMethod = "save",
+            //    methodProperties = new
+            //    {
+            //        SenderWarehouseIndex = "",// не обовязково
+            //        RecipientWarehouseIndex = address.WarehouseIndex,
+            //        PayerType = typeOfSender,
+            //        PaymentMethod = "Cash",
+            //        DateTime = date.ToString(),
+            //        CargoType = order.OrderRecords.FirstOrDefault()?.ProductName ?? "Мода та краса",
+            //        Weight = weight,
+            //        ServiceType =  serviceType,
+            //        SeatsAmount = "1",
+            //        description = description,
+            //        cost = cost,
+            //        CitySender = 
+            //    }
+            //}; 
+            return null;
         }
     }
 }
