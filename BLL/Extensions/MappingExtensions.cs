@@ -143,7 +143,6 @@ public static class MappingExtensions
             PaymentReceived = order.PaymentReceived,
             Notes = order.Notes,
             OrderRecords = order.OrderRecords.Select(or => or.ToOrderRecordDto()).ToList(),
-            NewPostInternetDocument = order.NewPostInternetDocument?.ToNewPostInternetDocumentDto()
         };
     }
 
@@ -312,21 +311,6 @@ public static class MappingExtensions
             IntDocNumber = internetDocument.IntDocNumber,
             TypeDocument = internetDocument.TypeDocument,
             OrderId = internetDocument.OrderId,
-            Order = internetDocument.Order?.ToOrderDto()
         };
     }
-
-    //public static NewPostInternetDocument ToNewPostInternetDocument(this NewPostInternetDocumentDto internetDocumentDto)
-    //{
-    //    return new NewPostInternetDocument
-    //    {
-    //        Ref = internetDocumentDto.Ref,
-    //        CostOnSite = internetDocumentDto.CostOnSite,
-    //        EstimatedDeliveryDate = internetDocumentDto.EstimatedDeliveryDate,
-    //        IntDocNumber = internetDocumentDto.IntDocNumber,
-    //        TypeDocument = internetDocumentDto.TypeDocument,
-    //        OrderId = internetDocumentDto.OrderId,
-    //        Order = internetDocumentDto.Order?.ToOrder()
-    //    };
-    //}
 }

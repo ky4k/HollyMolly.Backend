@@ -11,7 +11,8 @@ namespace HM.BLL.Interfaces.NewPost
 {
     public interface INewPostInternetDocument
     {
-        Task<OperationResult<NewPostInternetDocumentDto>> CreateInternetDocument (int orderid, string typeOfSender, DateTimeOffset date,
-            float weight, string serviceType, string description,float cost, CancellationToken cancellationToken);
+        Task<OperationResult<NewPostInternetDocumentDto>> CreateInternetDocument(int orderid, string? SenderWarehouseIndex, string senderRef,
+            string PayerType, string PaymentMethod, DateTimeOffset DateOfSend, float weight, string serviceType, string SeatsAmount,
+            string description, float cost, CancellationToken cancellationToken);
     }
 }

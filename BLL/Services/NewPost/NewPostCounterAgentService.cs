@@ -33,9 +33,31 @@ namespace HM.BLL.Services.NewPost
         private readonly string? _apiKey = configurationHelper.GetConfigurationValue("NewPost:APIKey");
         private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
-        
+        private async Task<NewPostCounterAgentDto?> FindExistingCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
+        {
+            var existingCounterAgent = await _dbContext.NewPostCounterAgents
+                .Include(ca => ca.ContactPersons)
+                .FirstOrDefaultAsync(ca => ca.FirstName == customerDto.FirstName &&
+                                           ca.LastName == customerDto.LastName &&
+                                           ca.ContactPersons.Any(cp => cp.Phones == customerDto.PhoneNumber && cp.Email == customerDto.Email),
+                                           cancellationToken);
+
+            if (existingCounterAgent != null)
+            {
+                return existingCounterAgent.ToNewPostCounterAgentDto();
+            }
+
+            return null;
+        }
+
         public async Task<OperationResult<IEnumerable<NewPostCounterAgentDto>>> CreateCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
         {
+            var existingCounterAgentDto = await FindExistingCounterpartyAsync(customerDto, cancellationToken);
+
+            if (existingCounterAgentDto != null)
+            {
+                return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(true, string.Empty, new List<NewPostCounterAgentDto> { existingCounterAgentDto });
+            }
             var requestBody = new
             {
                 apiKey = _apiKey,

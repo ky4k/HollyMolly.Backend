@@ -12,7 +12,8 @@ namespace HM.WebAPI.Controllers;
 [ApiController]
 public class NewPostController(
     INewPostCityesService newPostService,
-    INewPostCounerAgentService newPostCounterAgentService
+    INewPostCounerAgentService newPostCounterAgentService,
+    INewPostInternetDocument newPostInternetDocument
     ) : ControllerBase
 {
     /// <summary>
@@ -300,5 +301,61 @@ public class NewPostController(
         {
             return StatusCode(StatusCodes.Status500InternalServerError, new { message = "An unexpected error occurred.", details = ex.Message });
         }
+    }
+    /// <summary>
+    /// Creates an internet document in New Post.
+    /// </summary>
+    /// <param name="orderid">Order ID.</param>
+    /// <param name="SenderWarehouseIndex">Sender warehouse index.</param>
+    /// <param name="senderRef">Sender reference.</param>
+    /// <param name="PayerType">Payer type.</param>
+    /// <param name="PaymentMethod">Payment method.</param>
+    /// <param name="DateOfSend">Date of sending.</param>
+    /// <param name="CargoType">Cargo type.</param>
+    /// <param name="weight">Weight of the cargo.</param>
+    /// <param name="serviceType">Service type.</param>
+    /// <param name="SeatsAmount">Number of seats.</param>
+    /// <param name="description">Description of the cargo.</param>
+    /// <param name="cost">Cost of the cargo.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>Returns the created internet document or an error message.</returns>
+    [Route("internet-document")]
+    [HttpPost]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreateInternetDocument(
+    int orderId,
+    string? senderWarehouseIndex,
+    string senderRef,
+    string payerType,
+    string paymentMethod,
+    DateTimeOffset dateOfSend,
+    float weight,
+    string serviceType,
+    string seatsAmount,
+    string description,
+    float cost,
+    CancellationToken cancellationToken)
+    {
+        var result = await newPostInternetDocument.CreateInternetDocument(
+            orderId,
+            senderWarehouseIndex,
+            senderRef,
+            payerType,
+            paymentMethod,
+            dateOfSend,
+            weight,
+            serviceType,
+            seatsAmount,
+            description,
+            cost,
+            cancellationToken);
+
+        if (!result.Succeeded)
+        {
+            return BadRequest(result.Message);
+        }
+
+        return Ok(result.Payload);
     }
 }

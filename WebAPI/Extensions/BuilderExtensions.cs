@@ -36,8 +36,8 @@ public static class BuilderExtensions
         builder.Services.AddScoped<ICheckoutService, CheckoutService>();
         builder.Services.AddScoped<Stripe.Checkout.SessionService>();
         builder.Services.AddScoped<ISupportService, SupportService>();
-        builder.Services.AddScoped<INewPostCityesService, NewPostService>();//can be exception
+        builder.Services.AddScoped<INewPostCityesService, NewPostService>();
         builder.Services.AddScoped<INewPostCounerAgentService,NewPostCounterAgentService>();
-
+        builder.Services.AddScoped<INewPostInternetDocument, NewPostInternetDocumentSertvice>();
     }
 }

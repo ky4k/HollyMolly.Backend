@@ -24,5 +24,4 @@ public class OrderDto
     public List<OrderStatusHistoryDto> StatusHistory { get; set; } = [];
     public bool PaymentReceived { get; set; }
     public string Notes { get; set; } = null!;
-    public NewPostInternetDocumentDto? NewPostInternetDocument { get; set; }
 }

@@ -216,7 +216,7 @@ public class NewPostService(
         }
     }
 
-    public async Task<OperationResult> UpadateCounterPartyAdress(string CounterPartyRef, string AdressRef, string StreetRef, string? BuildingNumber, string? Flat, string? Note, CancellationToken cancellationToken)
+    public async Task<OperationResult> UpadateCounterPartyAdressAsync(string CounterPartyRef, string AdressRef, string StreetRef, string? BuildingNumber, CancellationToken cancellationToken)
     {
         var requestPayload = new
         {
@@ -228,8 +228,6 @@ public class NewPostService(
                 CounterpartyRef = CounterPartyRef,
                 StreetRef = StreetRef,
                 BuildingNumber = BuildingNumber,
-                Flat = Flat,
-                Note = Note,
                 Ref = AdressRef
             }
         };
@@ -247,13 +245,15 @@ public class NewPostService(
             var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
 
-            if (jsonResponse.Contains("\"success\": true"))
+            if (jsonResponse.Contains("\"success\":true"))
             {
                 return new OperationResult(true, "Address updated successfully.");
             }
-
-            _logger.LogError("Failed to update address. Response did not indicate success.");
-            return new OperationResult(false, "Failed to update address.");
+            else
+            {
+                _logger.LogError("Failed to update address. Response did not indicate success.");
+                return new OperationResult(false, "Failed to update address.");
+            }
         }
         catch (HttpRequestException httpEx)
         {
