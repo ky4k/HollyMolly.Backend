@@ -1,9 +1,11 @@
-﻿using HM.BLL.Interfaces.NewPost;
+﻿using HM.BLL.Interfaces;
+using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
 using HM.BLL.Models.Orders;
 using HM.BLL.Services;
 using HM.BLL.Services.NewPost;
+using HM.DAL.Entities.NewPost;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HM.WebAPI.Controllers;
@@ -13,7 +15,9 @@ namespace HM.WebAPI.Controllers;
 public class NewPostController(
     INewPostCityesService newPostService,
     INewPostCounerAgentService newPostCounterAgentService,
-    INewPostInternetDocument newPostInternetDocument
+    INewPostInternetDocument newPostInternetDocument,
+    IEmailService emailSevice,
+    IOrderService orderService
     ) : ControllerBase
 {
     /// <summary>
@@ -335,6 +339,7 @@ public class NewPostController(
     string seatsAmount,
     string description,
     float cost,
+    float costOfGood,
     CancellationToken cancellationToken)
     {
         var result = await newPostInternetDocument.CreateInternetDocument(
@@ -349,13 +354,71 @@ public class NewPostController(
             seatsAmount,
             description,
             cost,
+            costOfGood,
             cancellationToken);
 
         if (!result.Succeeded)
         {
             return BadRequest(result.Message);
         }
+        else
+        {
+            var order = await orderService.GetOrderByIdAsync(orderId, cancellationToken);
+            var documentNumber = result.Payload?.IntDocNumber;
+            if (!string.IsNullOrEmpty(documentNumber))
+            {
+                await emailSevice.SendInternetDocumentCreatedEmailAsync(order, documentNumber, cancellationToken);
+            }
+        }
 
         return Ok(result.Payload);
+    }
+    [Route("internet-document/delete")]
+    [HttpDelete]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteInternetDocument(
+        [FromQuery] string internetDocumentRef,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await newPostInternetDocument.DeleteInternetDocument(internetDocumentRef, cancellationToken);
+
+        if (result.Succeeded)
+            return Ok(result.Message);
+
+        return BadRequest(result.Message);
+    }
+
+    [Route("internet-documents")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetAllInternetDocuments(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var result = await newPostInternetDocument.GetAllInternetDocumentsAsync(cancellationToken);
+            return Ok(result);
+        }
+        catch (Exception ex)
+        {
+            return BadRequest($"Error: {ex.Message}");
+        }
+    }
+
+    [Route("internet-document/{documentRef}")]
+    [HttpGet]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetInternetDocumentByRef(
+        [FromRoute] string documentRef,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await newPostInternetDocument.GetInternetDocumentByRefAsync(documentRef, cancellationToken);
+
+        if (result == null)
+            return NotFound($"Internet document with ref {documentRef} not found.");
+
+        return Ok(result);
     }
 }

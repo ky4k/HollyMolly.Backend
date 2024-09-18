@@ -8,11 +8,13 @@ using HM.BLL.Models.NewPost;
 using HM.BLL.Models.Orders;
 using HM.DAL.Data;
 using HM.DAL.Entities.NewPost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Stripe;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -57,7 +59,7 @@ namespace HM.BLL.Services.NewPost
 
         public async Task<OperationResult<NewPostInternetDocumentDto>> CreateInternetDocument(int orderid, string? SenderWarehouseIndex,string senderRef,
             string PayerType, string PaymentMethod, DateTimeOffset DateOfSend, float weight, string serviceType,string SeatsAmount,
-            string description, float cost, CancellationToken cancellationToken)
+            string description, float costOfEstimate,float costOfGood, CancellationToken cancellationToken)
         {
             var order = await orderService.GetOrderByIdAsync(orderid, cancellationToken);//take order
             if (order == null) 
@@ -135,7 +137,7 @@ namespace HM.BLL.Services.NewPost
                     ServiceType = serviceType,
                     SeatsAmount = SeatsAmount,
                     Description = description,
-                    Cost = cost.ToString(),
+                    Cost = costOfEstimate.ToString(),
                     CitySender =sender.City,
                     Sender = sender.Ref,
                     SenderAddress = senderAdress.Ref,
@@ -145,7 +147,16 @@ namespace HM.BLL.Services.NewPost
                     Recipient = recipient.Ref,
                     RecipientAddress = address.Ref,
                     ContactRecipient = contactPersonOfReciooient.Ref,
-                    RecipientsPhone= contactPersonOfReciooient.Phones
+                    RecipientsPhone= contactPersonOfReciooient.Phones,
+                    BackwardDeliveryData = new[]
+                    {
+                        new
+                        {
+                            PayerType = "Recipient", 
+                            CargoType = "Money",
+                            RedeliveryString = costOfGood.ToString(),
+                        }
+                    }
                 }
             };
             var jsonRequestBody = JsonSerializer.Serialize(requestBody, _jsonSerializerOptions);
@@ -191,6 +202,83 @@ namespace HM.BLL.Services.NewPost
                 return new OperationResult<NewPostInternetDocumentDto>(false, "Exception occurred while creating Internet document.");
             }
         }
+        public async Task<OperationResult> DeleteInternetDocument(string internetDocumentRef, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(internetDocumentRef))
+            {
+                _logger.LogWarning("CounterPartyRef is null or empty.");
+                return new OperationResult(false, "The internet docoment ref is empty");
+            }
+            var requestBody = new
+            {
+                apiKey = _apiKey,
+                modelName = "InternetDocumentGeneral",
+                calledMethod = "delete",
+                methodProperties = new
+                {
+                    DocumentRefs = internetDocumentRef
+                }
+            };
+            var jsonRequestBody = JsonSerializer.Serialize(requestBody, _jsonSerializerOptions);
+            var content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
+            try
+            {
+                var response = await _httpClient.PostAsJsonAsync("https://api.novaposhta.ua/v2.0/json/", requestBody, cancellationToken);
+                response.EnsureSuccessStatusCode();
+                var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
+                var document = await _dbContext.NewPostInternetDocuments.FirstOrDefaultAsync(d => d.Ref == internetDocumentRef, cancellationToken);
+                if (document != null)
+                {
+                    _dbContext.NewPostInternetDocuments.Remove(document);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                    _logger.LogInformation("Internet Document with ref: {Ref} has been successfully deleted from the database.", internetDocumentRef);
+                }
+                else
+                {
+                    _logger.LogWarning("Internet Document with ref: {Ref} was not found in the database.", internetDocumentRef);
+                    return new OperationResult(false, "Internet Document with ref: {Ref} was not found in the database.");
+                }
+
+                if (jsonResponse.Contains("\"success\":true"))
+                {
+                    return new OperationResult(true, "Internet document was deleted from both API and database.");
+                }
+                else
+                {
+                    _logger.LogError("Failed to delete internet document from Nova Poshta API.");
+                    return new OperationResult(true, "Internet document was deleted from the database, but failed to delete from the API.");
+                }
+
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while deleting the internet document.");
+                return new OperationResult(false, $"An error occurred: {ex.Message}");
+            }
+        }
+        public async Task<IEnumerable<NewPostInternetDocumentDto>> GetAllInternetDocumentsAsync(CancellationToken cancellationToken)
+        {
+            var documents = await _dbContext.NewPostInternetDocuments.ToListAsync(cancellationToken);
+            return documents.Select(d => d.ToNewPostInternetDocumentDto());
+        }
+        public async Task<NewPostInternetDocumentDto?> GetInternetDocumentByRefAsync(string documentRef, CancellationToken cancellationToken)
+        {
+            if (string.IsNullOrWhiteSpace(documentRef))
+            {
+                _logger.LogWarning("Document ref is null or empty.");
+                return null;
+            }
+            var document = await _dbContext.NewPostInternetDocuments
+                .FirstOrDefaultAsync(d => d.Ref == documentRef, cancellationToken);
+
+            if (document == null)
+            {
+                _logger.LogWarning("Internet document with ref {Ref} not found.", documentRef);
+                return null;
+            }
+            return document.ToNewPostInternetDocumentDto();
+        }    
     }
 }
 
