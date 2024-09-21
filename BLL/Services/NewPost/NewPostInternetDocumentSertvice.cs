@@ -272,14 +272,14 @@ namespace HM.BLL.Services.NewPost
                 calledMethod = "delete",
                 methodProperties = new
                 {
-                    DocumentRefs = internetDocumentRef
+                    DocumentRefs = internetDocumentRef 
                 }
             };
             var jsonRequestBody = JsonSerializer.Serialize(requestBody, _jsonSerializerOptions);
             var content = new StringContent(jsonRequestBody, Encoding.UTF8, "application/json");
             try
             {
-                var response = await _httpClient.PostAsJsonAsync("https://api.novaposhta.ua/v2.0/json/", requestBody, cancellationToken);
+                var response = await _httpClient.PostAsync("https://api.novaposhta.ua/v2.0/json/", content, cancellationToken);
                 response.EnsureSuccessStatusCode();
                 var jsonResponse = await response.Content.ReadAsStringAsync(cancellationToken);
                 _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
