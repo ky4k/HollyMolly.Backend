@@ -4,6 +4,7 @@ using HM.DAL.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace HM.DAL.Migrations
 {
     [DbContext(typeof(HmDbContext))]
-    partial class HmDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240818121051_Сreated teables for CounterAgent")]
+    partial class СreatedteablesforCounterAgent
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -158,13 +161,11 @@ namespace HM.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("CounterAgentId")
+                    b.Property<int>("CounterpartyRef")
                         .HasColumnType("int");
 
-                    b.Property<string>("Description")
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
@@ -176,19 +177,16 @@ namespace HM.DAL.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MiddleName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Phones")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Ref")
+                    b.Property<string>("Phone")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CounterAgentId");
+                    b.HasIndex("CounterpartyRef");
 
                     b.ToTable("NewPostContactPersons");
                 });
@@ -201,16 +199,20 @@ namespace HM.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Counterparty")
+                    b.Property<string>("CounterpartyId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CounterpartyType")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("EDRPOU")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("FirstName")
@@ -222,12 +224,15 @@ namespace HM.DAL.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("MiddleName")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("OwnershipForm")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("OwnershipFormDescription")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OwnershipFormId")
+                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Ref")
@@ -237,44 +242,6 @@ namespace HM.DAL.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("NewPostCounterAgents");
-                });
-
-            modelBuilder.Entity("HM.DAL.Entities.NewPost.NewPostInternetDocument", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<float>("CostOnSite")
-                        .HasColumnType("real");
-
-                    b.Property<string>("EstimatedDeliveryDate")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IntDocNumber")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Ref")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("TypeDocument")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("OrderId")
-                        .IsUnique();
-
-                    b.ToTable("NewPostInternetDocuments");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.NewsSubscription", b =>
@@ -972,22 +939,11 @@ namespace HM.DAL.Migrations
                 {
                     b.HasOne("HM.DAL.Entities.NewPost.NewPostCounterAgent", "CounterAgent")
                         .WithMany("ContactPersons")
-                        .HasForeignKey("CounterAgentId")
+                        .HasForeignKey("CounterpartyRef")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("CounterAgent");
-                });
-
-            modelBuilder.Entity("HM.DAL.Entities.NewPost.NewPostInternetDocument", b =>
-                {
-                    b.HasOne("HM.DAL.Entities.Order", "Order")
-                        .WithOne("NewPostInternetDocument")
-                        .HasForeignKey("HM.DAL.Entities.NewPost.NewPostInternetDocument", "OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Order");
                 });
 
             modelBuilder.Entity("HM.DAL.Entities.Order", b =>
@@ -1213,8 +1169,6 @@ namespace HM.DAL.Migrations
                 {
                     b.Navigation("Customer")
                         .IsRequired();
-
-                    b.Navigation("NewPostInternetDocument");
 
                     b.Navigation("OrderRecords");
 

@@ -28,7 +28,8 @@ public class EmailService(
     private const string OrderStatusUpdatedSubject = "Статус замовлення оновлено";
     private const string OrderStatusUpdatedTemplate = "<p>Статус вашого замовлення з ідентифікатором №{{orderId}} було змінено на {{newStatus}}. Для відслідковування статусу замовлень перейдіть за посиланням та скористайтесь розділом \"Мої замовлення\"<br /><a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private const string NewsTemplate = "{{news}}<p>____<br />Відписатися від новин можна за посиланням: <a title=\"{{link}}\" href=\"{{link}}\">{{link}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
-
+    private const string InternetDocumentCreatedSubject = "Накладна створена";
+    private const string InternetDocumentCreatedTemplate = "<p>Шановний клієнте, ваша накладна з номером {{documentNumber}} була успішно створена. Ви можете відслідковувати ваше замовлення за посиланням:<br /><a title=\"{{trackingLink}}\" href=\"{{trackingLink}}\">{{trackingLink}}</a></p><p>___<br />З найкращими побажаннями, HollyMolly</p>";
     private readonly IEmailSender _emailSender = emailSender;
     private readonly string? _supportEmail = configurationHelper.GetConfigurationValue("Support:Email");
     private readonly string _confirmEmailPage = configurationHelper.GetConfigurationValue("FrontendUrls:ConfirmEmailPage") ?? "";
@@ -184,4 +185,25 @@ public class EmailService(
         sb.Insert(0, $"{succeeded} emails were sent {fails}");
         return new OperationResult(succeeded >= failed, sb.ToString());
     }
+    public async Task<OperationResult> SendInternetDocumentCreatedEmailAsync(OrderDto order, string documentNumber, CancellationToken cancellationToken)
+    {
+        UserMailInfo userMailInfo = new()
+        {
+            Email = order.Customer.Email,
+            FirstName = order.Customer.FirstName,
+            LastName = order.Customer.LastName,
+        };
+
+        string trackingLink = QueryHelpers.AddQueryString(_myOrdersPage, new Dictionary<string, string?>
+        {
+            { "trackingNumber", documentNumber }
+        });
+
+        string emailBody = InternetDocumentCreatedTemplate
+            .Replace("{{documentNumber}}", documentNumber)
+            .Replace("{{trackingLink}}", trackingLink);
+
+        return await _emailSender.SendEmailAsync(userMailInfo, InternetDocumentCreatedSubject, emailBody, cancellationToken);
+    }
+
 }

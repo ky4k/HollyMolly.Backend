@@ -1,6 +1,8 @@
 ﻿using HM.BLL.Helpers;
 using HM.BLL.Interfaces;
+using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Services;
+using HM.BLL.Services.NewPost;
 using HM.DAL.Data;
 using HM.WebAPI.Middleware;
 using System.IdentityModel.Tokens.Jwt;
@@ -34,6 +36,8 @@ public static class BuilderExtensions
         builder.Services.AddScoped<ICheckoutService, CheckoutService>();
         builder.Services.AddScoped<Stripe.Checkout.SessionService>();
         builder.Services.AddScoped<ISupportService, SupportService>();
-        builder.Services.AddScoped<INewPostService, NewPostService>();
+        builder.Services.AddScoped<INewPostCitiesService, NewPostCitiesService>();
+        builder.Services.AddScoped<INewPostCounerAgentService,NewPostCounterAgentService>();
+        builder.Services.AddScoped<INewPostInternetDocumentService, NewPostInternetDocumentSertvice>();
     }
 }

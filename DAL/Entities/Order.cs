@@ -1,4 +1,6 @@
-﻿namespace HM.DAL.Entities;
+﻿using HM.DAL.Entities.NewPost;
+
+namespace HM.DAL.Entities;
 
 public class Order
 {
@@ -12,4 +14,5 @@ public class Order
     public bool PaymentReceived { get; set; }
     public string Notes { get; set; } = string.Empty;
     public List<Support> Supports { get; set; } = [];
+    public NewPostInternetDocument? NewPostInternetDocument { get; set; }
 }

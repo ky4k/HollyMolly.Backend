@@ -1,4 +1,5 @@
 ﻿using HM.BLL.Interfaces;
+using HM.BLL.Interfaces.NewPost;
 using HM.DAL.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
@@ -33,12 +34,12 @@ public class WebAppFactoryHelper
                 });
 
                 var newPostDescriptor = services.FirstOrDefault(
-                    d => d.ServiceType == typeof(INewPostService));
+                    d => d.ServiceType == typeof(INewPostCitiesService));
                 if (newPostDescriptor != null)
                 {
                     services.Remove(newPostDescriptor);
                 }
-                services.AddScoped<INewPostService, MockNewPostService>();
+                services.AddScoped<INewPostCitiesService, MockNewPostService>();
 
                 var emailSenderDescriptor = services.FirstOrDefault(
                     d => d.ServiceType == typeof(IEmailSender));

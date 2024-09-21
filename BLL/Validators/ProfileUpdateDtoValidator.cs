@@ -1,12 +1,12 @@
 ﻿using FluentValidation;
-using HM.BLL.Interfaces;
+using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Users;
 
 namespace HM.BLL.Validators;
 
 public class ProfileUpdateDtoValidator : AbstractValidator<ProfileUpdateDto>
 {
-    public ProfileUpdateDtoValidator(INewPostService newPostService)
+    public ProfileUpdateDtoValidator(INewPostCitiesService newPostService)
     {
         RuleFor(pud => pud.FirstName)
             .ApplyNameValidationRules();

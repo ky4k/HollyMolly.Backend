@@ -1,5 +1,5 @@
 ﻿using FluentValidation.TestHelper;
-using HM.BLL.Interfaces;
+using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Orders;
 using HM.BLL.UnitTests.TestHelpers;
 using HM.BLL.Validators;
@@ -9,11 +9,11 @@ namespace HM.BLL.UnitTests.Validators;
 
 public class CustomerDtoValidatorTests
 {
-    private readonly INewPostService _newPostService;
+    private readonly INewPostCitiesService _newPostService;
     private readonly CustomerCreateDtoValidator _validator;
     public CustomerDtoValidatorTests()
     {
-        _newPostService = Substitute.For<INewPostService>();
+        _newPostService = Substitute.For<INewPostCitiesService>();
         _newPostService.CheckIfCityIsValidAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(true);
         _newPostService.CheckIfAddressIsValidAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
