@@ -6,7 +6,7 @@ namespace HM.BLL.Validators;
 
 public class OrderCreateDtoValidator : AbstractValidator<OrderCreateDto>
 {
-    public OrderCreateDtoValidator(INewPostCityesService newPostService)
+    public OrderCreateDtoValidator(INewPostCitiesService newPostService)
     {
         RuleFor(ocd => ocd.Customer)
             .SetValidator(new CustomerCreateDtoValidator(newPostService));

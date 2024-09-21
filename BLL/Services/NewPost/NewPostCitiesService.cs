@@ -3,22 +3,19 @@ using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
 using Microsoft.Extensions.Logging;
-using System.Net.Http;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
-namespace HM.BLL.Services;
+namespace HM.BLL.Services.NewPost;
 
-public class NewPostService(
+public class NewPostCitiesService(
     IConfigurationHelper configurationHelper,
     IHttpClientFactory httpClientFactory,
-    ILogger<NewPostService> logger
-        ) : INewPostCityesService
+    ILogger<NewPostCitiesService> logger
+        ) : INewPostCitiesService
 {
     private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
-    private readonly ILogger<NewPostService> _logger = logger;
+    private readonly ILogger<NewPostCitiesService> _logger = logger;
     private readonly string? _apiKey = configurationHelper.GetConfigurationValue("NewPost:APIKey");
     private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 

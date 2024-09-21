@@ -6,7 +6,7 @@ namespace HM.BLL.Validators;
 
 public class ProfileUpdateDtoValidator : AbstractValidator<ProfileUpdateDto>
 {
-    public ProfileUpdateDtoValidator(INewPostCityesService newPostService)
+    public ProfileUpdateDtoValidator(INewPostCitiesService newPostService)
     {
         RuleFor(pud => pud.FirstName)
             .ApplyNameValidationRules();

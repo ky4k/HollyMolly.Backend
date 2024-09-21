@@ -9,11 +9,11 @@ namespace HM.BLL.UnitTests.Validators;
 
 public class ProfileUpdateDtoValidatorTests
 {
-    private readonly INewPostCityesService _newPostService;
+    private readonly INewPostCitiesService _newPostService;
     private readonly ProfileUpdateDtoValidator _validator;
     public ProfileUpdateDtoValidatorTests()
     {
-        _newPostService = Substitute.For<INewPostCityesService>();
+        _newPostService = Substitute.For<INewPostCitiesService>();
         _newPostService.CheckIfCityIsValidAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(true);
         _newPostService.CheckIfAddressIsValidAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())

@@ -1,5 +1,4 @@
-﻿using DocumentFormat.OpenXml.InkML;
-using HM.BLL.Extensions;
+﻿using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
 using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
@@ -9,16 +8,8 @@ using HM.DAL.Data;
 using HM.DAL.Entities.NewPost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Security.Policy;
 using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Linq;
 
 namespace HM.BLL.Services.NewPost
 {
@@ -33,7 +24,7 @@ namespace HM.BLL.Services.NewPost
         private readonly string? _apiKey = configurationHelper.GetConfigurationValue("NewPost:APIKey");
         private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
-        public async Task<NewPostCounterAgentDto> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
+        public async Task<NewPostCounterAgentDto?> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
         {
             try
             {
@@ -130,7 +121,7 @@ namespace HM.BLL.Services.NewPost
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
                 var savedCounterAgentDto = await GetCounterpartyAsync(customerDto, cancellationToken);
-                return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(true, string.Empty, new List<NewPostCounterAgentDto> { savedCounterAgentDto });
+                return new OperationResult<IEnumerable<NewPostCounterAgentDto>>(true, string.Empty, new List<NewPostCounterAgentDto> { savedCounterAgentDto! });
             }
             catch (HttpRequestException httpEx)
             {

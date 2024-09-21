@@ -4,7 +4,7 @@ using HM.BLL.Models.NewPost;
 
 namespace WebAPI.IntegrationTests.Mocks;
 
-public class MockNewPostService : INewPostCityesService
+public class MockNewPostService : INewPostCitiesService
 {
     public Task<bool> CheckIfAddressIsValidAsync(string city, string address, CancellationToken cancellationToken)
     {
@@ -16,13 +16,28 @@ public class MockNewPostService : INewPostCityesService
         return Task.FromResult(true);
     }
 
-    public Task<OperationResult<IEnumerable<NewPostCity>>> GetCitiesAsync(string? name, CancellationToken cancellationToken)
+    public Task<IEnumerable<NewPostCities>> GetCitiesAsync(string? FindByString, string? Ref, string? Page, string? Limit, CancellationToken cancellationToken)
     {
-        return Task.FromResult(new OperationResult<IEnumerable<NewPostCity>>(true, Array.Empty<NewPostCity>()));
+        return Task.FromResult(Enumerable.Empty<NewPostCities>());
+    }
+
+    public Task<IEnumerable<NewPostStreets>> GetStreetsAync(string CityRef, string FindByString, string? Page, string? Limit, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(Enumerable.Empty<NewPostStreets>());
     }
 
     public Task<OperationResult<IEnumerable<NewPostWarehouse>>> GetWarehousesAsync(string? warehouse, string koatuu, int page, CancellationToken cancellationToken)
     {
         return Task.FromResult(new OperationResult<IEnumerable<NewPostWarehouse>>(true, Array.Empty<NewPostWarehouse>()));
+    }
+
+    public Task<IEnumerable<NewPostWarehouse>> GetWarehousesAync(string? CityName, string? WarehouseId, string? FindByString, string? CityRef, string? Page, string? Limit, string? Language, string? TypeOfWarehouseRef, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(Enumerable.Empty<NewPostWarehouse>());
+    }
+
+    public Task<OperationResult> UpadateCounterPartyAdressAsync(string CounterPartyRef, string AdressRef, string StreetRef, string? BuildingNumber, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(new OperationResult(true));
     }
 }

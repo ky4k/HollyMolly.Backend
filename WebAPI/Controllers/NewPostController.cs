@@ -1,12 +1,7 @@
 ﻿using HM.BLL.Interfaces;
 using HM.BLL.Interfaces.NewPost;
-using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
-using HM.BLL.Models.Orders;
-using HM.BLL.Services;
-using HM.BLL.Services.NewPost;
 using HM.DAL.Constants;
-using HM.DAL.Entities.NewPost;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,9 +10,9 @@ namespace HM.WebAPI.Controllers;
 [Route("api/[controller]")]
 [ApiController]
 public class NewPostController(
-    INewPostCityesService newPostService,
+    INewPostCitiesService newPostService,
     INewPostCounerAgentService newPostCounterAgentService,
-    INewPostInternetDocument newPostInternetDocument,
+    INewPostInternetDocumentService newPostInternetDocumentService,
     IEmailService emailSevice,
     IOrderService orderService
     ) : ControllerBase
@@ -205,7 +200,8 @@ public class NewPostController(
     /// <param name="cost">Cost's estimate.</param>
     /// <param name="costOfGood">Cost of order.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    /// <returns>Returns the created internet document or an error message.</returns>
+    /// <response code="200">Returns the created internet document.</response>
+    /// <response code="400">Indicates that the document has not been created and returns an error message.</response>
     [Authorize(Roles = $"{DefaultRoles.Administrator},{DefaultRoles.Manager}")]
     [Route("internet-document")]
     [HttpPost]
@@ -226,7 +222,7 @@ public class NewPostController(
     float costOfGood,
     CancellationToken cancellationToken)
     {
-        var result = await newPostInternetDocument.CreateInternetDocument(
+        var result = await newPostInternetDocumentService.CreateInternetDocument(
             orderId,
             senderWarehouseIndex,
             senderRef,
@@ -245,19 +241,23 @@ public class NewPostController(
         {
             return BadRequest(result.Message);
         }
-        else
+        
+        var order = await orderService.GetOrderByIdAsync(orderId, cancellationToken);
+        var documentNumber = result.Payload?.IntDocNumber;
+        if (!string.IsNullOrEmpty(documentNumber) && order != null)
         {
-            var order = await orderService.GetOrderByIdAsync(orderId, cancellationToken);
-            var documentNumber = result.Payload?.IntDocNumber;
-            if (!string.IsNullOrEmpty(documentNumber))
-            {
-                await emailSevice.SendInternetDocumentCreatedEmailAsync(order, documentNumber, cancellationToken);
-            }
+            await emailSevice.SendInternetDocumentCreatedEmailAsync(order, documentNumber, cancellationToken);
         }
-
         return Ok(result.Payload);
     }
 
+    /// <summary>
+    /// Allows administrators and managers to delete a document
+    /// </summary>
+    /// <param name="internetDocumentRef">Reference of the document to delete</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Indicates that operation was successful and return the message with details.</response>
+    /// <response code="400">Indicates that the document has not been deleted and returns an error message.</response>
     [Authorize(Roles = $"{DefaultRoles.Administrator},{DefaultRoles.Manager}")]
     [Route("internet-document/delete")]
     [HttpDelete]
@@ -267,7 +267,7 @@ public class NewPostController(
         [FromQuery] string internetDocumentRef,
         CancellationToken cancellationToken = default)
     {
-        var result = await newPostInternetDocument.DeleteInternetDocument(internetDocumentRef, cancellationToken);
+        var result = await newPostInternetDocumentService.DeleteInternetDocument(internetDocumentRef, cancellationToken);
 
         if (result.Succeeded)
             return Ok(result.Message);
@@ -275,6 +275,12 @@ public class NewPostController(
         return BadRequest(result.Message);
     }
 
+    /// <summary>
+    /// Allows administrators and managers to get all New Post internet documents
+    /// </summary>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Returns all New Post internet documents.</response>
+    /// <response code="400">Indicates that operation fails and returns an error message.</response>
     [Authorize(Roles = $"{DefaultRoles.Administrator},{DefaultRoles.Manager}")]
     [Route("internet-documents")]
     [HttpGet]
@@ -284,7 +290,7 @@ public class NewPostController(
     {
         try
         {
-            var result = await newPostInternetDocument.GetAllInternetDocumentsAsync(cancellationToken);
+            var result = await newPostInternetDocumentService.GetAllInternetDocumentsAsync(cancellationToken);
             return Ok(result);
         }
         catch (Exception ex)
@@ -293,6 +299,13 @@ public class NewPostController(
         }
     }
 
+    /// <summary>
+    /// Allows administrators and managers to get a New Post internet document by its ref
+    /// </summary>
+    /// <param name="documentRef">Ref of the document to obtain.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <response code="200">Returns a New Post internet document.</response>
+    /// <response code="404">Indicates that document with such a ref does not exist.</response>
     [Authorize(Roles = $"{DefaultRoles.Administrator},{DefaultRoles.Manager}")]
     [Route("internet-document/{documentRef}")]
     [HttpGet]
@@ -302,7 +315,7 @@ public class NewPostController(
         [FromRoute] string documentRef,
         CancellationToken cancellationToken = default)
     {
-        var result = await newPostInternetDocument.GetInternetDocumentByRefAsync(documentRef, cancellationToken);
+        var result = await newPostInternetDocumentService.GetInternetDocumentByRefAsync(documentRef, cancellationToken);
 
         if (result == null)
             return NotFound($"Internet document with ref {documentRef} not found.");

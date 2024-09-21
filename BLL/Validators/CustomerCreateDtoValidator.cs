@@ -6,7 +6,7 @@ namespace HM.BLL.Validators;
 
 public class CustomerCreateDtoValidator : AbstractValidator<CustomerCreateDto>
 {
-    public CustomerCreateDtoValidator(INewPostCityesService newPostService)
+    public CustomerCreateDtoValidator(INewPostCitiesService newPostService)
     {
         RuleFor(c => c.FirstName)
             .NotEmpty()

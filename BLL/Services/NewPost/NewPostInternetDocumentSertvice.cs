@@ -28,7 +28,7 @@ namespace HM.BLL.Services.NewPost
     ILogger<NewPostCounterAgentService> logger,
     IOrderService orderService,
     INewPostCounerAgentService newPostCounerAgentService,
-    INewPostCityesService newPostCityesService) : INewPostInternetDocument
+    INewPostCitiesService newPostCityesService) : INewPostInternetDocumentService
     {
         private readonly HttpClient _httpClient = httpClientFactory.CreateClient();
         private readonly ILogger<NewPostCounterAgentService> _logger = logger;
@@ -56,7 +56,7 @@ namespace HM.BLL.Services.NewPost
 
             return buildingNumber;
         }
-        private async Task<OperationResult<NewPostInternetDocumentDto>> CheckParameters(int orderid, string SenderWarehouseIndex, string senderRef,
+        private OperationResult<NewPostInternetDocumentDto> CheckParameters(int orderid, string SenderWarehouseIndex, string senderRef,
             string PayerType, string PaymentMethod, DateTimeOffset DateOfSend, float weight, string serviceType, string SeatsAmount,
             string description, float costOfEstimate, float costOfGood)
         {
@@ -123,9 +123,9 @@ namespace HM.BLL.Services.NewPost
             string PayerType, string PaymentMethod, DateTimeOffset DateOfSend, float weight, string serviceType,string SeatsAmount,
             string description, float costOfEstimate,float costOfGood, CancellationToken cancellationToken)
         {
-            var validationParam = await CheckParameters(orderid, SenderWarehouseIndex,senderRef,PayerType,PaymentMethod,DateOfSend,weight,serviceType,
+            var validationParam = CheckParameters(orderid, SenderWarehouseIndex,senderRef,PayerType,PaymentMethod,DateOfSend,weight,serviceType,
                 SeatsAmount,description,costOfEstimate,costOfGood);
-            if (!validationParam.Succeeded) { return new OperationResult<NewPostInternetDocumentDto>(false, validationParam.Message); }
+            if (!validationParam.Succeeded) { return new OperationResult<NewPostInternetDocumentDto>(false, validationParam.Message!); }
 
             var order = await orderService.GetOrderByIdAsync(orderid, cancellationToken);//take order
             if (order == null)  { return new OperationResult<NewPostInternetDocumentDto>(false, "Order does not exist"); }
@@ -200,13 +200,13 @@ namespace HM.BLL.Services.NewPost
                     Cost = costOfEstimate.ToString(),
                     CitySender =sender.City,
                     Sender = sender.Ref,
-                    SenderAddress = senderAdress.Ref,
-                    ContactSender = contactPersonofSender.Ref,
+                    SenderAddress = senderAdress!.Ref,
+                    ContactSender = contactPersonofSender!.Ref,
                     SendersPhone = contactPersonofSender.Phones,
                     CityRecipient =address.Ref,
                     Recipient = recipient.Ref,
                     RecipientAddress = address.Ref,
-                    ContactRecipient = contactPersonOfReciooient.Ref,
+                    ContactRecipient = contactPersonOfReciooient!.Ref,
                     RecipientsPhone= contactPersonOfReciooient.Phones,
                     BackwardDeliveryData = new[]
                     {
@@ -229,7 +229,7 @@ namespace HM.BLL.Services.NewPost
                 _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
 
                 var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostInternetDocumentDto>>(jsonResponse, _jsonSerializerOptions);
-                if(apiResponse.Data == null)
+                if(apiResponse?.Data == null)
                 {
                     _logger.LogError("Failed to retrieve data.");
                     return new OperationResult<NewPostInternetDocumentDto>(false, "Failed to retrieve data.");

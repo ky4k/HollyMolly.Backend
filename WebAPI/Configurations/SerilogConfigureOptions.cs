@@ -3,7 +3,7 @@ using Serilog.Events;
 
 namespace HM.WebAPI.Configurations;
 
-public class SerilogConfigureOptions(IConfiguration configuration)
+public class SerilogConfigureOptions(IConfiguration configuration, bool isProduction)
 {
     public void Configure(LoggerConfiguration options)
     {
@@ -12,5 +12,9 @@ public class SerilogConfigureOptions(IConfiguration configuration)
             .ReadFrom.Configuration(configuration)
             .WriteTo.File("./logs/log.txt", LogEventLevel.Information, rollingInterval: RollingInterval.Day)
             .WriteTo.Console(restrictedToMinimumLevel: LogEventLevel.Debug);
+        if(isProduction)
+        {
+            options.MinimumLevel.Override("HM.BLL.Services.NewPost", LogEventLevel.Warning);
+        }
     }
 }
