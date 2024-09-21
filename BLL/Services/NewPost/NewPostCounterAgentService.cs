@@ -33,26 +33,36 @@ namespace HM.BLL.Services.NewPost
         private readonly string? _apiKey = configurationHelper.GetConfigurationValue("NewPost:APIKey");
         private readonly JsonSerializerOptions _jsonSerializerOptions = new() { PropertyNameCaseInsensitive = true };
 
-        private async Task<NewPostCounterAgentDto?> FindExistingCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
+        public async Task<NewPostCounterAgentDto> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
         {
-            var existingCounterAgent = await _dbContext.NewPostCounterAgents
+            try
+            {
+                var existingCounterAgent = await _dbContext.NewPostCounterAgents
+                .AsNoTracking()
                 .Include(ca => ca.ContactPersons)
                 .FirstOrDefaultAsync(ca => ca.FirstName == customerDto.FirstName &&
                                            ca.LastName == customerDto.LastName &&
                                            ca.ContactPersons.Any(cp => cp.Phones == customerDto.PhoneNumber && cp.Email == customerDto.Email),
                                            cancellationToken);
 
-            if (existingCounterAgent != null)
-            {
-                return existingCounterAgent.ToNewPostCounterAgentDto();
+                if (existingCounterAgent == null)
+                {
+                    _logger.LogWarning("Counteragent not found for customer: {FirstName} {LastName}.", customerDto.FirstName, customerDto.LastName);
+                    return null;
+                }
+                var counterAgentDto = existingCounterAgent.ToNewPostCounterAgentDto();
+                return counterAgentDto;
             }
-
-            return null;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while retrieving the counteragent.");
+                throw;
+            }
         }
 
         public async Task<OperationResult<IEnumerable<NewPostCounterAgentDto>>> CreateCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
         {
-            var existingCounterAgentDto = await FindExistingCounterpartyAsync(customerDto, cancellationToken);
+            var existingCounterAgentDto = await GetCounterpartyAsync(customerDto, cancellationToken);
 
             if (existingCounterAgentDto != null)
             {
@@ -98,11 +108,21 @@ namespace HM.BLL.Services.NewPost
                         string.Equals(contactPerson.FirstName, counterAgentDto.FirstName, StringComparison.OrdinalIgnoreCase) &&
                         string.Equals(contactPerson.LastName, counterAgentDto.LastName, StringComparison.OrdinalIgnoreCase) &&
                         (string.IsNullOrEmpty(counterAgentDto.MiddleName) || string.Equals(contactPerson.MiddleName, counterAgentDto.MiddleName, StringComparison.OrdinalIgnoreCase)))
-                    .Select(contactPerson => contactPerson.ToNewPostContactPerson())
-                    .ToList();
+                    .Select(contactPersonDto =>
+                    {
+                        return new NewPostContactPerson
+                        {
+                            Ref = contactPersonDto.Ref, 
+                            FirstName = contactPersonDto.FirstName,
+                            LastName = contactPersonDto.LastName,
+                            MiddleName = contactPersonDto.MiddleName,
+                            Description = contactPersonDto.Description,
+                            Phones = contactPersonDto.Phones.StartsWith("+") ? contactPersonDto.Phones : $"+{contactPersonDto.Phones}",
+                            Email = contactPersonDto.Email
+                        };
+                    }).ToList();
 
                     var counterAgent = counterAgentDto.ToNewPostCounterAgent();
-
                     counterAgent.ContactPersons = filteredContactPersons;
 
                     _dbContext.NewPostCounterAgents.Add(counterAgent);
@@ -249,39 +269,6 @@ namespace HM.BLL.Services.NewPost
                 return Enumerable.Empty<NewPostCounterAgentAdress>();
             }
         }
-
-        public async Task<NewPostCounterAgentDto> GetCounterpartyAsync(CustomerDto customerDto, CancellationToken cancellationToken)
-        {
-            try
-            {
-                var counterAgent = await _dbContext.NewPostCounterAgents
-                    .Include(cp=>cp.ContactPersons)
-                    .FirstOrDefaultAsync(ca =>
-                        ca.FirstName == customerDto.FirstName &&
-                        ca.LastName == customerDto.LastName,
-                        cancellationToken);
-                if (counterAgent == null)
-                {
-                    var message = $"Counteragent not found for customer: {customerDto.FirstName} {customerDto.LastName}.";
-                    _logger.LogWarning(message);
-                    throw new InvalidOperationException(message);
-                }
-                var counterAgentDto = counterAgent.ToNewPostCounterAgentDto();
-
-                return counterAgentDto;
-            }
-            catch (InvalidOperationException ex)
-            {
-                _logger.LogError(ex, "An error occurred: {Message}", ex.Message);
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "An error occurred while retrieving the counteragent.");
-                throw;
-            }
-        }
-
         public async Task<IEnumerable<NewPostContactPersonDto>> GetContactPersonsAsync(string counterPartyRef, string Page, CancellationToken cancellationToken)
         {
             if (string.IsNullOrWhiteSpace(counterPartyRef))

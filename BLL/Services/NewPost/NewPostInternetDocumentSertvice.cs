@@ -56,17 +56,82 @@ namespace HM.BLL.Services.NewPost
 
             return buildingNumber;
         }
+        private async Task<OperationResult<NewPostInternetDocumentDto>> CheckParameters(int orderid, string SenderWarehouseIndex, string senderRef,
+            string PayerType, string PaymentMethod, DateTimeOffset DateOfSend, float weight, string serviceType, string SeatsAmount,
+            string description, float costOfEstimate, float costOfGood)
+        {
+            if (string.IsNullOrEmpty(SenderWarehouseIndex))
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid SenderWarehouseIndex. Empty string.");
+            }
 
-        public async Task<OperationResult<NewPostInternetDocumentDto>> CreateInternetDocument(int orderid, string? SenderWarehouseIndex,string senderRef,
+            if (string.IsNullOrEmpty(senderRef))
+            {
+                return new OperationResult<NewPostInternetDocumentDto> (false, "Invalid senderRef. Empty string.");
+            }
+
+            var validPayerTypes = new[] { "Sender", "Recipient", "ThirdPerson" };
+            if (!validPayerTypes.Contains(PayerType))
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid PayerType. Must be 'Sender', 'Recipient' or 'ThirdPerson'.");
+            }
+
+            var validPaymentMethods = new[] { "Cash", "NonCash" };
+            if (!validPaymentMethods.Contains(PaymentMethod))
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid PaymentMethod. Must be 'Cash' or 'NonCash'.");
+            }
+
+            if (DateOfSend < DateTimeOffset.Now.Date)
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid DateOfSend. Cannot be earlier than today.");
+            }
+
+            if (weight < 0.1)
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid weight. Must be at least 0.1 kg.");
+            }
+
+            var validServiceTypes = new[] { "DoorsDoors", "DoorsWarehouse", "WarehouseWarehouse", "WarehouseDoors" };
+            if (!validServiceTypes.Contains(serviceType))
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid serviceType. Must be one of 'DoorsDoors', 'DoorsWarehouse', 'WarehouseWarehouse', 'WarehouseDoors'.");
+            }
+
+            if (!int.TryParse(SeatsAmount, out int seats) || seats < 1)
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid SeatsAmount. Must be an integer greater than 0.");
+            }
+
+            if (string.IsNullOrEmpty(description))
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid description. It cannot be empty.");
+            }
+
+            if (costOfEstimate < 0)
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid costOfEstimate. Must be more then 0");
+            }
+
+            if (costOfGood <= 0)
+            {
+                return new OperationResult<NewPostInternetDocumentDto>(false, "Invalid costOfGood. Must be greater than 0.");
+            }
+            return new OperationResult<NewPostInternetDocumentDto>(true, "Parameters are valid.");
+        }
+        public async Task<OperationResult<NewPostInternetDocumentDto>> CreateInternetDocument(int orderid, string SenderWarehouseIndex,string senderRef,
             string PayerType, string PaymentMethod, DateTimeOffset DateOfSend, float weight, string serviceType,string SeatsAmount,
             string description, float costOfEstimate,float costOfGood, CancellationToken cancellationToken)
         {
+            var validationParam = await CheckParameters(orderid, SenderWarehouseIndex,senderRef,PayerType,PaymentMethod,DateOfSend,weight,serviceType,
+                SeatsAmount,description,costOfEstimate,costOfGood);
+            if (!validationParam.Succeeded) { return new OperationResult<NewPostInternetDocumentDto>(false, validationParam.Message); }
+
             var order = await orderService.GetOrderByIdAsync(orderid, cancellationToken);//take order
-            if (order == null) 
-            {
-                return new OperationResult<NewPostInternetDocumentDto>(false, "Order does not exist");
-            }
+            if (order == null)  { return new OperationResult<NewPostInternetDocumentDto>(false, "Order does not exist"); }
+
             var customerInfo = order.Customer;//take customer info
+            if (customerInfo == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Customer information is missing."); }
 
             var address = (await newPostCityesService.GetWarehousesAync(
                     CityName: customerInfo.City,
@@ -77,46 +142,41 @@ namespace HM.BLL.Services.NewPost
                     Limit: "50",
                     Language: null,
                     TypeOfWarehouseRef: null,
-                    cancellationToken: cancellationToken))
-                    .FirstOrDefault();// take adress of wharehouse 
+                    cancellationToken: cancellationToken)).FirstOrDefault();// take adress of wharehouse 
             if (address == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Warehouses serching exception"); }
 
-            if (customerInfo != null)
+            var counterAgentResult = await newPostCounerAgentService.CreateCounterpartyAsync(customerInfo, cancellationToken);//create counter agent
+            if ((!counterAgentResult.Succeeded) || counterAgentResult.Payload == null || !counterAgentResult.Payload.Any())
             {
-                var counterAgentResult = await newPostCounerAgentService.CreateCounterpartyAsync(customerInfo, cancellationToken);//create counter agent
-                if (!counterAgentResult.Succeeded)
-                {
-                    var errorMessage = string.Join(Environment.NewLine, counterAgentResult.Errors);
-                    return new OperationResult<NewPostInternetDocumentDto>(false, errorMessage);
-                } 
-
-                var counterAgent = counterAgentResult.Payload.FirstOrDefault(c => c.FirstName == customerInfo.FirstName && c.LastName == customerInfo.LastName);
-                if (counterAgent == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Not true data about con"); }//take counter agent
-
-                var counterAgentAdress = (await newPostCounerAgentService.GetCounterpartyAdressAsync(counterAgent.Ref, cancellationToken)).FirstOrDefault();
-                if (counterAgentAdress == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Adress serching exception"); }//take CA adress
-
-                var street = ExtractStreetName(address.ShortAddress);//give name of street from adress wharehouse 
-                var build = ExtractBuildNumber(address.ShortAddress);//give nubmer of build
-                var streetForUpdate = (await newPostCityesService.GetStreetsAync(address.CityRef, street, "1", "50", cancellationToken)).FirstOrDefault();
-                if (streetForUpdate == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Street update exception"); }//update adress CA
-
-                var updetedCounterAgent = await newPostCityesService.UpadateCounterPartyAdressAsync(counterAgent.Ref, counterAgentAdress.Ref,
-                    streetForUpdate.Ref, build, cancellationToken);//update CA
-
-                if (!updetedCounterAgent.Succeeded)
-                {
-                    return new OperationResult<NewPostInternetDocumentDto>(false, "Counteragent update exception");
-                }
+                var errorMessage = string.Join(Environment.NewLine, counterAgentResult.Errors);
+                return new OperationResult<NewPostInternetDocumentDto>(false, $"Error creating counterparty: {errorMessage} or counterparty creation succeeded, but no data was returned.");
             }
-            else { return new OperationResult<NewPostInternetDocumentDto>(false, "Customer info dosen't serched"); }
+
+            var counterAgent = counterAgentResult.Payload.FirstOrDefault(c => c.FirstName == customerInfo.FirstName && c.LastName == customerInfo.LastName);
+            if (counterAgent == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Not true data about con"); }//take counter agent
+
+            var counterAgentAdress = (await newPostCounerAgentService.GetCounterpartyAdressAsync(counterAgent.Ref, cancellationToken)).FirstOrDefault();
+            if (counterAgentAdress == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Adress serching exception"); }//take CA adress
+
+            var street = ExtractStreetName(address.ShortAddress);//give name of street from adress wharehouse 
+            var build = ExtractBuildNumber(address.ShortAddress);//give nubmer of build
+            var streetForUpdate = (await newPostCityesService.GetStreetsAync(address.CityRef, street, "1", "50", cancellationToken)).FirstOrDefault();
+            if (streetForUpdate == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Street update exception"); }//update adress CA
+
+            var updetedCounterAgent = await newPostCityesService.UpadateCounterPartyAdressAsync(counterAgent.Ref, counterAgentAdress.Ref,
+                streetForUpdate.Ref, build, cancellationToken);//update CA
+            if (!updetedCounterAgent.Succeeded) { return new OperationResult<NewPostInternetDocumentDto>(false, "Counteragent update exception");}
 
             var recipient = await newPostCounerAgentService.GetCounterpartyAsync(customerInfo, cancellationToken);
+            if (recipient == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Recipient searching exception"); }
+
             var contactPersonOfReciooient = (await newPostCounerAgentService.GetContactPersonsAsync(recipient.Ref, "1", cancellationToken))
                 .Where(c=>c.FirstName==recipient.FirstName && c.LastName==recipient.LastName).FirstOrDefault();
             var recipientAdress =(await newPostCounerAgentService.GetCounterpartyAdressAsync(recipient.Ref, cancellationToken)).FirstOrDefault();
 
             var sender = (await newPostCounerAgentService.GetSendersListAsync("1", cancellationToken)).Where(c=>c.Ref==senderRef).FirstOrDefault();
+            if (sender == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Sender searching exception"); }
+
             var contactPersonofSender = (await newPostCounerAgentService.GetContactPersonsAsync(senderRef, "1", cancellationToken)).FirstOrDefault();//get contact person of sender
             var senderAdress = (await newPostCounerAgentService.GetCounterpartyAdressAsync(sender.Ref, cancellationToken)).FirstOrDefault();
 
@@ -169,17 +229,13 @@ namespace HM.BLL.Services.NewPost
                 _logger.LogInformation("Response from Nova Poshta API: {Response}", jsonResponse);
 
                 var apiResponse = JsonSerializer.Deserialize<NewPostResponseData<NewPostInternetDocumentDto>>(jsonResponse, _jsonSerializerOptions);
-
                 if(apiResponse.Data == null)
                 {
                     _logger.LogError("Failed to retrieve data.");
                     return new OperationResult<NewPostInternetDocumentDto>(false, "Failed to retrieve data.");
                 }
                 var internetDocument = apiResponse.Data.FirstOrDefault();
-                if (internetDocument == null)
-                {
-                    return new OperationResult<NewPostInternetDocumentDto>(false, "Internet document not created.");
-                }
+                if (internetDocument == null){ return new OperationResult<NewPostInternetDocumentDto>(false, "Internet document not created.");}
 
                 var newDocument = new NewPostInternetDocument
                 {
