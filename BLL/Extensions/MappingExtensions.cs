@@ -185,7 +185,12 @@ public static class MappingExtensions
         return new OrderRecordDto()
         {
             ProductInstanceId = orderRecord.ProductInstanceId,
+            ProductSKU = orderRecord.ProductInstance.SKU,
             ProductName = orderRecord.ProductName,
+            Size = orderRecord.ProductInstance?.Size,
+            Color = orderRecord.ProductInstance?.Color,
+            Image = orderRecord.ProductInstance?.Images
+                .DefaultIfEmpty().MinBy(i => i?.Position)?.Link,
             Quantity = orderRecord.Quantity,
             Price = orderRecord.Price,
             Discount = orderRecord.Discount
