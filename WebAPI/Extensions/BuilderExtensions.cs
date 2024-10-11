@@ -38,6 +38,6 @@ public static class BuilderExtensions
         builder.Services.AddScoped<ISupportService, SupportService>();
         builder.Services.AddScoped<INewPostCitiesService, NewPostCitiesService>();
         builder.Services.AddScoped<INewPostCounerAgentService,NewPostCounterAgentService>();
-        builder.Services.AddScoped<INewPostInternetDocumentService, NewPostInternetDocumentSertvice>();
+        builder.Services.AddScoped<INewPostInternetDocumentService, NewPostInternetDocumentService>();
     }
 }

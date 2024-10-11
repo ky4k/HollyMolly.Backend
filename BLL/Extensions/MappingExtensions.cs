@@ -143,6 +143,7 @@ public static class MappingExtensions
             PaymentReceived = order.PaymentReceived,
             Notes = order.Notes,
             OrderRecords = order.OrderRecords.Select(or => or.ToOrderRecordDto()).ToList(),
+            NewPostDocument = order.NewPostInternetDocument?.IntDocNumber
         };
     }
 

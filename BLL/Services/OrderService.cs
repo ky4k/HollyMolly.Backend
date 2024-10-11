@@ -24,6 +24,7 @@ public class OrderService(
                 .ThenInclude(or => or.ProductInstance)
                     .ThenInclude(pi => pi.Images)
             .Include(o => o.StatusHistory)
+            .Include(o => o.NewPostInternetDocument)
             .AsNoTracking();
         if (userId != null)
         {
@@ -52,6 +53,7 @@ public class OrderService(
                 .ThenInclude(or => or.ProductInstance)
                     .ThenInclude(pi => pi.Images)
             .Include(o => o.StatusHistory)
+            .Include(o => o.NewPostInternetDocument)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         return order?.ToOrderDto();
     }
@@ -158,6 +160,7 @@ public class OrderService(
                 .ThenInclude(or => or.ProductInstance)
                     .ThenInclude(pi => pi.Images)
             .Include(o => o.StatusHistory)
+            .Include(o => o.NewPostInternetDocument)
             .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
         if (order == null)
         {
