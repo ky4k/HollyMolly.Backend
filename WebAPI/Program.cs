@@ -44,7 +44,7 @@ builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
 builder.Services.ConfigureOptions<SwaggerGenConfigureOptions>();
 
-builder.Services.AddSerilog(new SerilogConfigureOptions(builder.Configuration).Configure);
+builder.Services.AddSerilog(new SerilogConfigureOptions(builder.Configuration, builder.Environment.IsProduction()).Configure);
 
 Stripe.StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("Stripe:SecretKey")
     ?? builder.Configuration["Stripe:SecretKey"];

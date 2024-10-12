@@ -3,7 +3,7 @@ using HM.BLL.Models.NewPost;
 
 namespace HM.BLL.Interfaces.NewPost;
 
-public interface INewPostCityesService
+public interface INewPostCitiesService
 {
     Task<IEnumerable<NewPostCities>> GetCitiesAsync(
         string? FindByString, string? Ref, string? Page, string? Limit, CancellationToken cancellationToken);

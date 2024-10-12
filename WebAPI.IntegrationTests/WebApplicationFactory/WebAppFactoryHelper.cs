@@ -34,12 +34,12 @@ public class WebAppFactoryHelper
                 });
 
                 var newPostDescriptor = services.FirstOrDefault(
-                    d => d.ServiceType == typeof(INewPostCityesService));
+                    d => d.ServiceType == typeof(INewPostCitiesService));
                 if (newPostDescriptor != null)
                 {
                     services.Remove(newPostDescriptor);
                 }
-                services.AddScoped<INewPostCityesService, MockNewPostService>();
+                services.AddScoped<INewPostCitiesService, MockNewPostService>();
 
                 var emailSenderDescriptor = services.FirstOrDefault(
                     d => d.ServiceType == typeof(IEmailSender));

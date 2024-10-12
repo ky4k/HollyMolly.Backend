@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace HM.DAL.Entities.NewPost
+﻿namespace HM.DAL.Entities.NewPost
 {
     public class NewPostContactPerson
     {

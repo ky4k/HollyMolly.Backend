@@ -1,6 +1,4 @@
-﻿using HM.BLL.Models.NewPost;
-
-namespace HM.BLL.Models.Orders;
+﻿namespace HM.BLL.Models.Orders;
 
 public class OrderDto
 {
