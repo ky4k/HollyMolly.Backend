@@ -153,7 +153,7 @@ namespace HM.BLL.Services.NewPost
             }
 
             var counterAgent = counterAgentResult.Payload.FirstOrDefault(c => c.FirstName == customerInfo.FirstName && c.LastName == customerInfo.LastName);
-            if (counterAgent == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Not true data about con"); }//take counter agent
+            if (counterAgent == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Not true data about counterAgen"); }//take counter agent
 
             var counterAgentAdress = (await newPostCounerAgentService.GetCounterpartyAdressAsync(counterAgent.Ref, cancellationToken)).FirstOrDefault();
             if (counterAgentAdress == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Adress serching exception"); }//take CA adress

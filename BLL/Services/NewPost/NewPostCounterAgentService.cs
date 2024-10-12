@@ -42,7 +42,9 @@ namespace HM.BLL.Services.NewPost
                 .Include(ca => ca.ContactPersons)
                 .FirstOrDefaultAsync(ca => ca.FirstName == customerDto.FirstName &&
                                            ca.LastName == customerDto.LastName &&
-                                           ca.ContactPersons.Any(cp => cp.Phones == customerDto.PhoneNumber && cp.Email == customerDto.Email),
+                                           ca.ContactPersons.Any(cp => 
+                                               cp.Phones.EndsWith(customerDto.PhoneNumber.Length==10 ? customerDto.PhoneNumber: customerDto.PhoneNumber.Substring(3)) &&
+                                               cp.Email == customerDto.Email),
                                            cancellationToken);
 
                 if (existingCounterAgent == null)
