@@ -1,27 +1,18 @@
-﻿using DocumentFormat.OpenXml.Drawing.Charts;
-using DocumentFormat.OpenXml.Presentation;
-using HM.BLL.Extensions;
+﻿using HM.BLL.Extensions;
 using HM.BLL.Interfaces;
 using HM.BLL.Interfaces.NewPost;
 using HM.BLL.Models.Common;
 using HM.BLL.Models.NewPost;
-using HM.BLL.Models.Orders;
 using HM.DAL.Data;
 using HM.DAL.Entities.NewPost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Stripe;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace HM.BLL.Services.NewPost
 {
-    public class NewPostInternetDocumentSertvice(
+    public class NewPostInternetDocumentService(
     HmDbContext _dbContext,
     IConfigurationHelper configurationHelper,
     IHttpClientFactory httpClientFactory,
@@ -146,7 +137,7 @@ namespace HM.BLL.Services.NewPost
             if (address == null) { return new OperationResult<NewPostInternetDocumentDto>(false, "Warehouses serching exception"); }
 
             var counterAgentResult = await newPostCounerAgentService.CreateCounterpartyAsync(customerInfo, cancellationToken);//create counter agent
-            if ((!counterAgentResult.Succeeded) || counterAgentResult.Payload == null || !counterAgentResult.Payload.Any())
+            if ((!counterAgentResult.Succeeded) || counterAgentResult.Payload == null || !counterAgentResult.Payload.Any(c => c != null))
             {
                 var errorMessage = string.Join(Environment.NewLine, counterAgentResult.Errors);
                 return new OperationResult<NewPostInternetDocumentDto>(false, $"Error creating counterparty: {errorMessage} or counterparty creation succeeded, but no data was returned.");
@@ -263,7 +254,7 @@ namespace HM.BLL.Services.NewPost
             if (string.IsNullOrWhiteSpace(internetDocumentRef))
             {
                 _logger.LogWarning("CounterPartyRef is null or empty.");
-                return new OperationResult(false, "The internet docoment ref is empty");
+                return new OperationResult(false, "The internet document ref is empty");
             }
             var requestBody = new
             {
