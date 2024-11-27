@@ -15,6 +15,7 @@ public class SerilogConfigureOptions(IConfiguration configuration, bool isProduc
         if(isProduction)
         {
             options.MinimumLevel.Override("HM.BLL.Services.NewPost", LogEventLevel.Warning);
+            options.MinimumLevel.Override("Microsoft.Extensions.Http.DefaultHttpClientFactory", LogEventLevel.Information);
         }
     }
 }
