@@ -61,7 +61,10 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 app.UseCors("FreeCORSPolicy");
+
+#if !NGINX
 app.UseHttpsRedirection();
+#endif
 
 app.UseStaticFiles();
 
